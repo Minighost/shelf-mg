@@ -1,6 +1,9 @@
 # proj specific
 /fics/
 test_*
+/.claude/
+pyproject.toml
+shelf-mg.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
