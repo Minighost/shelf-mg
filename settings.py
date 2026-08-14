@@ -1,7 +1,7 @@
 import sqlite3
 from dataclasses import dataclass
 
-DEFAULT_THEME = "light"
+DEFAULT_THEME = "dark"
 DEFAULT_FONT_FAMILY = "serif"
 DEFAULT_FONT_SIZE = 1.1  # rem
 
