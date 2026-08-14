@@ -1,0 +1,138 @@
+/* shelf-mg — base styles.
+   Mobile-first: these are the phone rules. The min-width media query
+   near the bottom layers on desktop-specific additions. */
+
+:root {
+    /* Light theme (default) */
+    --bg-color: #ffffff;
+    --text-color: #1a1a1a;
+    --text-muted: #666666;
+    --link-color: #900;
+    --border-color: #e0e0e0;
+    --content-max-width: 700px;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #e8e8e8;
+    --text-muted: #a0a0a0;
+    --link-color: #ff8a8a;
+    --border-color: #3a3a3a;
+}
+
+/* Match OS preference by default, before any manual toggle choice exists */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg-color: #1a1a1a;
+        --text-color: #e8e8e8;
+        --text-muted: #a0a0a0;
+        --link-color: #ff8a8a;
+        --border-color: #3a3a3a;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 1rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.6;
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- theme toggle button --- */
+
+.theme-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    float: right;
+}
+
+/* --- library list --- */
+
+.library-title {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.book-entry {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+}
+
+.book-entry h2 {
+    margin: 0 0 0.3rem 0;
+    font-size: 1.2rem;
+}
+
+.book-meta {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0.2rem 0;
+}
+
+.continue-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-weight: bold;
+}
+
+/* --- reader page --- */
+
+.reader-header {
+    max-width: var(--content-max-width);
+    margin: 0 auto 1rem auto;
+}
+
+.chapter-select {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.chapter-nav {
+    max-width: var(--content-max-width);
+    margin: 1rem auto;
+    display: flex;
+    justify-content: space-between;
+}
+
+.chapter-content-wrapper {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    font-size: 1.1rem;
+}
+
+/* --- desktop additions --- */
+
+@media (min-width: 900px) {
+    body {
+        padding: 2rem;
+    }
+
+    .library-title {
+        font-size: 2.2rem;
+    }
+}

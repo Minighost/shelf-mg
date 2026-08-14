@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ book.title }} — {{ chapter.title }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/theme.js"></script>
+</head>
+
+<body data-book-id="{{ book.id }}" data-chapter-index="{{ chapter.index }}" {% if restore_scroll_percent is not none
+    %}data-restore-scroll="{{ restore_scroll_percent }}" {% endif %}>
+
+    {% macro chapter_nav() %}
+    <nav class="chapter-nav">
+        <span>
+            {% if prev_index is not none %}
+            <a href="/read/{{ book.id }}/{{ prev_index }}">&larr; Previous</a>
+            {% endif %}
+        </span>
+        <span>
+            {% if next_index is not none %}
+            <a href="/read/{{ book.id }}/{{ next_index }}">Next &rarr;</a>
+            {% endif %}
+        </span>
+    </nav>
+    {% endmacro %}
+
+    <div class="reader-header">
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+        <a href="/">&larr; Back to library</a>
+        <h1>{{ book.title }}</h1>
+
+        <select class="chapter-select" onchange="location.href='/read/{{ book.id }}/' + this.value">
+            {% for c in chapters %}
+            <option value="{{ c.index }}" {% if c.index==chapter.index %}selected{% endif %}>{{ c.title }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {{ chapter_nav() }}
+
+    <div class="chapter-content-wrapper">
+        {{ chapter.content | safe }}
+    </div>
+
+    {{ chapter_nav() }}
+
+    <script>
+        (function () {
+            const bookId = document.body.dataset.bookId;
+            const chapterIndex = document.body.dataset.chapterIndex;
+            const restoreScroll = document.body.dataset.restoreScroll;
+
+            if (restoreScroll !== undefined) {
+                window.addEventListener("load", () => {
+                    const maxScroll = document.body.scrollHeight - window.innerHeight;
+                    window.scrollTo(0, maxScroll * parseFloat(restoreScroll));
+                });
+            }
+
+            function currentScrollPercent() {
+                const maxScroll = document.body.scrollHeight - window.innerHeight;
+                if (maxScroll <= 0) return 0;
+                return Math.min(1, Math.max(0, window.scrollY / maxScroll));
+            }
+
+            function savePosition() {
+                const payload = JSON.stringify({
+                    chapter_index: parseInt(chapterIndex, 10),
+                    scroll_percent: currentScrollPercent(),
+                });
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(
+                        `/api/position/${bookId}`,
+                        new Blob([payload], { type: "application/json" })
+                    );
+                } else {
+                    fetch(`/api/position/${bookId}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: payload,
+                        keepalive: true,
+                    });
+                }
+            }
+
+            let scrollTimeout;
+            window.addEventListener("scroll", () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(savePosition, 1000);
+            });
+
+            window.addEventListener("beforeunload", savePosition);
+        })();
+    </script>
+</body>
+
+</html>
