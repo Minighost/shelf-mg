@@ -2,7 +2,7 @@
 <html lang="en"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.reader_font_family_css if settings.override_epub_font else settings.font_family_css }};
-             --reader-font-size: {{ (settings.reader_font_size if settings.override_epub_font else settings.font_size) }}rem;
+             --reader-font-size-base: {{ (settings.reader_font_size if settings.override_epub_font else settings.font_size) }}rem;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};

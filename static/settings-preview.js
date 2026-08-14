@@ -43,7 +43,7 @@ function previewFont(fontKey) {
 }
 
 function previewFontSize(size) {
-    document.getElementById("settings-preview").style.setProperty("--reader-font-size", `${size}rem`);
+    document.getElementById("settings-preview").style.setProperty("--reader-font-size-base", `${size}rem`);
     document.getElementById("font-size-label").textContent = size;
 }
 
@@ -66,6 +66,6 @@ function previewReaderFont(fontKey) {
 }
 
 function previewReaderFontSize(size) {
-    document.getElementById("reader-font-preview").style.setProperty("--reader-font-size", `${size}rem`);
+    document.getElementById("reader-font-preview").style.setProperty("--reader-font-size-base", `${size}rem`);
     document.getElementById("reader-font-size-label").textContent = size;
 }

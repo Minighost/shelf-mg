@@ -1,7 +1,7 @@
 :root {
     --content-max-width: 1024px;
     --reader-font-family: Georgia, 'Times New Roman', serif;
-    --reader-font-size: 1.1rem;
+    --reader-font-size: var(--reader-font-size-base, 1.1rem);
 }
 
 [data-theme="light"] {
@@ -73,8 +73,7 @@ a:hover {
     padding: 0.4rem 0.8rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9rem;
-    float: right;
+    font-size: 0.9em;
     box-sizing: border-box;
     line-height: 1;
 }
@@ -85,7 +84,7 @@ a:hover {
     color: var(--text-color);
     padding: 0.4rem 0.8rem;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.9em;
     display: inline-block;
     line-height: 1;
 }
@@ -109,18 +108,30 @@ button::-moz-focus-inner {
 .library-header {
     max-width: var(--content-max-width);
     margin: 0 auto;
-    text-align: center;
 }
 
-.library-header .theme-toggle {
-    float: none;
-    display: inline-block;
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-top .header-right {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.header-title {
+    text-align: center;
+    margin-top: 0.5rem;
 }
 
 /* --- library list --- */
 
 .library-title {
-    font-size: 1.8rem;
+    font-size: 1.8em;
     margin-bottom: 1.5rem;
 }
 
@@ -139,7 +150,7 @@ button::-moz-focus-inner {
     color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    font-size: 0.95rem;
+    font-size: 0.95em;
 }
 
 .search-form button {
@@ -149,7 +160,7 @@ button::-moz-focus-inner {
     padding: 0.6rem 1.2rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.95em;
 }
 
 .search-form button:hover {
@@ -157,7 +168,7 @@ button::-moz-focus-inner {
 }
 
 .search-form a {
-    font-size: 0.9rem;
+    font-size: 0.9em;
     color: var(--text-muted);
 }
 
@@ -173,12 +184,12 @@ button::-moz-focus-inner {
 
 .book-entry h2 {
     margin: 0 0 0.3rem 0;
-    font-size: 1.2rem;
+    font-size: 1.2em;
 }
 
 .book-meta {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.9em;
     margin: 0.2rem 0;
 }
 
@@ -191,7 +202,7 @@ button::-moz-focus-inner {
 }
 
 .book-summary {
-    font-size: 0.9rem;
+    font-size: 0.9em;
     margin-top: 0.5rem;
 }
 
@@ -215,7 +226,7 @@ button::-moz-focus-inner {
     align-items: center;
     gap: 1rem;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.9em;
 }
 
 /* --- reader page --- */
@@ -265,7 +276,7 @@ button::-moz-focus-inner {
     display: block;
     margin-bottom: 0.3rem;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.9em;
 }
 
 .settings-field select,
@@ -278,14 +289,6 @@ button::-moz-focus-inner {
     border-radius: 4px;
 }
 
-.settings-preview {
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 1rem;
-    margin-bottom: 1.2rem;
-}
-
 .settings-save {
     background: var(--accent-color);
     color: white;
@@ -293,7 +296,7 @@ button::-moz-focus-inner {
     padding: 0.6rem 1.2rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 1em;
     margin-top: 0.8rem;
 }
 
@@ -309,7 +312,7 @@ button::-moz-focus-inner {
     margin-bottom: 1.2rem;
     color: var(--text-color);
     font-family: var(--reader-font-family);
-    font-size: var(--reader-font-size);
+    font-size: var(--reader-font-size-base, 1.1rem);
 }
 
 .settings-preview .preview-body {
@@ -418,7 +421,7 @@ button::-moz-focus-inner {
     margin-bottom: 1.5rem;
 }
 
-/* --- desktop additions --- */
+/* --- device specific --- */
 
 @media (min-width: 900px) {
     body {
@@ -426,6 +429,16 @@ button::-moz-focus-inner {
     }
 
     .library-title {
-        font-size: 2.2rem;
+        font-size: 2.2em;
+    }
+}
+
+@media (max-width: 672px) {
+    :root {
+        --reader-font-size: clamp(
+            calc(var(--reader-font-size-base, 1.1rem) * 0.5),
+            calc(var(--reader-font-size-base, 1.1rem) * 0.3 + 2vw),
+            var(--reader-font-size-base, 1.1rem)
+        );
     }
 }

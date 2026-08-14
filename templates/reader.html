@@ -2,7 +2,7 @@
 <html lang="en"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size: {{ settings.font_size }}rem;
+             --reader-font-size-base: {{ settings.font_size }}rem;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};
@@ -35,9 +35,15 @@
             </nav>
         {% endmacro %}
         <div class="reader-header">
-            <a class="theme-toggle" href="/settings">Settings</a>
-            <a href="/">&larr; Back to library</a>
-            <h1>{{ book.title }}</h1>
+            <div class="header-top">
+                <div class="header-left">
+                    <a href="/">&larr; Back to library</a>
+                </div>
+                <div class="header-right">
+                    <a class="theme-toggle" href="/settings">Settings</a>
+                </div>
+            </div>
+            <h1 class="header-title">{{ book.title }}</h1>
             <select class="chapter-select"
                     onchange="location.href='/read/{{ book.id }}/' + this.value">
                 {% for c in chapters %}

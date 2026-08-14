@@ -2,7 +2,7 @@
 <html lang="en"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size: {{ settings.font_size }}rem;
+             --reader-font-size-base: {{ settings.font_size }}rem;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};
@@ -18,8 +18,15 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
     <body>
-        <a href="{{ url_for('library_list') }}">&larr; Back to library</a>
-        <h1 class="library-title">Settings</h1>
+        <div class="reader-header">
+            <div class="header-top">
+                <div class="header-left">
+                    <a href="{{ url_for('library_list') }}">&larr; Back to library</a>
+                </div>
+                <div class="header-right"></div>
+            </div>
+            <h1 class="library-title header-title">Settings</h1>
+        </div>
         <form method="post" class="settings-form">
             <div class="settings-field">
                 <label for="theme">Theme</label>
@@ -160,7 +167,7 @@
                      id="reader-font-preview"
                      style="display: {{ 'block' if settings.override_epub_font else 'none' }};
                             --reader-font-family: {{ settings.reader_font_family_css }};
-                            --reader-font-size: {{ settings.reader_font_size }}rem">
+                            --reader-font-size-base: {{ settings.reader_font_size }}rem">
                     <p class="preview-reader-label">Reading area</p>
                     <p class="preview-body"><em>His AC touches down, metal sparking against the floor.</em> "Looks like the guest of honor's here. <strong>Hey, Buddy.</strong>"</p>
                 </div>

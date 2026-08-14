@@ -2,7 +2,7 @@
 <html lang="en"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size: {{ settings.font_size }}rem;
+             --reader-font-size-base: {{ settings.font_size }}rem;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};
@@ -20,9 +20,14 @@
     </head>
     <body>
         <div class="library-header">
-            <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
-            <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
-            <h1 class="library-title">Library</h1>
+            <div class="header-top">
+                <div class="header-left"></div>
+                <div class="header-right">
+                    <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+                    <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+                </div>
+            </div>
+            <h1 class="library-title header-title">Library</h1>
         </div>
         <form method="get" class="search-form">
             <input type="text"
