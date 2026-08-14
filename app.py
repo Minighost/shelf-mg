@@ -44,6 +44,8 @@ DB_PATH = os.environ.get("SHELF_MG_DB_PATH", "shelf-mg.db")
 init_positions_db(DB_PATH)
 init_settings_db(DB_PATH)
 
+BOOKS_PER_PAGE = 20
+
 
 @app.context_processor
 def inject_settings():
@@ -79,10 +81,27 @@ def _rewrite_image_srcs(
 
 @app.route("/")
 def library_list():
-    books = list_books(LIBRARY_PATH)
+    page = request.args.get("page", 1, type=int)
+    if page < 1:
+        page = 1
+
+    all_books = list_books(LIBRARY_PATH)
+    total_pages = max(1, (len(all_books) + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
+    page = min(page, total_pages)
+
+    start = (page - 1) * BOOKS_PER_PAGE
+    books = all_books[start : start + BOOKS_PER_PAGE]
+
     positions = {book.id: get_position(DB_PATH, book.id) for book in books}
     positions = {k: v for k, v in positions.items() if v is not None}
-    return render_template("library.html", books=books, positions=positions)
+
+    return render_template(
+        "library.html",
+        books=books,
+        positions=positions,
+        page=page,
+        total_pages=total_pages,
+    )
 
 
 @app.route("/read/<int:book_id>/<int:chapter_index>")
