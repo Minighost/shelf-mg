@@ -431,6 +431,10 @@ button::-moz-focus-inner {
     .library-title {
         font-size: 2.2em;
     }
+
+    :root {
+        --content-max-width: clamp(700px, var(--content-max-width-vw, 40vw), 1800px);
+    }
 }
 
 @media (max-width: 672px) {

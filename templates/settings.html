@@ -3,6 +3,7 @@
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
              --reader-font-size-base: {{ settings.font_size }}rem;
+             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};
@@ -119,6 +120,17 @@
                        step="0.1"
                        value="{{ settings.font_size }}"
                        oninput="previewFontSize(this.value)">
+            </div>
+            <div class="settings-field">
+                <label for="content_max_width_pct">Max content width on desktop (<span id="content-max-width-label">{{ settings.content_max_width_pct }}</span>% of screen width)</label>
+                <input type="range"
+                       id="content_max_width_pct"
+                       name="content_max_width_pct"
+                       min="20"
+                       max="80"
+                       step="1"
+                       value="{{ settings.content_max_width_pct }}"
+                       oninput="previewContentMaxWidth(this.value)">
             </div>
             <div class="settings-field">
                 <label>

@@ -3,6 +3,7 @@
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
              --reader-font-size-base: {{ settings.font_size }}rem;
+             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};

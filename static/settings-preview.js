@@ -47,6 +47,11 @@ function previewFontSize(size) {
     document.getElementById("font-size-label").textContent = size;
 }
 
+function previewContentMaxWidth(pct) {
+    document.documentElement.style.setProperty("--content-max-width-vw", `${pct}vw`);
+    document.getElementById("content-max-width-label").textContent = pct;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const themeSelect = document.getElementById("theme");
     if (themeSelect) previewTheme(themeSelect.value);

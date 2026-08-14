@@ -4,6 +4,7 @@ from dataclasses import dataclass
 DEFAULT_THEME = "dark"
 DEFAULT_FONT_FAMILY = "serif"
 DEFAULT_FONT_SIZE = 1.1  # rem
+DEFAULT_CONTENT_MAX_WIDTH_PCT = 40  # % of viewport width, desktop only
 
 FONT_CHOICES = {
     "serif": "Georgia, 'Times New Roman', serif",
@@ -49,6 +50,7 @@ class Settings:
     reader_font_family_key: str
     reader_font_family_css: str
     reader_font_size: float
+    content_max_width_pct: float
     custom_bg_color: str
     custom_surface_color: str
     custom_text_color: str
@@ -73,6 +75,7 @@ def init_db(db_path: str) -> None:
         "override_epub_font",
         "reader_font_family_key",
         "reader_font_size",
+        "content_max_width_pct",
     ]
     for field in new_columns:
         try:
@@ -89,7 +92,7 @@ def get_settings(db_path: str) -> Settings:
     conn.row_factory = sqlite3.Row
     row = conn.execute(
         "SELECT theme, font_family_key, font_size, override_epub_font, "
-        "reader_font_family_key, reader_font_size, "
+        "reader_font_family_key, reader_font_size, content_max_width_pct, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -105,6 +108,7 @@ def get_settings(db_path: str) -> Settings:
             reader_font_family_key=DEFAULT_FONT_FAMILY,
             reader_font_family_css=FONT_CHOICES[DEFAULT_FONT_FAMILY],
             reader_font_size=DEFAULT_FONT_SIZE,
+            content_max_width_pct=DEFAULT_CONTENT_MAX_WIDTH_PCT,
             **DEFAULT_CUSTOM_COLORS,
         )
 
@@ -126,6 +130,9 @@ def get_settings(db_path: str) -> Settings:
             reader_key, FONT_CHOICES[DEFAULT_FONT_FAMILY]
         ),
         reader_font_size=float(row["reader_font_size"] or DEFAULT_FONT_SIZE),
+        content_max_width_pct=float(
+            row["content_max_width_pct"] or DEFAULT_CONTENT_MAX_WIDTH_PCT
+        ),
         **custom_colors,
     )
 
@@ -138,6 +145,7 @@ def save_settings(
     override_epub_font: bool = False,
     reader_font_family_key: str | None = None,
     reader_font_size: float | None = None,
+    content_max_width_pct: float | None = None,
     custom_colors: dict | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
@@ -156,6 +164,13 @@ def save_settings(
         reader_font_size if reader_font_size is not None else existing.reader_font_size
     )
     reader_font_size = max(0.7, min(2.5, reader_font_size))
+
+    content_max_width_pct = (
+        content_max_width_pct
+        if content_max_width_pct is not None
+        else existing.content_max_width_pct
+    )
+    content_max_width_pct = max(20, min(80, content_max_width_pct))
 
     custom_colors = custom_colors or {}
     resolved_colors = {}
@@ -176,6 +191,7 @@ def save_settings(
         "override_epub_font",
         "reader_font_family_key",
         "reader_font_size",
+        "content_max_width_pct",
     ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
@@ -188,6 +204,7 @@ def save_settings(
         int(override_epub_font),
         reader_font_family_key,
         reader_font_size,
+        content_max_width_pct,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)
