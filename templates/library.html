@@ -11,44 +11,58 @@
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
     </head>
     <body>
-        <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
-        <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
-        <h1 class="library-title">Library</h1>
+        <div class="library-header">
+            <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+            <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+            <h1 class="library-title">Library</h1>
+        </div>
+        <form method="get" class="search-form">
+            <input type="text"
+                   name="q"
+                   value="{{ query }}"
+                   placeholder="Search title, author, or tag">
+            <button type="submit">Search</button>
+            {% if query %}
+                <a href="{{ url_for('library_list') }}">Clear</a>
+            {% endif %}
+        </form>
         {% if total_pages > 1 %}
             <nav class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('library_list', page=page - 1) }}">&larr; Previous</a>
+                    <a href="{{ url_for('library_list', q=query, page=page - 1) }}">&larr; Previous</a>
                 {% endif %}
                 <span>Page {{ page }} of {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('library_list', page=page + 1) }}">Next &rarr;</a>
+                    <a href="{{ url_for('library_list', q=query, page=page + 1) }}">Next &rarr;</a>
                 {% endif %}
             </nav>
         {% endif %}
-        {% for book in books %}
-            <div class="book-entry">
-                <h2><a href="/read/{{ book.id }}/0">{{ book.title }}</a></h2>
-                <p class="book-meta">by {{ book.authors | join(", ") }}</p>
-                <p class="book-meta">Tags: {{ book.tags | join(", ") }}</p>
-                <div>{{ book.summary_html | safe }}</div>
-                {% if book.id in positions %}
-                    <p>
-                        <a class="continue-link"
-                           href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}">
-                            Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
-                        </a>
-                    </p>
-                {% endif %}
-            </div>
-        {% endfor %}
+        <div class="book-list">
+            {% for book in books %}
+                <div class="book-entry">
+                    <h2><a href="/read/{{ book.id }}/0">{{ book.title }}</a></h2>
+                    <p class="book-meta">by {{ book.authors | join(", ") }}</p>
+                    <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
+                    <div class="book-summary">{{ book.summary_html | safe }}</div>
+                    {% if book.id in positions %}
+                        <p>
+                            <a class="continue-link"
+                               href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}">
+                                Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
         {% if total_pages > 1 %}
             <nav class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('library_list', page=page - 1) }}">&larr; Previous</a>
+                    <a href="{{ url_for('library_list', q=query, page=page - 1) }}">&larr; Previous</a>
                 {% endif %}
                 <span>Page {{ page }} of {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('library_list', page=page + 1) }}">Next &rarr;</a>
+                    <a href="{{ url_for('library_list', q=query, page=page + 1) }}">Next &rarr;</a>
                 {% endif %}
             </nav>
         {% endif %}

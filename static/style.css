@@ -36,6 +36,14 @@ img {
     box-sizing: border-box;
 }
 
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+    font-size: inherit;
+}
+
 body {
     margin: 0;
     padding: 1rem;
@@ -55,7 +63,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* --- theme toggle button --- */
+/* --- buttons --- */
 
 .theme-toggle {
     background: none;
@@ -68,11 +76,74 @@ a:hover {
     float: right;
 }
 
+.settings-link {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.settings-link:hover {
+    text-decoration: none;
+}
+
+.theme-toggle,
+.settings-link {
+    line-height: 1;
+}
+
 /* --- library list --- */
 
-.library-title {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
+.library-header {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    text-align: center;
+}
+
+.library-header .theme-toggle {
+    float: none;
+    display: inline-block;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    max-width: var(--content-max-width);
+    margin: 1rem auto;
+}
+
+.search-form input[type="text"] {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.search-form button {
+    background: var(--link-color);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.search-form a {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.book-list {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
 }
 
 .book-entry {
@@ -91,10 +162,40 @@ a:hover {
     margin: 0.2rem 0;
 }
 
+.book-tags {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.book-summary {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.book-summary blockquote {
+    margin: 0;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--border-color);
+}
+
 .continue-link {
     display: inline-block;
     margin-top: 0.5rem;
     font-weight: bold;
+}
+
+.pagination {
+    max-width: var(--content-max-width);
+    margin: 1.5rem auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 /* --- reader page --- */

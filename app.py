@@ -79,13 +79,28 @@ def _rewrite_image_srcs(
     return pattern.sub(replace, html)
 
 
+def _book_matches(book, query):
+    query = query.lower()
+    if query in book.title.lower():
+        return True
+    if any(query in author.lower() for author in book.authors):
+        return True
+    if any(query in tag.lower() for tag in book.tags):
+        return True
+    return False
+
+
 @app.route("/")
 def library_list():
+    query = request.args.get("q", "").strip()
     page = request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
 
     all_books = list_books(LIBRARY_PATH)
+    if query:
+        all_books = [b for b in all_books if _book_matches(b, query)]
+
     total_pages = max(1, (len(all_books) + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
     page = min(page, total_pages)
 
@@ -101,6 +116,7 @@ def library_list():
         positions=positions,
         page=page,
         total_pages=total_pages,
+        query=query,
     )
 
 
