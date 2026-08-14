@@ -2,7 +2,15 @@
 <html lang="en"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size: {{ settings.font_size }}rem">
+             --reader-font-size: {{ settings.font_size }}rem;
+             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
+             --surface-color: {{ settings.custom_surface_color }};
+             --text-color: {{ settings.custom_text_color }};
+             --text-muted: {{ settings.custom_text_muted }};
+             --border-color: {{ settings.custom_border_color }};
+             --accent-color: {{ settings.custom_accent_color }};
+             --accent-hover: {{ settings.custom_accent_hover }};
+             {% endif %}">
     <head>
         <meta charset="utf-8">
         <title>{{ chapter_title }}</title>

@@ -29,6 +29,7 @@ from settings import (
     save_settings,
     FONT_CHOICES,
     THEME_CHOICES,
+    CUSTOM_COLOR_FIELDS,
 )
 
 app = Flask(__name__)
@@ -204,12 +205,17 @@ def settings_page():
         except ValueError:
             return "Invalid font size", 400
 
+        custom_colors = {
+            field: request.form.get(field, "").strip() for field in CUSTOM_COLOR_FIELDS
+        }
+
         try:
             save_settings(
                 DB_PATH,
                 theme=theme,
                 font_family_key=font_family_key,
                 font_size=font_size,
+                custom_colors=custom_colors,
             )
         except ValueError as e:
             return str(e), 400
@@ -227,7 +233,7 @@ def settings_page():
 def update_theme():
     data = request.get_json(silent=True) or {}
     theme = data.get("theme", "").strip()
-    if theme not in THEME_CHOICES:
+    if theme not in ("light", "dark"):  # custom isn't reachable from the quick toggle
         return jsonify({"error": "invalid theme"}), 400
 
     current = get_settings(DB_PATH)

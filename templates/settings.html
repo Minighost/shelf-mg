@@ -2,7 +2,15 @@
 <html lang="en"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size: {{ settings.font_size }}rem">
+             --reader-font-size: {{ settings.font_size }}rem;
+             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
+             --surface-color: {{ settings.custom_surface_color }};
+             --text-color: {{ settings.custom_text_color }};
+             --text-muted: {{ settings.custom_text_muted }};
+             --border-color: {{ settings.custom_border_color }};
+             --accent-color: {{ settings.custom_accent_color }};
+             --accent-hover: {{ settings.custom_accent_hover }};
+             {% endif %}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,6 +29,66 @@
                                 {% if choice == settings.theme %}selected{% endif %}>{{ choice | capitalize }}</option>
                     {% endfor %}
                 </select>
+            </div>
+            <div id="custom-color-fields"
+                 class="custom-color-fields"
+                 style="display: {{ 'block' if settings.theme == 'custom' else 'none' }}">
+                <div class="settings-field">
+                    <label for="custom_bg_color">Background</label>
+                    <input type="color"
+                           id="custom_bg_color"
+                           name="custom_bg_color"
+                           value="{{ settings.custom_bg_color }}"
+                           oninput="previewCustomColors()">
+                </div>
+                <div class="settings-field">
+                    <label for="custom_surface_color">Surface</label>
+                    <input type="color"
+                           id="custom_surface_color"
+                           name="custom_surface_color"
+                           value="{{ settings.custom_surface_color }}"
+                           oninput="previewCustomColors()">
+                </div>
+                <div class="settings-field">
+                    <label for="custom_text_color">Text</label>
+                    <input type="color"
+                           id="custom_text_color"
+                           name="custom_text_color"
+                           value="{{ settings.custom_text_color }}"
+                           oninput="previewCustomColors()">
+                </div>
+                <div class="settings-field">
+                    <label for="custom_text_muted">Muted text</label>
+                    <input type="color"
+                           id="custom_text_muted"
+                           name="custom_text_muted"
+                           value="{{ settings.custom_text_muted }}"
+                           oninput="previewCustomColors()">
+                </div>
+                <div class="settings-field">
+                    <label for="custom_border_color">Border</label>
+                    <input type="color"
+                           id="custom_border_color"
+                           name="custom_border_color"
+                           value="{{ settings.custom_border_color }}"
+                           oninput="previewCustomColors()">
+                </div>
+                <div class="settings-field">
+                    <label for="custom_accent_color">Accent</label>
+                    <input type="color"
+                           id="custom_accent_color"
+                           name="custom_accent_color"
+                           value="{{ settings.custom_accent_color }}"
+                           oninput="previewCustomColors()">
+                </div>
+                <div class="settings-field">
+                    <label for="custom_accent_hover">Accent (hover)</label>
+                    <input type="color"
+                           id="custom_accent_hover"
+                           name="custom_accent_hover"
+                           value="{{ settings.custom_accent_hover }}"
+                           oninput="previewCustomColors()">
+                </div>
             </div>
             <div class="settings-field">
                 <label for="font_family">Font</label>
@@ -45,9 +113,12 @@
                        value="{{ settings.font_size }}"
                        oninput="previewFontSize(this.value)">
             </div>
-            <div class="settings-preview"
-                 style="font-family: var(--reader-font-family);
-                        font-size: var(--reader-font-size)">Preview: the quick brown fox jumps over the lazy dog.</div>
+            <div class="settings-preview" id="settings-preview">
+                <p class="preview-body">Preview: the quick brown fox jumps over the lazy dog.</p>
+                <p class="preview-muted">Muted text example</p>
+                <a href="#" class="preview-link" onclick="return false;">A sample link</a>
+                <button type="button" class="preview-button">Sample button</button>
+            </div>
             <button type="submit" class="settings-save">Save</button>
         </form>
         <script src="{{ url_for('static', filename='settings-preview.js') }}"></script>

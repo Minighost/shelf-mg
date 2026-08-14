@@ -294,10 +294,91 @@ button::-moz-focus-inner {
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
+    margin-top: 0.8rem;
 }
 
 .settings-save:hover {
     background: var(--accent-hover);
+}
+
+.settings-preview {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1.2rem;
+    color: var(--text-color);
+    font-family: var(--reader-font-family);
+    font-size: var(--reader-font-size);
+}
+
+.settings-preview .preview-body {
+    margin: 0 0 1rem 0;
+}
+
+.settings-preview .preview-muted {
+    margin: 0 0 1rem 0;
+}
+
+.settings-preview .preview-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.preview-muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.preview-link {
+    color: var(--accent-color);
+}
+
+.preview-button {
+    display: block;
+    margin-top: 0.6rem;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.preview-button:hover {
+    background: var(--accent-hover);
+}
+
+.custom-color-fields input[type="color"] {
+    width: 60px;
+    height: 36px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--surface-color);
+    cursor: pointer;
+}
+
+.custom-color-fields {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    gap: 1.5rem;
+    margin-bottom: 1.2rem;
+}
+
+.custom-color-fields .settings-field {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+}
+
+.custom-color-fields label {
+    text-align: center;
+    white-space: nowrap;
 }
 
 /* --- desktop additions --- */
