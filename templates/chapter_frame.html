@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"
       data-theme="{{ settings.theme }}"
-      style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size: {{ settings.font_size }}rem;
+      style="--reader-font-family: {{ settings.reader_font_family_css if settings.override_epub_font else settings.font_family_css }};
+             --reader-font-size: {{ (settings.reader_font_size if settings.override_epub_font else settings.font_size) }}rem;
              {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
              --surface-color: {{ settings.custom_surface_color }};
              --text-color: {{ settings.custom_text_color }};
@@ -14,14 +14,16 @@
     <head>
         <meta charset="utf-8">
         <title>{{ chapter_title }}</title>
-        <!-- Same stylesheet as the outer page — single source of truth for
-       colors/typography. Theme and font now come from settings.py,
-       rendered server-side directly into the <html> tag above — no more
-       client-side JS reaching into the parent document to read its theme;
-       since settings are stored server-side now (not localStorage), this
-       document can just render the correct values itself from the start. -->
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         <style>{{ css | safe }}</style>
+        {% if settings.override_epub_font %}
+            <style>
+                body, body * {
+                    font-family: var(--reader-font-family) !important;
+                    font-size: var(--reader-font-size) !important;
+                }
+            </style>
+        {% endif %}
     </head>
     <body>
         {{ content | safe }}

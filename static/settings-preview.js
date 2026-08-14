@@ -51,3 +51,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const themeSelect = document.getElementById("theme");
     if (themeSelect) previewTheme(themeSelect.value);
 });
+
+function toggleReaderFontFields(show) {
+    document.getElementById("reader-font-fields").style.display = show ? "block" : "none";
+    document.getElementById("reader-font-preview").style.display = show ? "block" : "none";
+}
+
+function previewReaderFont(fontKey) {
+    const select = document.getElementById("reader_font_family");
+    const option = select.querySelector(`option[value="${fontKey}"]`);
+    if (option) {
+        document.getElementById("reader-font-preview").style.setProperty("--reader-font-family", option.dataset.css);
+    }
+}
+
+function previewReaderFontSize(size) {
+    document.getElementById("reader-font-preview").style.setProperty("--reader-font-size", `${size}rem`);
+    document.getElementById("reader-font-size-label").textContent = size;
+}

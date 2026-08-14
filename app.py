@@ -199,9 +199,15 @@ def settings_page():
         theme = request.form.get("theme", "").strip()
         font_family_key = request.form.get("font_family", "").strip()
         font_size_raw = request.form.get("font_size", "")
+        override_epub_font = request.form.get("override_epub_font") is not None
+        reader_font_family_key = request.form.get("reader_font_family", "").strip()
+        reader_font_size_raw = request.form.get("reader_font_size", "")
 
         try:
             font_size = float(font_size_raw)
+            reader_font_size = (
+                float(reader_font_size_raw) if reader_font_size_raw else None
+            )
         except ValueError:
             return "Invalid font size", 400
 
@@ -215,6 +221,9 @@ def settings_page():
                 theme=theme,
                 font_family_key=font_family_key,
                 font_size=font_size,
+                override_epub_font=override_epub_font,
+                reader_font_family_key=reader_font_family_key or None,
+                reader_font_size=reader_font_size,
                 custom_colors=custom_colors,
             )
         except ValueError as e:

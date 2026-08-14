@@ -36,6 +36,8 @@ DEFAULT_CUSTOM_COLORS = {
     "custom_accent_hover": "#d3665f",
 }
 
+DEFAULT_OVERRIDE_EPUB_FONT = False
+
 
 @dataclass
 class Settings:
@@ -43,6 +45,10 @@ class Settings:
     font_family_key: str
     font_family_css: str
     font_size: float
+    override_epub_font: bool
+    reader_font_family_key: str
+    reader_font_family_css: str
+    reader_font_size: float
     custom_bg_color: str
     custom_surface_color: str
     custom_text_color: str
@@ -63,10 +69,12 @@ def init_db(db_path: str) -> None:
         )
     """)
 
-    # Migrate existing DBs that predate the custom-color columns. SQLite has
-    # no "ADD COLUMN IF NOT EXISTS", so each ALTER is attempted individually
-    # and a "duplicate column" failure is treated as "already migrated".
-    for field in CUSTOM_COLOR_FIELDS:
+    new_columns = CUSTOM_COLOR_FIELDS + [
+        "override_epub_font",
+        "reader_font_family_key",
+        "reader_font_size",
+    ]
+    for field in new_columns:
         try:
             conn.execute(f"ALTER TABLE settings ADD COLUMN {field} TEXT")
         except sqlite3.OperationalError:
@@ -80,7 +88,8 @@ def get_settings(db_path: str) -> Settings:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     row = conn.execute(
-        "SELECT theme, font_family_key, font_size, "
+        "SELECT theme, font_family_key, font_size, override_epub_font, "
+        "reader_font_family_key, reader_font_size, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -92,10 +101,15 @@ def get_settings(db_path: str) -> Settings:
             font_family_key=DEFAULT_FONT_FAMILY,
             font_family_css=FONT_CHOICES[DEFAULT_FONT_FAMILY],
             font_size=DEFAULT_FONT_SIZE,
+            override_epub_font=DEFAULT_OVERRIDE_EPUB_FONT,
+            reader_font_family_key=DEFAULT_FONT_FAMILY,
+            reader_font_family_css=FONT_CHOICES[DEFAULT_FONT_FAMILY],
+            reader_font_size=DEFAULT_FONT_SIZE,
             **DEFAULT_CUSTOM_COLORS,
         )
 
     key = row["font_family_key"]
+    reader_key = row["reader_font_family_key"] or DEFAULT_FONT_FAMILY
     custom_colors = {
         field: row[field] or DEFAULT_CUSTOM_COLORS[field]
         for field in CUSTOM_COLOR_FIELDS
@@ -106,6 +120,12 @@ def get_settings(db_path: str) -> Settings:
         font_family_key=key,
         font_family_css=FONT_CHOICES.get(key, FONT_CHOICES[DEFAULT_FONT_FAMILY]),
         font_size=row["font_size"],
+        override_epub_font=bool(int(row["override_epub_font"] or 0)),
+        reader_font_family_key=reader_key,
+        reader_font_family_css=FONT_CHOICES.get(
+            reader_key, FONT_CHOICES[DEFAULT_FONT_FAMILY]
+        ),
+        reader_font_size=float(row["reader_font_size"] or DEFAULT_FONT_SIZE),
         **custom_colors,
     )
 
@@ -115,6 +135,9 @@ def save_settings(
     theme: str,
     font_family_key: str,
     font_size: float,
+    override_epub_font: bool = False,
+    reader_font_family_key: str | None = None,
+    reader_font_size: float | None = None,
     custom_colors: dict | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
@@ -122,6 +145,17 @@ def save_settings(
     if font_family_key not in FONT_CHOICES:
         raise ValueError(f"invalid font_family_key: {font_family_key}")
     font_size = max(0.7, min(2.5, font_size))
+
+    existing = get_settings(db_path)
+
+    reader_font_family_key = reader_font_family_key or existing.reader_font_family_key
+    if reader_font_family_key not in FONT_CHOICES:
+        raise ValueError(f"invalid reader_font_family_key: {reader_font_family_key}")
+
+    reader_font_size = (
+        reader_font_size if reader_font_size is not None else existing.reader_font_size
+    )
+    reader_font_size = max(0.7, min(2.5, reader_font_size))
 
     custom_colors = custom_colors or {}
     resolved_colors = {}
@@ -132,19 +166,29 @@ def save_settings(
                 raise ValueError(f"invalid color for {field}: {value}")
             resolved_colors[field] = value
         else:
-            # Preserve whatever's already saved rather than wiping it out
-            # on every save (e.g. saving a font change shouldn't blank
-            # out previously-chosen custom colors).
-            existing = get_settings(db_path)
             resolved_colors[field] = getattr(existing, field)
 
-    columns = ["id", "theme", "font_family_key", "font_size"] + CUSTOM_COLOR_FIELDS
+    columns = [
+        "id",
+        "theme",
+        "font_family_key",
+        "font_size",
+        "override_epub_font",
+        "reader_font_family_key",
+        "reader_font_size",
+    ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
 
-    values = [1, theme, font_family_key, font_size] + [
-        resolved_colors[field] for field in CUSTOM_COLOR_FIELDS
-    ]
+    values = [
+        1,
+        theme,
+        font_family_key,
+        font_size,
+        int(override_epub_font),
+        reader_font_family_key,
+        reader_font_size,
+    ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)
     conn.execute(

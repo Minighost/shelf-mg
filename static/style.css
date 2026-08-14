@@ -350,6 +350,25 @@ button::-moz-focus-inner {
     background: var(--accent-hover);
 }
 
+.preview-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+.preview-row .settings-preview {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.preview-reader-label {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
 .custom-color-fields input[type="color"] {
     width: 60px;
     height: 36px;

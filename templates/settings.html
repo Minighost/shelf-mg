@@ -113,11 +113,57 @@
                        value="{{ settings.font_size }}"
                        oninput="previewFontSize(this.value)">
             </div>
-            <div class="settings-preview" id="settings-preview">
-                <p class="preview-body">Preview: the quick brown fox jumps over the lazy dog.</p>
-                <p class="preview-muted">Muted text example</p>
-                <a href="#" class="preview-link" onclick="return false;">A sample link</a>
-                <button type="button" class="preview-button">Sample button</button>
+            <div class="settings-field">
+                <label>
+                    <input type="checkbox"
+                           id="override_epub_font"
+                           name="override_epub_font"
+                           {% if settings.override_epub_font %}checked{% endif %}
+                           onchange="toggleReaderFontFields(this.checked)">
+                    Override story's font
+                </label>
+            </div>
+            <div id="reader-font-fields"
+                 style="display: {{ 'block' if settings.override_epub_font else 'none' }}">
+                <div class="settings-field">
+                    <label for="reader_font_family">Reader font</label>
+                    <select id="reader_font_family"
+                            name="reader_font_family"
+                            onchange="previewReaderFont(this.value)">
+                        {% for key, css_value in font_choices.items() %}
+                            <option value="{{ key }}"
+                                    data-css="{{ css_value }}"
+                                    {% if key == settings.reader_font_family_key %}selected{% endif %}>{{ key | capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="reader_font_size">Reader font size (<span id="reader-font-size-label">{{ settings.reader_font_size }}</span>rem)</label>
+                    <input type="range"
+                           id="reader_font_size"
+                           name="reader_font_size"
+                           min="0.7"
+                           max="2.5"
+                           step="0.1"
+                           value="{{ settings.reader_font_size }}"
+                           oninput="previewReaderFontSize(this.value)">
+                </div>
+            </div>
+            <div class="preview-row">
+                <div class="settings-preview" id="settings-preview">
+                    <p class="preview-body">Preview: the quick brown fox jumps over the lazy dog.</p>
+                    <p class="preview-muted">Muted text example</p>
+                    <a href="#" class="preview-link" onclick="return false;">A sample link</a>
+                    <button type="button" class="preview-button">Sample button</button>
+                </div>
+                <div class="settings-preview"
+                     id="reader-font-preview"
+                     style="display: {{ 'block' if settings.override_epub_font else 'none' }};
+                            --reader-font-family: {{ settings.reader_font_family_css }};
+                            --reader-font-size: {{ settings.reader_font_size }}rem">
+                    <p class="preview-reader-label">Reading area</p>
+                    <p class="preview-body"><em>His AC touches down, metal sparking against the floor.</em> "Looks like the guest of honor's here. <strong>Hey, Buddy.</strong>"</p>
+                </div>
             </div>
             <button type="submit" class="settings-save">Save</button>
         </form>
