@@ -1,31 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>shelf-mg</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/theme.js"></script>
-</head>
-
-<body>
-    <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
-    <h1 class="library-title">Library</h1>
-
-    {% for book in books %}
-    <div class="book-entry">
-        <h2><a href="/read/{{ book.id }}/0">{{ book.title }}</a></h2>
-        <p class="book-meta">by {{ book.authors | join(", ") }}</p>
-        <p class="book-meta">Tags: {{ book.tags | join(", ") }}</p>
-        <div>{{ book.summary_html | safe }}</div>
-        {% if book.id in positions %}
-        <p><a class="continue-link" href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}">
-                Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
-            </a></p>
-        {% endif %}
-    </div>
-    {% endfor %}
-</body>
-
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>shelf-mg</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    </head>
+    <body>
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+        <h1 class="library-title">Library</h1>
+        {% for book in books %}
+            <div class="book-entry">
+                <h2><a href="/read/{{ book.id }}/0">{{ book.title }}</a></h2>
+                <p class="book-meta">by {{ book.authors | join(", ") }}</p>
+                <p class="book-meta">Tags: {{ book.tags | join(", ") }}</p>
+                <div>{{ book.summary_html | safe }}</div>
+                {% if book.id in positions %}
+                    <p>
+                        <a class="continue-link"
+                           href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}">
+                            Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </body>
 </html>

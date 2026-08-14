@@ -1,7 +1,3 @@
-/* shelf-mg — base styles.
-   Mobile-first: these are the phone rules. The min-width media query
-   near the bottom layers on desktop-specific additions. */
-
 :root {
     /* Light theme (default) */
     --bg-color: #ffffff;
@@ -135,4 +131,14 @@ a:hover {
     .library-title {
         font-size: 2.2rem;
     }
+}
+
+.chapter-frame {
+    display: block;
+    width: 100%;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    border: none;
+    overflow: hidden;
+    /* scrolling happens on the outer page, not inside the iframe */
 }

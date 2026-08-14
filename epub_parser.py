@@ -178,3 +178,48 @@ def get_chapter_content(epub_path: str, book: Book, chapter_index: int) -> str:
         full_href = book.opf_dir + chapter.href
         raw = zf.read(full_href).decode("utf-8")
     return _extract_body_inner(raw)
+
+
+def resolve_relative_path(base_dir: str, relative_path: str) -> str:
+    """
+    Resolve a relative path (e.g. an <img src="../images/foo.png"> found
+    inside a chapter) against the directory containing that chapter's own
+    XHTML file, into a path relative to the EPUB zip root.
+    """
+    import posixpath
+
+    return posixpath.normpath(posixpath.join(base_dir, relative_path))
+
+
+def get_chapter_dir(book: Book, chapter: Chapter) -> str:
+    """Directory (relative to zip root) containing a given chapter's XHTML file."""
+    full_href = book.opf_dir + chapter.href
+    if "/" in full_href:
+        return full_href.rsplit("/", 1)[0] + "/"
+    return ""
+
+
+def get_stylesheets(epub_path: str, book: Book) -> str:
+    """
+    Return the concatenated text of every CSS file declared in the EPUB's
+    manifest. This is what goes inside the iframe alongside chapter content
+    — the fic keeps its own original formatting, just isolated from the
+    app's own CSS (see the .calibre/.calibre1/... classname collision
+    findings from earlier testing for why isolation matters).
+    """
+    with zipfile.ZipFile(epub_path) as zf:
+        opf_xml = ET.fromstring(zf.read(book.opf_path))
+        css_hrefs = [
+            item.attrib["href"]
+            for item in opf_xml.findall(".//opf:manifest/opf:item", NS)
+            if item.attrib.get("media-type") == "text/css"
+        ]
+
+        parts = []
+        for href in css_hrefs:
+            full_href = book.opf_dir + href
+            try:
+                parts.append(zf.read(full_href).decode("utf-8"))
+            except KeyError:
+                continue  # manifest lists it but it's missing from the zip — skip, don't crash
+        return "\n".join(parts)

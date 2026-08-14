@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{ chapter_title }}</title>
+        <!-- Same stylesheet as the outer page — a single source of truth for
+        colors/typography, instead of duplicating hex values here that
+        could silently drift out of sync with static/style.css. The
+        existing body{} rule there (background: var(--bg-color) etc.)
+        applies here automatically, no extra CSS needed for it. -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <script>
+            try {
+            const parentTheme = window.parent.document.documentElement.getAttribute("data-theme");
+            if (parentTheme) {
+                document.documentElement.setAttribute("data-theme", parentTheme);
+            }
+            } catch (e) { /* same-origin should always succeed; fail silently just in case */ }
+        </script>
+        <style>{{ css | safe }}</style>
+    </head>
+    <body>
+        {{ content | safe }}
+        <script>
+            function reportHeight() {
+            const height = document.documentElement.scrollHeight;
+            parent.postMessage({ type: "shelf-mg-frame-height", height: height }, window.location.origin);
+            }
+            window.addEventListener("load", reportHeight);
+            window.addEventListener("load", () => setTimeout(reportHeight, 300));
+        </script>
+    </body>
+</html>

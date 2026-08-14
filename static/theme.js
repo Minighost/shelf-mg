@@ -10,4 +10,9 @@ function toggleTheme() {
     const next = current === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("shelf-mg-theme", next);
+
+    const frame = document.getElementById("chapter-frame");
+    if (frame && frame.contentDocument) {
+        frame.contentDocument.documentElement.setAttribute("data-theme", next);
+    }
 }
