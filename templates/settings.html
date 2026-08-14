@@ -197,6 +197,20 @@
             </div>
             <button type="submit" class="settings-save">Save</button>
         </form>
+        <details class="advanced-settings">
+            <summary>Advanced</summary>
+            <p class="advanced-warning">Warning: actions in this section are irreversible.</p>
+            <form method="post"
+                  action="{{ url_for('reset_progress') }}"
+                  onsubmit="return confirm('Reset every story\'s progress back to chapter 1? This cannot be undone.');">
+                <button type="submit" class="danger-button">Reset all reading progress to chapter 1</button>
+            </form>
+            <form method="post"
+                  action="{{ url_for('clear_recent') }}"
+                  onsubmit="return confirm('Clear all reading progress and the \'Recently read\' list? This cannot be undone.');">
+                <button type="submit" class="danger-button">Clear reading progress and "Recently read" list</button>
+            </form>
+        </details>
         <script src="{{ url_for('static', filename='settings-preview.js') }}"></script>
     </body>
 </html>

@@ -24,8 +24,10 @@ from epub_parser import (
 )
 from positions import (
     init_db as init_positions_db,
+    clear_all_positions,
     get_position,
     get_recent_positions,
+    reset_all_positions,
     save_position,
 )
 from settings import (
@@ -291,6 +293,18 @@ def update_theme():
         font_size=current.font_size,
     )
     return jsonify({"status": "ok"})
+
+
+@app.route("/settings/reset-progress", methods=["POST"])
+def reset_progress():
+    reset_all_positions(DB_PATH)
+    return redirect(url_for("settings_page"))
+
+
+@app.route("/settings/clear-recent", methods=["POST"])
+def clear_recent():
+    clear_all_positions(DB_PATH)
+    return redirect(url_for("settings_page"))
 
 
 @app.route("/api/position/<int:book_id>", methods=["GET", "POST"])

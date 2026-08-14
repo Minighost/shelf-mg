@@ -52,6 +52,24 @@ def get_recent_positions(db_path: str, limit: int = 5) -> list[tuple[int, Positi
     ]
 
 
+def reset_all_positions(db_path: str) -> None:
+    """Reset every book's saved chapter back to the first chapter, keeping the row
+    (and its place in the "recently read" list) intact. Irreversible."""
+    conn = sqlite3.connect(db_path)
+    conn.execute("UPDATE positions SET chapter_index = 0")
+    conn.commit()
+    conn.close()
+
+
+def clear_all_positions(db_path: str) -> None:
+    """Delete every saved reading position outright, removing books from both
+    "Continue reading" and the "recently read" list. Irreversible."""
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM positions")
+    conn.commit()
+    conn.close()
+
+
 def save_position(db_path: str, book_id: int, chapter_index: int) -> Position:
     """
     Upsert the position for a book. One row per book — a new save always
