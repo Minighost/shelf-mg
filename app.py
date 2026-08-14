@@ -3,7 +3,16 @@ import os
 import re
 import zipfile
 
-from flask import Flask, render_template, request, jsonify, Response, abort
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    Response,
+    abort,
+    redirect,
+    url_for,
+)
 
 from calibre_reader import list_books
 from epub_parser import (
@@ -13,7 +22,14 @@ from epub_parser import (
     get_chapter_dir,
     resolve_relative_path,
 )
-from positions import init_db, get_position, save_position
+from positions import init_db as init_positions_db, get_position, save_position
+from settings import (
+    init_db as init_settings_db,
+    get_settings,
+    save_settings,
+    FONT_CHOICES,
+    THEME_CHOICES,
+)
 
 app = Flask(__name__)
 
@@ -25,11 +41,22 @@ if not LIBRARY_PATH:
     )
 
 DB_PATH = os.environ.get("SHELF_MG_DB_PATH", "shelf-mg.db")
-init_db(DB_PATH)
+init_positions_db(DB_PATH)
+init_settings_db(DB_PATH)
+
+
+@app.context_processor
+def inject_settings():
+    """
+    Makes `settings` available in every template automatically, so each
+    route doesn't need to remember to pass it explicitly — theme/font
+    need to render correctly on every page, not just the ones a developer
+    remembered to wire up.
+    """
+    return {"settings": get_settings(DB_PATH)}
 
 
 def _get_calibre_book(book_id):
-    """Shared lookup — every route below needs this, so it's factored out once."""
     books = list_books(LIBRARY_PATH)
     return next((b for b in books if b.id == book_id), None)
 
@@ -37,11 +64,6 @@ def _get_calibre_book(book_id):
 def _rewrite_image_srcs(
     html: str, book_id: int, chapter_index: int, chapter_dir: str
 ) -> str:
-    """
-    Rewrite <img src="..."> so it points at our image-serving route instead
-    of a raw relative path inside the EPUB zip (which the browser has no
-    way to resolve on its own). Absolute URLs and data: URIs are left alone.
-    """
     pattern = re.compile(r'(<img\b[^>]*\bsrc=)(["\'])(.*?)\2', re.IGNORECASE)
 
     def replace(match):
@@ -98,11 +120,6 @@ def read_chapter(book_id, chapter_index):
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/frame")
 def read_chapter_frame(book_id, chapter_index):
-    """
-    The isolated document that goes inside the reader page's iframe.
-    Carries the EPUB's own CSS, so the fic keeps looking like itself —
-    just walled off from shelf-mg's own page styles in both directions.
-    """
     calibre_book = _get_calibre_book(book_id)
     if calibre_book is None:
         return "Book not found", 404
@@ -126,7 +143,6 @@ def read_chapter_frame(book_id, chapter_index):
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/image/<path:img_path>")
 def read_chapter_image(book_id, chapter_index, img_path):
-    """Serve one image file pulled directly out of the EPUB zip."""
     calibre_book = _get_calibre_book(book_id)
     if calibre_book is None:
         abort(404)
@@ -139,6 +155,54 @@ def read_chapter_image(book_id, chapter_index, img_path):
 
     mime_type, _ = mimetypes.guess_type(img_path)
     return Response(data, mimetype=mime_type or "application/octet-stream")
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings_page():
+    if request.method == "POST":
+        theme = request.form.get("theme", "").strip()
+        font_family_key = request.form.get("font_family", "").strip()
+        font_size_raw = request.form.get("font_size", "")
+
+        try:
+            font_size = float(font_size_raw)
+        except ValueError:
+            return "Invalid font size", 400
+
+        try:
+            save_settings(
+                DB_PATH,
+                theme=theme,
+                font_family_key=font_family_key,
+                font_size=font_size,
+            )
+        except ValueError as e:
+            return str(e), 400
+
+        return redirect(url_for("settings_page"))
+
+    return render_template(
+        "settings.html",
+        theme_choices=THEME_CHOICES,
+        font_choices=FONT_CHOICES,
+    )
+
+
+@app.route("/settings/theme", methods=["POST"])
+def update_theme():
+    data = request.get_json(silent=True) or {}
+    theme = data.get("theme", "").strip()
+    if theme not in THEME_CHOICES:
+        return jsonify({"error": "invalid theme"}), 400
+
+    current = get_settings(DB_PATH)
+    save_settings(
+        DB_PATH,
+        theme=theme,
+        font_family_key=current.font_family_key,
+        font_size=current.font_size,
+    )
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/position/<int:book_id>", methods=["POST"])

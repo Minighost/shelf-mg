@@ -1,18 +1,18 @@
-(function () {
-    const saved = localStorage.getItem("shelf-mg-theme");
-    if (saved) {
-        document.documentElement.setAttribute("data-theme", saved);
-    }
-})();
-
 function toggleTheme() {
+    const themes = ["light", "dark"];
     const current = document.documentElement.getAttribute("data-theme");
-    const next = current === "dark" ? "light" : "dark";
+    const next = themes[(themes.indexOf(current) + 1) % themes.length];
+
     document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("shelf-mg-theme", next);
 
     const frame = document.getElementById("chapter-frame");
     if (frame && frame.contentDocument) {
         frame.contentDocument.documentElement.setAttribute("data-theme", next);
     }
+
+    fetch("/settings/theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: next }),
+    }).catch((err) => console.error("Failed to save theme:", err));
 }

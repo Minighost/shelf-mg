@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size: {{ settings.font_size }}rem">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +12,7 @@
     </head>
     <body>
         <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+        <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
         <h1 class="library-title">Library</h1>
         {% for book in books %}
             <div class="book-entry">

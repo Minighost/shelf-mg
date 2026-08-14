@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size: {{ settings.font_size }}rem">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ book.title }} — {{ chapter.title }}</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <script src="{{ url_for('static', filename='theme.js') }}"></script>
     </head>
     <body data-book-id="{{ book.id }}"
           data-chapter-index="{{ chapter.index }}"
-          {% if restore_scroll_percent is not none %}data-restore-scroll="{{ restore_scroll_percent }}" {% endif %}>
+          {% if restore_scroll_percent is not none %}data-restore-scroll="{{ restore_scroll_percent }}"{% endif %}>
         {% macro chapter_nav() %}
             <nav class="chapter-nav">
                 <span>
@@ -25,14 +27,14 @@
             </nav>
         {% endmacro %}
         <div class="reader-header">
-            <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+            <a class="theme-toggle" href="/settings">Settings</a>
             <a href="/">&larr; Back to library</a>
             <h1>{{ book.title }}</h1>
             <select class="chapter-select"
                     onchange="location.href='/read/{{ book.id }}/' + this.value">
                 {% for c in chapters %}
                     <option value="{{ c.index }}"
-                            {% if c.index==chapter.index %}selected{% endif %}>{{ c.title }}</option>
+                            {% if c.index == chapter.index %}selected{% endif %}>{{ c.title }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -44,7 +46,7 @@
                 title="{{ chapter.title }}"></iframe>
         {{ chapter_nav() }}
         <script>
-        (function () {
+            (function () {
             const bookId = document.body.dataset.bookId;
             const chapterIndex = document.body.dataset.chapterIndex;
             const restoreScroll = document.body.dataset.restoreScroll;
@@ -53,13 +55,13 @@
             window.addEventListener("message", (event) => {
                 if (event.origin !== window.location.origin) return;
                 if (event.data && event.data.type === "shelf-mg-frame-height") {
-                    iframe.style.height = event.data.height + "px";
+                iframe.style.height = event.data.height + "px";
 
-                    if (restoreScroll !== undefined && !window._shelfMgRestored) {
-                        window._shelfMgRestored = true;
-                        const maxScroll = document.body.scrollHeight - window.innerHeight;
-                        window.scrollTo(0, maxScroll * parseFloat(restoreScroll));
-                    }
+                if (restoreScroll !== undefined && !window._shelfMgRestored) {
+                    window._shelfMgRestored = true;
+                    const maxScroll = document.body.scrollHeight - window.innerHeight;
+                    window.scrollTo(0, maxScroll * parseFloat(restoreScroll));
+                }
                 }
             });
 
@@ -71,21 +73,21 @@
 
             function savePosition() {
                 const payload = JSON.stringify({
-                    chapter_index: parseInt(chapterIndex, 10),
-                    scroll_percent: currentScrollPercent(),
+                chapter_index: parseInt(chapterIndex, 10),
+                scroll_percent: currentScrollPercent(),
                 });
                 if (navigator.sendBeacon) {
-                    navigator.sendBeacon(
-                        `/api/position/${bookId}`,
-                        new Blob([payload], { type: "application/json" }),
-                    );
+                navigator.sendBeacon(
+                    `/api/position/${bookId}`,
+                    new Blob([payload], { type: "application/json" })
+                );
                 } else {
-                    fetch(`/api/position/${bookId}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: payload,
-                        keepalive: true,
-                    });
+                fetch(`/api/position/${bookId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: payload,
+                    keepalive: true,
+                });
                 }
             }
 
@@ -96,7 +98,7 @@
             });
 
             window.addEventListener("beforeunload", savePosition);
-        })();
+            })();
         </script>
     </body>
 </html>

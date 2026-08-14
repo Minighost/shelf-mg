@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size: {{ settings.font_size }}rem">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Settings — shelf-mg</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <a href="{{ url_for('library_list') }}">&larr; Back to library</a>
+        <h1 class="library-title">Settings</h1>
+        <form method="post" class="settings-form">
+            <div class="settings-field">
+                <label for="theme">Theme</label>
+                <select id="theme" name="theme" onchange="previewTheme(this.value)">
+                    {% for choice in theme_choices %}
+                        <option value="{{ choice }}"
+                                {% if choice == settings.theme %}selected{% endif %}>{{ choice | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="settings-field">
+                <label for="font_family">Font</label>
+                <select id="font_family"
+                        name="font_family"
+                        onchange="previewFont(this.value)">
+                    {% for key, css_value in font_choices.items() %}
+                        <option value="{{ key }}"
+                                data-css="{{ css_value }}"
+                                {% if key == settings.font_family_key %}selected{% endif %}>{{ key | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="settings-field">
+                <label for="font_size">Font size (<span id="font-size-label">{{ settings.font_size }}</span>rem)</label>
+                <input type="range"
+                       id="font_size"
+                       name="font_size"
+                       min="0.7"
+                       max="2.5"
+                       step="0.1"
+                       value="{{ settings.font_size }}"
+                       oninput="previewFontSize(this.value)">
+            </div>
+            <div class="settings-preview"
+                 style="font-family: var(--reader-font-family);
+                        font-size: var(--reader-font-size)">Preview: the quick brown fox jumps over the lazy dog.</div>
+            <button type="submit" class="settings-save">Save</button>
+        </form>
+        <script src="{{ url_for('static', filename='settings-preview.js') }}"></script>
+    </body>
+</html>

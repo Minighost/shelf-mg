@@ -1,22 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size: {{ settings.font_size }}rem">
     <head>
         <meta charset="utf-8">
         <title>{{ chapter_title }}</title>
-        <!-- Same stylesheet as the outer page — a single source of truth for
-        colors/typography, instead of duplicating hex values here that
-        could silently drift out of sync with static/style.css. The
-        existing body{} rule there (background: var(--bg-color) etc.)
-        applies here automatically, no extra CSS needed for it. -->
+        <!-- Same stylesheet as the outer page — single source of truth for
+       colors/typography. Theme and font now come from settings.py,
+       rendered server-side directly into the <html> tag above — no more
+       client-side JS reaching into the parent document to read its theme;
+       since settings are stored server-side now (not localStorage), this
+       document can just render the correct values itself from the start. -->
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <script>
-            try {
-            const parentTheme = window.parent.document.documentElement.getAttribute("data-theme");
-            if (parentTheme) {
-                document.documentElement.setAttribute("data-theme", parentTheme);
-            }
-            } catch (e) { /* same-origin should always succeed; fail silently just in case */ }
-        </script>
         <style>{{ css | safe }}</style>
     </head>
     <body>

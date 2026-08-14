@@ -6,6 +6,12 @@
     --link-color: #900;
     --border-color: #e0e0e0;
     --content-max-width: 700px;
+
+    /* Reading font — overridden per-request via an inline style on <html>,
+     driven by settings.py. These are just fallback defaults in case that
+     inline override is ever missing for some reason. */
+    --reader-font-family: Georgia, 'Times New Roman', serif;
+    --reader-font-size: 1.1rem;
 }
 
 [data-theme="dark"] {
@@ -16,15 +22,14 @@
     --border-color: #3a3a3a;
 }
 
-/* Match OS preference by default, before any manual toggle choice exists */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        --bg-color: #1a1a1a;
-        --text-color: #e8e8e8;
-        --text-muted: #a0a0a0;
-        --link-color: #ff8a8a;
-        --border-color: #3a3a3a;
-    }
+/* No prefers-color-scheme fallback here — theme is now an explicit,
+   server-rendered setting (see settings.py), always one of light/dark
+   by the time a page renders, so there's no "unset" state left
+   for a media-query fallback to fill in. */
+
+img {
+    max-width: 100%;
+    height: auto;
 }
 
 * {
@@ -36,7 +41,8 @@ body {
     padding: 1rem;
     background: var(--bg-color);
     color: var(--text-color);
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--reader-font-family);
+    font-size: var(--reader-font-size);
     line-height: 1.6;
 }
 
@@ -115,10 +121,57 @@ a:hover {
     justify-content: space-between;
 }
 
-.chapter-content-wrapper {
+.chapter-frame {
+    display: block;
+    width: 100%;
     max-width: var(--content-max-width);
     margin: 0 auto;
-    font-size: 1.1rem;
+    border: none;
+    overflow: hidden;
+}
+
+/* --- settings page --- */
+
+.settings-form {
+    max-width: var(--content-max-width);
+}
+
+.settings-field {
+    margin-bottom: 1.2rem;
+}
+
+.settings-field label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.settings-field select,
+.settings-field input[type="range"] {
+    width: 100%;
+    padding: 0.4rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.settings-preview {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+.settings-save {
+    background: var(--link-color);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
 }
 
 /* --- desktop additions --- */
@@ -131,14 +184,4 @@ a:hover {
     .library-title {
         font-size: 2.2rem;
     }
-}
-
-.chapter-frame {
-    display: block;
-    width: 100%;
-    max-width: var(--content-max-width);
-    margin: 0 auto;
-    border: none;
-    overflow: hidden;
-    /* scrolling happens on the outer page, not inside the iframe */
 }
