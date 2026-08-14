@@ -400,6 +400,24 @@ button::-moz-focus-inner {
     white-space: nowrap;
 }
 
+/* --- error page --- */
+
+.error-page {
+    max-width: var(--content-max-width);
+    margin: 4rem auto;
+    text-align: center;
+}
+
+.error-code {
+    font-size: 4rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-muted);
+}
+
+.error-message {
+    margin-bottom: 1.5rem;
+}
+
 /* --- desktop additions --- */
 
 @media (min-width: 900px) {

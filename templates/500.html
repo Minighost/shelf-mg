@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size: {{ settings.font_size }}rem;
+             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
+             --surface-color: {{ settings.custom_surface_color }};
+             --text-color: {{ settings.custom_text_color }};
+             --text-muted: {{ settings.custom_text_muted }};
+             --border-color: {{ settings.custom_border_color }};
+             --accent-color: {{ settings.custom_accent_color }};
+             --accent-hover: {{ settings.custom_accent_hover }};
+             {% endif %}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Something Went Wrong — shelf-mg</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <div class="error-page">
+            <h1 class="error-code">500</h1>
+            <p class="error-message">Something went wrong on this end. Try again in a moment.</p>
+            <a href="{{ url_for('library_list') }}" class="settings-link">&larr; Back to library</a>
+        </div>
+    </body>
+</html>

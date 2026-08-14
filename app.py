@@ -125,11 +125,11 @@ def library_list():
 def read_chapter(book_id, chapter_index):
     calibre_book = _get_calibre_book(book_id)
     if calibre_book is None:
-        return "Book not found", 404
+        abort(404, description="That book doesn't exist in your library.")
 
     epub_book = parse_book(calibre_book.epub_path)
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
-        return "Chapter not found", 404
+        abort(404, description="That chapter doesn't exist.")
 
     chapter = epub_book.chapters[chapter_index]
 
@@ -158,11 +158,11 @@ def read_chapter(book_id, chapter_index):
 def read_chapter_frame(book_id, chapter_index):
     calibre_book = _get_calibre_book(book_id)
     if calibre_book is None:
-        return "Book not found", 404
+        abort(404, description="That book doesn't exist in your library.")
 
     epub_book = parse_book(calibre_book.epub_path)
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
-        return "Chapter not found", 404
+        abort(404, description="That chapter doesn't exist.")
 
     content = get_chapter_content(calibre_book.epub_path, epub_book, chapter_index)
     chapter_dir = get_chapter_dir(epub_book, epub_book.chapters[chapter_index])
@@ -268,6 +268,17 @@ def save_position_api(book_id):
 
     save_position(DB_PATH, book_id, int(chapter_index), scroll_percent)
     return "", 204
+
+
+@app.errorhandler(404)
+def not_found(error):
+    message = getattr(error, "description", None)
+    return render_template("404.html", message=message), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return render_template("500.html"), 500
 
 
 if __name__ == "__main__":
