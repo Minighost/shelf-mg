@@ -99,7 +99,28 @@
                 </div>
             </div>
             <div class="settings-field">
-                <label for="font_family">Font</label>
+                <label for="recent_list_limit">Books in "Recently read" list</label>
+                <input type="number"
+                       id="recent_list_limit"
+                       name="recent_list_limit"
+                       min="1"
+                       max="20"
+                       step="1"
+                       value="{{ settings.recent_list_limit }}">
+            </div>
+            <div class="settings-field">
+                <label for="content_max_width_pct">[Wide screens only] Max content width (<span id="content-max-width-label">{{ settings.content_max_width_pct }}</span>% of screen width)</label>
+                <input type="range"
+                       id="content_max_width_pct"
+                       name="content_max_width_pct"
+                       min="20"
+                       max="80"
+                       step="1"
+                       value="{{ settings.content_max_width_pct }}"
+                       oninput="previewContentMaxWidth(this.value)">
+            </div>
+            <div class="settings-field">
+                <label for="font_family">Library font</label>
                 <select id="font_family"
                         name="font_family"
                         onchange="previewFont(this.value)">
@@ -111,7 +132,7 @@
                 </select>
             </div>
             <div class="settings-field">
-                <label for="font_size">Font size (<span id="font-size-label">{{ settings.font_size }}</span>rem)</label>
+                <label for="font_size">Library font size (<span id="font-size-label">{{ settings.font_size }}</span>rem)</label>
                 <input type="range"
                        id="font_size"
                        name="font_size"
@@ -120,27 +141,6 @@
                        step="0.1"
                        value="{{ settings.font_size }}"
                        oninput="previewFontSize(this.value)">
-            </div>
-            <div class="settings-field">
-                <label for="content_max_width_pct">Max content width on desktop (<span id="content-max-width-label">{{ settings.content_max_width_pct }}</span>% of screen width)</label>
-                <input type="range"
-                       id="content_max_width_pct"
-                       name="content_max_width_pct"
-                       min="20"
-                       max="80"
-                       step="1"
-                       value="{{ settings.content_max_width_pct }}"
-                       oninput="previewContentMaxWidth(this.value)">
-            </div>
-            <div class="settings-field">
-                <label for="recent_list_limit">Books in "Recently read" list</label>
-                <input type="number"
-                       id="recent_list_limit"
-                       name="recent_list_limit"
-                       min="1"
-                       max="20"
-                       step="1"
-                       value="{{ settings.recent_list_limit }}">
             </div>
             <div class="settings-field">
                 <label>
@@ -180,7 +180,8 @@
             </div>
             <div class="preview-row">
                 <div class="settings-preview" id="settings-preview">
-                    <p class="preview-body">Preview: the quick brown fox jumps over the lazy dog.</p>
+                    <p class="preview-reader-label">Library preview</p>
+                    <p class="preview-body">The quick brown fox jumps over the lazy dog.</p>
                     <p class="preview-muted">Muted text example</p>
                     <a href="#" class="preview-link" onclick="return false;">A sample link</a>
                     <button type="button" class="preview-button">Sample button</button>
@@ -190,7 +191,7 @@
                      style="display: {{ 'block' if settings.override_epub_font else 'none' }};
                             --reader-font-family: {{ settings.reader_font_family_css }};
                             --reader-font-size-base: {{ settings.reader_font_size }}rem">
-                    <p class="preview-reader-label">Reading area</p>
+                    <p class="preview-reader-label">Reading preview</p>
                     <p class="preview-body"><em>His AC touches down, metal sparking against the floor.</em> "Looks like the guest of honor's here. <strong>Hey, Buddy.</strong>"</p>
                 </div>
             </div>

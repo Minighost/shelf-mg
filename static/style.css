@@ -415,16 +415,16 @@ button::-moz-focus-inner {
 }
 
 .settings-preview .preview-body {
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.5rem 0;
 }
 
 .settings-preview .preview-muted {
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.5rem 0;
 }
 
 .settings-preview .preview-link {
     display: inline-block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .preview-muted {
