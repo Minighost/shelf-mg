@@ -125,13 +125,21 @@ button::-moz-focus-inner {
 
 .header-title {
     text-align: center;
-    margin: 0.75rem 0;
+    margin: 2rem 0 0 0;
+}
+
+.header-author {
+    text-align: center;
+    margin: 0 0 2rem 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
 }
 
 /* --- library list --- */
 
 .library-title {
     font-size: 1.8em;
+    margin-bottom: 2rem;
 }
 
 .search-form {
@@ -139,7 +147,7 @@ button::-moz-focus-inner {
     gap: 0.5rem;
     align-items: center;
     max-width: var(--content-max-width);
-    margin: 0 auto 1rem auto;
+    margin: 0 auto 2rem auto;
 }
 
 .search-form input[type="text"] {
@@ -272,6 +280,7 @@ button::-moz-focus-inner {
     background: var(--surface-color);
     color: var(--text-color);
     border: 1px solid var(--accent-color);
+    border-radius: 4px;
 }
 
 .conflict-dialog::backdrop {
@@ -316,6 +325,7 @@ button::-moz-focus-inner {
     white-space: nowrap;
     flex: 0 1 auto;
     min-width: 0;
+    border-radius: 4px;
 }
 
 #conflict-dialog-cancel {

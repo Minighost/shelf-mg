@@ -51,6 +51,7 @@
                 </div>
             </div>
             <h1 class="header-title">{{ book.title }}</h1>
+            <p class="header-author">{{ book.authors | join(", ") }}</p>
             <select class="chapter-select" id="chapter-select">
                 {% for c in chapters %}
                     <option value="{{ c.index }}"
