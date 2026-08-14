@@ -235,6 +235,105 @@ button::-moz-focus-inner {
     margin: 0 auto 1rem auto;
 }
 
+.recent-list {
+    max-width: var(--content-max-width);
+    margin: 0 auto 1.5rem auto;
+}
+
+.recent-title {
+    font-size: 1.1em;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-muted);
+}
+
+.recent-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.recent-entry:last-child {
+    border-bottom: none;
+}
+
+.recent-updated {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.conflict-dialog {
+    max-width: 420px;
+    width: calc(100% - 2rem);
+    padding: 1.2rem;
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--accent-color);
+}
+
+.conflict-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.conflict-dialog-x {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.conflict-dialog-x:hover {
+    color: var(--text-color);
+}
+
+.conflict-dialog p {
+    margin: 0 0 1rem 0;
+    padding-right: 1.5rem;
+    line-height: 1.5;
+}
+
+.conflict-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: nowrap;
+}
+
+.conflict-dialog-actions button {
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+#conflict-dialog-cancel {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+#conflict-dialog-confirm {
+    background: var(--accent-color);
+    border: none;
+    color: white;
+}
+
+#conflict-dialog-confirm:hover {
+    background: var(--accent-hover);
+}
+
 .chapter-select {
     width: 100%;
     padding: 0.5rem;

@@ -133,6 +133,16 @@
                        oninput="previewContentMaxWidth(this.value)">
             </div>
             <div class="settings-field">
+                <label for="recent_list_limit">Books in "Recently read" list</label>
+                <input type="number"
+                       id="recent_list_limit"
+                       name="recent_list_limit"
+                       min="1"
+                       max="20"
+                       step="1"
+                       value="{{ settings.recent_list_limit }}">
+            </div>
+            <div class="settings-field">
                 <label>
                     <input type="checkbox"
                            id="override_epub_font"

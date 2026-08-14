@@ -22,7 +22,12 @@ from epub_parser import (
     get_chapter_dir,
     resolve_relative_path,
 )
-from positions import init_db as init_positions_db, get_position, save_position
+from positions import (
+    init_db as init_positions_db,
+    get_position,
+    get_recent_positions,
+    save_position,
+)
 from settings import (
     init_db as init_settings_db,
     get_settings,
@@ -111,10 +116,31 @@ def library_list():
     positions = {book.id: get_position(DB_PATH, book.id) for book in books}
     positions = {k: v for k, v in positions.items() if v is not None}
 
+    recent_limit = get_settings(DB_PATH).recent_list_limit
+    recent = []
+    for recent_book_id, pos in get_recent_positions(DB_PATH, recent_limit):
+        recent_book = _get_calibre_book(recent_book_id)
+        if recent_book is None:
+            continue
+        try:
+            recent_epub = parse_book(recent_book.epub_path)
+            chapter_title = recent_epub.chapters[pos.chapter_index].title
+        except (IndexError, OSError):
+            continue
+        recent.append(
+            {
+                "book": recent_book,
+                "chapter_index": pos.chapter_index,
+                "chapter_title": chapter_title,
+                "updated_at": pos.updated_at,
+            }
+        )
+
     return render_template(
         "library.html",
         books=books,
         positions=positions,
+        recent=recent,
         page=page,
         total_pages=total_pages,
         query=query,
@@ -139,9 +165,7 @@ def read_chapter(book_id, chapter_index):
     )
 
     saved = get_position(DB_PATH, book_id)
-    restore_scroll_percent = None
-    if saved is not None and saved.chapter_index == chapter_index:
-        restore_scroll_percent = saved.scroll_percent
+    known_updated_at = saved.updated_at if saved is not None else None
 
     return render_template(
         "reader.html",
@@ -150,7 +174,7 @@ def read_chapter(book_id, chapter_index):
         chapters=epub_book.chapters,
         prev_index=prev_index,
         next_index=next_index,
-        restore_scroll_percent=restore_scroll_percent,
+        known_updated_at=known_updated_at,
     )
 
 
@@ -203,6 +227,7 @@ def settings_page():
         reader_font_family_key = request.form.get("reader_font_family", "").strip()
         reader_font_size_raw = request.form.get("reader_font_size", "")
         content_max_width_pct_raw = request.form.get("content_max_width_pct", "")
+        recent_list_limit_raw = request.form.get("recent_list_limit", "")
 
         try:
             font_size = float(font_size_raw)
@@ -214,6 +239,13 @@ def settings_page():
             )
         except ValueError:
             return "Invalid font size", 400
+
+        try:
+            recent_list_limit = (
+                int(recent_list_limit_raw) if recent_list_limit_raw else None
+            )
+        except ValueError:
+            return "Invalid recent list limit", 400
 
         custom_colors = {
             field: request.form.get(field, "").strip() for field in CUSTOM_COLOR_FIELDS
@@ -229,6 +261,7 @@ def settings_page():
                 reader_font_family_key=reader_font_family_key or None,
                 reader_font_size=reader_font_size,
                 content_max_width_pct=content_max_width_pct,
+                recent_list_limit=recent_list_limit,
                 custom_colors=custom_colors,
             )
         except ValueError as e:
@@ -260,19 +293,24 @@ def update_theme():
     return jsonify({"status": "ok"})
 
 
-@app.route("/api/position/<int:book_id>", methods=["POST"])
-def save_position_api(book_id):
+@app.route("/api/position/<int:book_id>", methods=["GET", "POST"])
+def position_api(book_id):
+    if request.method == "GET":
+        saved = get_position(DB_PATH, book_id)
+        if saved is None:
+            return jsonify(None)
+        return jsonify(
+            {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
+        )
+
     data = request.get_json(silent=True) or {}
     chapter_index = data.get("chapter_index")
-    scroll_percent = data.get("scroll_percent")
 
-    if chapter_index is None or scroll_percent is None:
-        return jsonify({"error": "chapter_index and scroll_percent are required"}), 400
+    if chapter_index is None:
+        return jsonify({"error": "chapter_index is required"}), 400
 
-    scroll_percent = max(0.0, min(1.0, float(scroll_percent)))
-
-    save_position(DB_PATH, book_id, int(chapter_index), scroll_percent)
-    return "", 204
+    saved = save_position(DB_PATH, book_id, int(chapter_index))
+    return jsonify({"chapter_index": saved.chapter_index, "updated_at": saved.updated_at})
 
 
 @app.errorhandler(404)

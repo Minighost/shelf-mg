@@ -20,17 +20,21 @@
     </head>
     <body data-book-id="{{ book.id }}"
           data-chapter-index="{{ chapter.index }}"
-          {% if restore_scroll_percent is not none %}data-restore-scroll="{{ restore_scroll_percent }}"{% endif %}>
+          {% if known_updated_at is not none %}data-known-updated-at="{{ known_updated_at }}"{% endif %}>
         {% macro chapter_nav() %}
             <nav class="chapter-nav">
                 <span>
                     {% if prev_index is not none %}
-                        <a href="/read/{{ book.id }}/{{ prev_index }}">&larr; Previous</a>
+                        <a href="/read/{{ book.id }}/{{ prev_index }}"
+                           class="chapter-nav-link"
+                           data-target-chapter="{{ prev_index }}">&larr; Previous</a>
                     {% endif %}
                 </span>
                 <span>
                     {% if next_index is not none %}
-                        <a href="/read/{{ book.id }}/{{ next_index }}">Next &rarr;</a>
+                        <a href="/read/{{ book.id }}/{{ next_index }}"
+                           class="chapter-nav-link"
+                           data-target-chapter="{{ next_index }}">Next &rarr;</a>
                     {% endif %}
                 </span>
             </nav>
@@ -38,21 +42,33 @@
         <div class="reader-header">
             <div class="header-top">
                 <div class="header-left">
-                    <a href="/">&larr; Back to library</a>
+                    <a href="/"
+                       class="chapter-nav-link"
+                       data-target-chapter="{{ chapter.index }}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
                     <a class="theme-toggle" href="/settings">Settings</a>
                 </div>
             </div>
             <h1 class="header-title">{{ book.title }}</h1>
-            <select class="chapter-select"
-                    onchange="location.href='/read/{{ book.id }}/' + this.value">
+            <select class="chapter-select" id="chapter-select">
                 {% for c in chapters %}
                     <option value="{{ c.index }}"
                             {% if c.index == chapter.index %}selected{% endif %}>{{ c.title }}</option>
                 {% endfor %}
             </select>
         </div>
+        <dialog id="conflict-dialog" class="conflict-dialog">
+            <button type="button"
+                    id="conflict-dialog-x"
+                    class="conflict-dialog-x"
+                    aria-label="Close">&times;</button>
+            <p id="conflict-dialog-message"></p>
+            <div class="conflict-dialog-actions">
+                <button type="button" id="conflict-dialog-cancel"></button>
+                <button type="button" id="conflict-dialog-confirm"></button>
+            </div>
+        </dialog>
         {{ chapter_nav() }}
         <iframe id="chapter-frame"
                 class="chapter-frame"
@@ -63,56 +79,144 @@
         <script>
             (function () {
             const bookId = document.body.dataset.bookId;
-            const chapterIndex = document.body.dataset.chapterIndex;
-            const restoreScroll = document.body.dataset.restoreScroll;
+            const chapterIndex = parseInt(document.body.dataset.chapterIndex, 10);
+            const knownUpdatedAt = document.body.dataset.knownUpdatedAt || null;
             const iframe = document.getElementById("chapter-frame");
+            const select = document.getElementById("chapter-select");
+            const conflictDialog = document.getElementById("conflict-dialog");
+            const conflictMessage = document.getElementById("conflict-dialog-message");
+            const conflictConfirmBtn = document.getElementById("conflict-dialog-confirm");
+            const conflictCancelBtn = document.getElementById("conflict-dialog-cancel");
+            const conflictCloseBtn = document.getElementById("conflict-dialog-x");
+
+            // Three outcomes: "confirm" (overwrite), "alternate" (the labeled
+            // cancel action, which navigates somewhere), or "dismiss" (×,
+            // Escape, or backdrop — just close and stay put, no side effects).
+            // The dialog's native `close` event is the single resolution point
+            // so Escape/backdrop-dismiss are handled for free.
+            function askConfirm(message, confirmLabel, cancelLabel) {
+                return new Promise((resolve) => {
+                    conflictMessage.textContent = message;
+                    conflictConfirmBtn.textContent = confirmLabel;
+                    conflictCancelBtn.textContent = cancelLabel;
+                    let result = "dismiss";
+
+                    function onConfirm() { result = "confirm"; conflictDialog.close(); }
+                    function onCancel() { result = "alternate"; conflictDialog.close(); }
+                    function onDismiss() { conflictDialog.close(); }
+                    function onClose() {
+                        conflictConfirmBtn.removeEventListener("click", onConfirm);
+                        conflictCancelBtn.removeEventListener("click", onCancel);
+                        conflictCloseBtn.removeEventListener("click", onDismiss);
+                        conflictDialog.removeEventListener("close", onClose);
+                        resolve(result);
+                    }
+
+                    conflictConfirmBtn.addEventListener("click", onConfirm);
+                    conflictCancelBtn.addEventListener("click", onCancel);
+                    conflictCloseBtn.addEventListener("click", onDismiss);
+                    conflictDialog.addEventListener("close", onClose);
+                    conflictDialog.showModal();
+                });
+            }
 
             window.addEventListener("message", (event) => {
                 if (event.origin !== window.location.origin) return;
                 if (event.data && event.data.type === "shelf-mg-frame-height") {
-                iframe.style.height = event.data.height + "px";
-
-                if (restoreScroll !== undefined && !window._shelfMgRestored) {
-                    window._shelfMgRestored = true;
-                    const maxScroll = document.body.scrollHeight - window.innerHeight;
-                    window.scrollTo(0, maxScroll * parseFloat(restoreScroll));
-                }
+                    iframe.style.height = event.data.height + "px";
                 }
             });
 
-            function currentScrollPercent() {
-                const maxScroll = document.body.scrollHeight - window.innerHeight;
-                if (maxScroll <= 0) return 0;
-                return Math.min(1, Math.max(0, window.scrollY / maxScroll));
+            function chapterTitle(index) {
+                const option = select.querySelector(`option[value="${index}"]`);
+                return option ? option.textContent : `Chapter ${index + 1}`;
             }
 
-            function savePosition() {
-                const payload = JSON.stringify({
-                chapter_index: parseInt(chapterIndex, 10),
-                scroll_percent: currentScrollPercent(),
-                });
-                if (navigator.sendBeacon) {
-                navigator.sendBeacon(
-                    `/api/position/${bookId}`,
-                    new Blob([payload], { type: "application/json" })
-                );
-                } else {
-                fetch(`/api/position/${bookId}`, {
+            function savePosition(targetChapterIndex) {
+                return fetch(`/api/position/${bookId}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: payload,
-                    keepalive: true,
+                    body: JSON.stringify({ chapter_index: targetChapterIndex }),
                 });
+            }
+
+            function saveBeacon(targetChapterIndex) {
+                const payload = JSON.stringify({ chapter_index: targetChapterIndex });
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(
+                        `/api/position/${bookId}`,
+                        new Blob([payload], { type: "application/json" })
+                    );
+                } else {
+                    fetch(`/api/position/${bookId}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: payload,
+                        keepalive: true,
+                    });
                 }
             }
 
-            let scrollTimeout;
-            window.addEventListener("scroll", () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(savePosition, 1000);
+            // We're leaving via an explicit chapter change (goToChapter), which
+            // already saves the target position — the beforeunload handler must
+            // not also fire and blindly re-save the *old* chapter over it.
+            let navigating = false;
+
+            async function goToChapter(targetIndex, url) {
+                let current = null;
+                try {
+                    const res = await fetch(`/api/position/${bookId}`);
+                    current = res.ok ? await res.json() : null;
+                } catch (e) {
+                    current = null; // if the live check fails, fall through and save/navigate anyway
+                }
+
+                if (current && knownUpdatedAt && current.updated_at > knownUpdatedAt) {
+                    const isLeaving = targetIndex === chapterIndex;
+                    const message = isLeaving
+                        ? `Reading progress was updated elsewhere (now at "${chapterTitle(current.chapter_index)}"). ` +
+                          `Save your current position ("${chapterTitle(targetIndex)}") anyway?`
+                        : `Reading progress was updated elsewhere (now at "${chapterTitle(current.chapter_index)}"). ` +
+                          `Overwrite it with "${chapterTitle(targetIndex)}"?`;
+                    const cancelLabel = isLeaving
+                        ? "Don't overwrite, just leave"
+                        : "Don't overwrite, jump there";
+                    const result = await askConfirm(message, "Overwrite and continue", cancelLabel);
+                    if (result === "dismiss") return; // stay exactly here — no save, no navigation
+                    if (result === "alternate") {
+                        // Cancel means "don't overwrite" — for back-to-library, just leave;
+                        // for a chapter change, go to wherever progress actually is instead.
+                        navigating = true;
+                        window.location.href = isLeaving
+                            ? url
+                            : `/read/${bookId}/${current.chapter_index}`;
+                        return;
+                    }
+                }
+
+                navigating = true;
+                await savePosition(targetIndex);
+                window.location.href = url;
+            }
+
+            document.querySelectorAll(".chapter-nav-link").forEach((link) => {
+                link.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    goToChapter(parseInt(link.dataset.targetChapter, 10), link.href);
+                });
             });
 
-            window.addEventListener("beforeunload", savePosition);
+            const initialSelectValue = select.value;
+            select.addEventListener("change", () => {
+                const target = select.value;
+                select.value = initialSelectValue; // revert until the navigation actually happens
+                goToChapter(parseInt(target, 10), `/read/${bookId}/${target}`);
+            });
+
+            window.addEventListener("beforeunload", () => {
+                if (navigating) return;
+                saveBeacon(chapterIndex);
+            });
             })();
         </script>
     </body>

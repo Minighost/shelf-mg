@@ -5,6 +5,7 @@ DEFAULT_THEME = "dark"
 DEFAULT_FONT_FAMILY = "serif"
 DEFAULT_FONT_SIZE = 1.1  # rem
 DEFAULT_CONTENT_MAX_WIDTH_PCT = 40  # % of viewport width, desktop only
+DEFAULT_RECENT_LIST_LIMIT = 5  # books shown in the library's "Recently read" list
 
 FONT_CHOICES = {
     "serif": "Georgia, 'Times New Roman', serif",
@@ -51,6 +52,7 @@ class Settings:
     reader_font_family_css: str
     reader_font_size: float
     content_max_width_pct: float
+    recent_list_limit: int
     custom_bg_color: str
     custom_surface_color: str
     custom_text_color: str
@@ -76,6 +78,7 @@ def init_db(db_path: str) -> None:
         "reader_font_family_key",
         "reader_font_size",
         "content_max_width_pct",
+        "recent_list_limit",
     ]
     for field in new_columns:
         try:
@@ -93,6 +96,7 @@ def get_settings(db_path: str) -> Settings:
     row = conn.execute(
         "SELECT theme, font_family_key, font_size, override_epub_font, "
         "reader_font_family_key, reader_font_size, content_max_width_pct, "
+        "recent_list_limit, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -109,6 +113,7 @@ def get_settings(db_path: str) -> Settings:
             reader_font_family_css=FONT_CHOICES[DEFAULT_FONT_FAMILY],
             reader_font_size=DEFAULT_FONT_SIZE,
             content_max_width_pct=DEFAULT_CONTENT_MAX_WIDTH_PCT,
+            recent_list_limit=DEFAULT_RECENT_LIST_LIMIT,
             **DEFAULT_CUSTOM_COLORS,
         )
 
@@ -133,6 +138,7 @@ def get_settings(db_path: str) -> Settings:
         content_max_width_pct=float(
             row["content_max_width_pct"] or DEFAULT_CONTENT_MAX_WIDTH_PCT
         ),
+        recent_list_limit=int(row["recent_list_limit"] or DEFAULT_RECENT_LIST_LIMIT),
         **custom_colors,
     )
 
@@ -146,6 +152,7 @@ def save_settings(
     reader_font_family_key: str | None = None,
     reader_font_size: float | None = None,
     content_max_width_pct: float | None = None,
+    recent_list_limit: int | None = None,
     custom_colors: dict | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
@@ -172,6 +179,11 @@ def save_settings(
     )
     content_max_width_pct = max(20, min(80, content_max_width_pct))
 
+    recent_list_limit = (
+        recent_list_limit if recent_list_limit is not None else existing.recent_list_limit
+    )
+    recent_list_limit = max(1, min(20, int(recent_list_limit)))
+
     custom_colors = custom_colors or {}
     resolved_colors = {}
     for field in CUSTOM_COLOR_FIELDS:
@@ -192,6 +204,7 @@ def save_settings(
         "reader_font_family_key",
         "reader_font_size",
         "content_max_width_pct",
+        "recent_list_limit",
     ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
@@ -205,6 +218,7 @@ def save_settings(
         reader_font_family_key,
         reader_font_size,
         content_max_width_pct,
+        recent_list_limit,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)
