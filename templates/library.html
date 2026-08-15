@@ -35,7 +35,6 @@
             <div class="header-top">
                 <div class="header-left"></div>
                 <div class="header-right">
-                    <a class="settings-link" href="{{ url_for('library_list', page=page, **toggle_view_args) }}">Toggle list display</a>
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
                     <a class="settings-link" href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
@@ -101,17 +100,20 @@
             {% endif %}
         </form>
         <p class="results-summary">Showing {{ total_matches }} out of {{ total_library }} total files</p>
-        {% if total_pages > 1 %}
-            <nav class="pagination">
-                {% if page > 1 %}
-                    <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
-                {% endif %}
-                <span>Page {{ page }} of {{ total_pages }}</span>
-                {% if page < total_pages %}
-                    <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
-                {% endif %}
-            </nav>
-        {% endif %}
+        <nav class="pagination pagination-top">
+            {% if total_pages > 1 %}
+                <div class="pagination-controls">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
+                    {% endif %}
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <a class="settings-link" href="{{ url_for('library_list', page=page, **toggle_view_args) }}">Toggle list display</a>
+        </nav>
         <div class="book-list">
             {% for book in books %}
                 <div class="book-entry">

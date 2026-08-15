@@ -452,6 +452,17 @@ html.view-grid .book-grid {
     font-size: 0.9em;
 }
 
+.pagination-top {
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 /* --- reader page --- */
 
 .reader-header {
