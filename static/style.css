@@ -398,6 +398,8 @@ html.view-grid .book-grid {
 }
 
 .book-entry h2 {
+    display: flex;
+    align-items: center;
     margin: 0 0 0.3rem 0;
     font-size: 1.2em;
 }
