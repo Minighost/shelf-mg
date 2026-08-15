@@ -215,6 +215,7 @@ def library_list():
             selected[field["key"]] = values
 
     all_books = list_books(LIBRARY_PATH)
+    total_library = len(all_books)
     filter_options = {
         field["key"]: _filter_options(all_books, field) for field in filter_fields
     }
@@ -255,6 +256,8 @@ def library_list():
         filter_options=filter_options,
         selected=selected,
         page_args=page_args,
+        total_matches=len(all_books),
+        total_library=total_library,
     )
 
 

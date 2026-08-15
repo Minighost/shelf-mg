@@ -318,6 +318,14 @@ button::-moz-focus-inner {
     font-weight: bold;
 }
 
+.results-summary {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
 .pagination {
     max-width: var(--content-max-width);
     margin: 1.5rem auto;
