@@ -16,7 +16,13 @@ from flask import (
     url_for,
 )
 
-from calibre_reader import list_books, get_custom_columns, get_book_details
+from calibre_reader import (
+    list_books,
+    get_book,
+    get_book_epub_path,
+    get_custom_columns,
+    get_book_details,
+)
 from epub_parser import (
     parse_book,
     get_chapter_content,
@@ -73,8 +79,7 @@ def inject_settings():
 
 
 def _get_calibre_book(book_id):
-    books = list_books(LIBRARY_PATH)
-    return next((b for b in books if b.id == book_id), None)
+    return get_book(LIBRARY_PATH, book_id)
 
 
 def _rewrite_image_srcs(
@@ -145,7 +150,7 @@ def _all_filter_fields():
 def _filter_values(book, field):
     if field["key"] in BUILTIN_FILTER_GETTERS:
         return BUILTIN_FILTER_GETTERS[field["key"]](book)
-    custom_label = field["key"][len(CUSTOM_FILTER_KEY_PREFIX):]
+    custom_label = field["key"][len(CUSTOM_FILTER_KEY_PREFIX) :]
     return book.custom.get(custom_label, [])
 
 
@@ -389,11 +394,11 @@ def inspect_book(book_id):
 
 @app.route("/inspect/<int:book_id>/cover")
 def inspect_cover(book_id):
-    calibre_book = _get_calibre_book(book_id)
-    if calibre_book is None:
+    epub_path = get_book_epub_path(LIBRARY_PATH, book_id)
+    if epub_path is None:
         abort(404, description="That book doesn't exist in your library.")
 
-    cover_path = find_cover_image(calibre_book.epub_path)
+    cover_path = find_cover_image(epub_path)
     if cover_path is None:
         abort(404, description="No cover image for that book.")
 
@@ -402,18 +407,18 @@ def inspect_cover(book_id):
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/frame")
 def read_chapter_frame(book_id, chapter_index):
-    calibre_book = _get_calibre_book(book_id)
-    if calibre_book is None:
+    epub_path = get_book_epub_path(LIBRARY_PATH, book_id)
+    if epub_path is None:
         abort(404, description="That book doesn't exist in your library.")
 
-    epub_book = parse_book(calibre_book.epub_path)
+    epub_book = parse_book(epub_path)
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
         abort(404, description="That chapter doesn't exist.")
 
-    content = get_chapter_content(calibre_book.epub_path, epub_book, chapter_index)
+    content = get_chapter_content(epub_path, epub_book, chapter_index)
     chapter_dir = get_chapter_dir(epub_book, epub_book.chapters[chapter_index])
     content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
-    css = get_stylesheets(calibre_book.epub_path, epub_book)
+    css = get_stylesheets(epub_path, epub_book)
 
     return render_template(
         "chapter_frame.html",
@@ -425,12 +430,12 @@ def read_chapter_frame(book_id, chapter_index):
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/image/<path:img_path>")
 def read_chapter_image(book_id, chapter_index, img_path):
-    calibre_book = _get_calibre_book(book_id)
-    if calibre_book is None:
+    epub_path = get_book_epub_path(LIBRARY_PATH, book_id)
+    if epub_path is None:
         abort(404)
 
     try:
-        with zipfile.ZipFile(calibre_book.epub_path) as zf:
+        with zipfile.ZipFile(epub_path) as zf:
             data = zf.read(img_path)
     except KeyError:
         abort(404)
@@ -477,7 +482,10 @@ def settings_page():
         valid_filter_keys = {field["key"] for field in _all_filter_fields()}
         invalid_filter_keys = set(enabled_filters) - valid_filter_keys
         if invalid_filter_keys:
-            return f"Invalid filter key(s): {', '.join(sorted(invalid_filter_keys))}", 400
+            return (
+                f"Invalid filter key(s): {', '.join(sorted(invalid_filter_keys))}",
+                400,
+            )
 
         try:
             save_settings(
