@@ -99,6 +99,30 @@
                 </div>
             </div>
             <div class="settings-field">
+                <label>Library filters</label>
+                <ul id="active-filters-list" class="active-filters-list">
+                    {% for field in filter_fields %}
+                        {% if field.key in settings.enabled_filter_keys() %}
+                            <li class="active-filter-chip" data-key="{{ field.key }}">
+                                <input type="checkbox" name="enabled_filters" value="{{ field.key }}" checked hidden>
+                                <span>{{ field.label }}</span>
+                                <button type="button" class="remove-filter-btn" onclick="removeActiveFilter(this)" aria-label="Remove {{ field.label }}">&times;</button>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                <div class="add-filter-control">
+                    <input type="text"
+                           id="filter-search"
+                           placeholder="Add a filter…"
+                           autocomplete="off"
+                           oninput="renderFilterSuggestions(this.value)"
+                           onfocus="renderFilterSuggestions(this.value)">
+                    <ul id="filter-suggestions" class="filter-suggestions" style="display: none;"></ul>
+                </div>
+                <script type="application/json" id="all-filter-fields-data">{{ filter_fields | tojson }}</script>
+            </div>
+            <div class="settings-field">
                 <label for="recent_list_limit">Books in "Recently read" list</label>
                 <input type="number"
                        id="recent_list_limit"

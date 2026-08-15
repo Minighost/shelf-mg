@@ -18,6 +18,7 @@
         <title>shelf-mg</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
+        <script src="{{ url_for('static', filename='filter-search.js') }}"></script>
         <script>
             // If this page is restored from bfcache (e.g. via the back
             // button), its "Recently read"/"Continue reading" data may be
@@ -52,24 +53,60 @@
                 {% endfor %}
             </div>
         {% endif %}
-        <form method="get" class="search-form">
-            <input type="text"
-                   name="q"
-                   value="{{ query }}"
-                   placeholder="Search title, author, or tag">
-            <button type="submit">Search</button>
-            {% if query %}
-                <a href="{{ url_for('library_list') }}">Clear</a>
+        <form method="get" class="search-form-wrapper">
+            <div class="search-form">
+                <input type="text"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Search title, author, or tag">
+                <button type="submit">Search</button>
+                {% if query or selected %}
+                    <a href="{{ url_for('library_list') }}">Clear</a>
+                {% endif %}
+            </div>
+            {% if filter_fields %}
+                <div class="filter-bar">
+                    {% for field in filter_fields %}
+                        <details class="filter-field">
+                            <summary>
+                                {{ field.label }}
+                                {% if field.type == "multi" and selected.get(field.key) %} ({{ selected[field.key] | length }}){% endif %}
+                                {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
+                            </summary>
+                            {% if field.type == "single" %}
+                                <label class="filter-choice filter-any">
+                                    <input type="radio"
+                                           name="{{ field.key }}"
+                                           value=""
+                                           {% if not selected.get(field.key) %}checked{% endif %}>
+                                    Any
+                                </label>
+                            {% endif %}
+                            <input type="text" class="filter-search" placeholder="Search…" oninput="filterOptions(this)">
+                            <div class="filter-options">
+                                {% for value in filter_options[field.key] %}
+                                    <label class="filter-choice">
+                                        <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                               name="{{ field.key }}"
+                                               value="{{ value }}"
+                                               {% if value in selected.get(field.key, []) %}checked{% endif %}>
+                                        {{ value }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endfor %}
+                </div>
             {% endif %}
         </form>
         {% if total_pages > 1 %}
             <nav class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('library_list', q=query, page=page - 1) }}">&larr; Previous</a>
+                    <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
                 {% endif %}
                 <span>Page {{ page }} of {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('library_list', q=query, page=page + 1) }}">Next &rarr;</a>
+                    <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
                 {% endif %}
             </nav>
         {% endif %}
@@ -94,11 +131,11 @@
         {% if total_pages > 1 %}
             <nav class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('library_list', q=query, page=page - 1) }}">&larr; Previous</a>
+                    <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
                 {% endif %}
                 <span>Page {{ page }} of {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('library_list', q=query, page=page + 1) }}">Next &rarr;</a>
+                    <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
                 {% endif %}
             </nav>
         {% endif %}

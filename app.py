@@ -14,7 +14,7 @@ from flask import (
     url_for,
 )
 
-from calibre_reader import list_books
+from calibre_reader import list_books, get_custom_columns
 from epub_parser import (
     parse_book,
     get_chapter_content,
@@ -100,6 +100,78 @@ def _book_matches(book, query):
     return False
 
 
+# Filters tied to fixed Book fields — always available regardless of library.
+BUILTIN_FILTER_FIELDS = [
+    {"key": "tags", "label": "Tags", "type": "multi"},
+    {"key": "author", "label": "Author", "type": "single"},
+    {"key": "series", "label": "Series", "type": "single"},
+    {"key": "publisher", "label": "Publisher", "type": "single"},
+]
+
+BUILTIN_FILTER_GETTERS = {
+    "tags": lambda book: book.tags,
+    "author": lambda book: book.authors,
+    "series": lambda book: [book.series] if book.series else [],
+    "publisher": lambda book: [book.publisher] if book.publisher else [],
+}
+
+CUSTOM_FILTER_KEY_PREFIX = "custom:"
+
+
+def _custom_filter_fields():
+    """
+    Filters discovered from the connected Calibre library's custom columns.
+    Unlike BUILTIN_FILTER_FIELDS, this set varies per library, so it's
+    recomputed from the live schema rather than hard-coded.
+    """
+    return [
+        {
+            "key": CUSTOM_FILTER_KEY_PREFIX + column["label"],
+            "label": column["name"],
+            "type": "multi" if column["is_multiple"] else "single",
+        }
+        for column in get_custom_columns(LIBRARY_PATH)
+    ]
+
+
+def _all_filter_fields():
+    return BUILTIN_FILTER_FIELDS + _custom_filter_fields()
+
+
+def _filter_values(book, field):
+    if field["key"] in BUILTIN_FILTER_GETTERS:
+        return BUILTIN_FILTER_GETTERS[field["key"]](book)
+    custom_label = field["key"][len(CUSTOM_FILTER_KEY_PREFIX):]
+    return book.custom.get(custom_label, [])
+
+
+def _enabled_filter_fields():
+    enabled = set(get_settings(DB_PATH).enabled_filter_keys())
+    return [field for field in _all_filter_fields() if field["key"] in enabled]
+
+
+def _filter_options(books, field):
+    values = set()
+    for book in books:
+        values.update(_filter_values(book, field))
+    return sorted(values)
+
+
+def _book_matches_filters(book, filter_fields, selected):
+    for field in filter_fields:
+        chosen = selected.get(field["key"])
+        if not chosen:
+            continue
+        book_values = set(_filter_values(book, field))
+        if field["type"] == "multi":
+            if not set(chosen).issubset(book_values):
+                return False
+        else:
+            if chosen[0] not in book_values:
+                return False
+    return True
+
+
 def _build_history_entries(rows):
     """Turn (book_id, Position) pairs into display dicts, resolving chapter
     titles and skipping books/chapters that no longer exist."""
@@ -131,9 +203,27 @@ def library_list():
     if page < 1:
         page = 1
 
+    filter_fields = _enabled_filter_fields()
+    selected = {}
+    for field in filter_fields:
+        if field["type"] == "multi":
+            values = request.args.getlist(field["key"])
+        else:
+            value = request.args.get(field["key"], "").strip()
+            values = [value] if value else []
+        if values:
+            selected[field["key"]] = values
+
     all_books = list_books(LIBRARY_PATH)
+    filter_options = {
+        field["key"]: _filter_options(all_books, field) for field in filter_fields
+    }
+
     if query:
         all_books = [b for b in all_books if _book_matches(b, query)]
+    all_books = [
+        b for b in all_books if _book_matches_filters(b, filter_fields, selected)
+    ]
 
     total_pages = max(1, (len(all_books) + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
     page = min(page, total_pages)
@@ -147,6 +237,12 @@ def library_list():
     recent_limit = get_settings(DB_PATH).recent_list_limit
     recent = _build_history_entries(get_recent_positions(DB_PATH, recent_limit))
 
+    # Active filter/query params, reusable for building pagination links that
+    # preserve the current search+filter state.
+    page_args = {"q": query} if query else {}
+    for key, values in selected.items():
+        page_args[key] = values
+
     return render_template(
         "library.html",
         books=books,
@@ -155,6 +251,10 @@ def library_list():
         page=page,
         total_pages=total_pages,
         query=query,
+        filter_fields=filter_fields,
+        filter_options=filter_options,
+        selected=selected,
+        page_args=page_args,
     )
 
 
@@ -261,6 +361,7 @@ def settings_page():
         reader_font_size_raw = request.form.get("reader_font_size", "")
         content_max_width_pct_raw = request.form.get("content_max_width_pct", "")
         recent_list_limit_raw = request.form.get("recent_list_limit", "")
+        enabled_filters = request.form.getlist("enabled_filters")
 
         try:
             font_size = float(font_size_raw)
@@ -284,6 +385,11 @@ def settings_page():
             field: request.form.get(field, "").strip() for field in CUSTOM_COLOR_FIELDS
         }
 
+        valid_filter_keys = {field["key"] for field in _all_filter_fields()}
+        invalid_filter_keys = set(enabled_filters) - valid_filter_keys
+        if invalid_filter_keys:
+            return f"Invalid filter key(s): {', '.join(sorted(invalid_filter_keys))}", 400
+
         try:
             save_settings(
                 DB_PATH,
@@ -296,6 +402,7 @@ def settings_page():
                 content_max_width_pct=content_max_width_pct,
                 recent_list_limit=recent_list_limit,
                 custom_colors=custom_colors,
+                enabled_filters=enabled_filters,
             )
         except ValueError as e:
             return str(e), 400
@@ -306,6 +413,7 @@ def settings_page():
         "settings.html",
         theme_choices=THEME_CHOICES,
         font_choices=FONT_CHOICES,
+        filter_fields=_all_filter_fields(),
     )
 
 

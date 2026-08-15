@@ -40,6 +40,12 @@ DEFAULT_CUSTOM_COLORS = {
 
 DEFAULT_OVERRIDE_EPUB_FONT = False
 
+# Library filters enabled by default for new/existing users. The full set of
+# *available* filters (built-ins plus discovered Calibre custom columns) is
+# computed live in app.py, since it depends on the connected library's
+# schema — this module just stores whichever keys the user has enabled.
+DEFAULT_ENABLED_FILTERS = "tags,author,series"
+
 
 @dataclass
 class Settings:
@@ -60,6 +66,10 @@ class Settings:
     custom_border_color: str
     custom_accent_color: str
     custom_accent_hover: str
+    enabled_filters: str
+
+    def enabled_filter_keys(self) -> list[str]:
+        return [key for key in self.enabled_filters.split(",") if key]
 
 
 def init_db(db_path: str) -> None:
@@ -79,6 +89,7 @@ def init_db(db_path: str) -> None:
         "reader_font_size",
         "content_max_width_pct",
         "recent_list_limit",
+        "enabled_filters",
     ]
     for field in new_columns:
         try:
@@ -96,7 +107,7 @@ def get_settings(db_path: str) -> Settings:
     row = conn.execute(
         "SELECT theme, font_family_key, font_size, override_epub_font, "
         "reader_font_family_key, reader_font_size, content_max_width_pct, "
-        "recent_list_limit, "
+        "recent_list_limit, enabled_filters, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -114,6 +125,7 @@ def get_settings(db_path: str) -> Settings:
             reader_font_size=DEFAULT_FONT_SIZE,
             content_max_width_pct=DEFAULT_CONTENT_MAX_WIDTH_PCT,
             recent_list_limit=DEFAULT_RECENT_LIST_LIMIT,
+            enabled_filters=DEFAULT_ENABLED_FILTERS,
             **DEFAULT_CUSTOM_COLORS,
         )
 
@@ -139,6 +151,9 @@ def get_settings(db_path: str) -> Settings:
             row["content_max_width_pct"] or DEFAULT_CONTENT_MAX_WIDTH_PCT
         ),
         recent_list_limit=int(row["recent_list_limit"] or DEFAULT_RECENT_LIST_LIMIT),
+        enabled_filters=row["enabled_filters"]
+        if row["enabled_filters"] is not None
+        else DEFAULT_ENABLED_FILTERS,
         **custom_colors,
     )
 
@@ -154,6 +169,7 @@ def save_settings(
     content_max_width_pct: float | None = None,
     recent_list_limit: int | None = None,
     custom_colors: dict | None = None,
+    enabled_filters: list[str] | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
         raise ValueError(f"invalid theme: {theme}")
@@ -186,6 +202,15 @@ def save_settings(
     )
     recent_list_limit = max(1, min(20, int(recent_list_limit)))
 
+    if enabled_filters is None:
+        resolved_enabled_filters = existing.enabled_filters
+    else:
+        # This module doesn't know which keys are actually valid — that
+        # depends on the connected Calibre library's schema, so callers
+        # (app.py) are responsible for validating keys before calling in.
+        deduped = dict.fromkeys(key for key in enabled_filters if key)
+        resolved_enabled_filters = ",".join(deduped)
+
     custom_colors = custom_colors or {}
     resolved_colors = {}
     for field in CUSTOM_COLOR_FIELDS:
@@ -207,6 +232,7 @@ def save_settings(
         "reader_font_size",
         "content_max_width_pct",
         "recent_list_limit",
+        "enabled_filters",
     ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
@@ -221,6 +247,7 @@ def save_settings(
         reader_font_size,
         content_max_width_pct,
         recent_list_limit,
+        resolved_enabled_filters,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)

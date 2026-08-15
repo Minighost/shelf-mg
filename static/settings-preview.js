@@ -74,3 +74,84 @@ function previewReaderFontSize(size) {
     document.getElementById("reader-font-preview").style.setProperty("--reader-font-size-base", `${size}rem`);
     document.getElementById("reader-font-size-label").textContent = size;
 }
+
+function activeFilterKeys() {
+    return new Set(
+        Array.from(document.querySelectorAll("#active-filters-list .active-filter-chip"))
+            .map((chip) => chip.dataset.key)
+    );
+}
+
+function addActiveFilter(field) {
+    const list = document.getElementById("active-filters-list");
+
+    const li = document.createElement("li");
+    li.className = "active-filter-chip";
+    li.dataset.key = field.key;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = "enabled_filters";
+    checkbox.value = field.key;
+    checkbox.checked = true;
+    checkbox.hidden = true;
+
+    const label = document.createElement("span");
+    label.textContent = field.label;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "remove-filter-btn";
+    removeBtn.setAttribute("aria-label", `Remove ${field.label}`);
+    removeBtn.textContent = "×";
+    removeBtn.onclick = () => removeActiveFilter(removeBtn);
+
+    li.append(checkbox, label, removeBtn);
+    list.appendChild(li);
+
+    const search = document.getElementById("filter-search");
+    search.value = "";
+    renderFilterSuggestions("");
+}
+
+function removeActiveFilter(button) {
+    button.closest(".active-filter-chip").remove();
+    renderFilterSuggestions(document.getElementById("filter-search").value);
+}
+
+function renderFilterSuggestions(query) {
+    const dataEl = document.getElementById("all-filter-fields-data");
+    const suggestionsList = document.getElementById("filter-suggestions");
+    if (!dataEl || !suggestionsList) return;
+
+    const allFields = JSON.parse(dataEl.textContent);
+    const active = activeFilterKeys();
+    const normalizedQuery = query.trim().toLowerCase();
+
+    const matches = allFields.filter(
+        (field) => !active.has(field.key) && field.label.toLowerCase().includes(normalizedQuery)
+    );
+
+    suggestionsList.innerHTML = "";
+    for (const field of matches) {
+        const li = document.createElement("li");
+        li.className = "filter-suggestion";
+        li.textContent = field.label;
+        li.onclick = () => addActiveFilter(field);
+        suggestionsList.appendChild(li);
+    }
+
+    suggestionsList.style.display = matches.length > 0 ? "block" : "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("filter-search");
+    if (!searchInput) return;
+
+    document.addEventListener("click", (event) => {
+        const control = document.querySelector(".add-filter-control");
+        if (control && !control.contains(event.target)) {
+            document.getElementById("filter-suggestions").style.display = "none";
+        }
+    });
+});
