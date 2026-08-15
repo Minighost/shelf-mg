@@ -628,6 +628,10 @@ html.view-grid .book-grid {
     margin-bottom: 1.2rem;
 }
 
+.settings-field.settings-field-grouped {
+    margin-bottom: 2rem;
+}
+
 .settings-field label {
     display: block;
     margin-bottom: 0.3rem;
