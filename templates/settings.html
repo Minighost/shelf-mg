@@ -123,14 +123,15 @@
                 <script type="application/json" id="all-filter-fields-data">{{ filter_fields | tojson }}</script>
             </div>
             <div class="settings-field">
-                <label for="recent_list_limit">Books in "Recently read" list</label>
-                <input type="number"
+                <label for="recent_list_limit">Books in "Recently read" list (<span id="recent-list-limit-label">{{ settings.recent_list_limit }}</span>)</label>
+                <input type="range"
                        id="recent_list_limit"
                        name="recent_list_limit"
                        min="1"
                        max="20"
                        step="1"
-                       value="{{ settings.recent_list_limit }}">
+                       value="{{ settings.recent_list_limit }}"
+                       oninput="previewRecentListLimit(this.value)">
             </div>
             <div class="settings-field">
                 <label for="content_max_width_pct">[Wide screens only] Max content width (<span id="content-max-width-label">{{ settings.content_max_width_pct }}</span>% of screen width)</label>
