@@ -29,6 +29,7 @@
         </script>
     </head>
     <body>
+        {% set back_qs = request.query_string.decode() %}
         <div class="library-header">
             <div class="header-top">
                 <div class="header-left"></div>
@@ -45,7 +46,7 @@
                 <h2 class="recent-title">Recently read</h2>
                 {% for item in recent %}
                     <div class="recent-entry">
-                        <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}">
+                        <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
                             {{ item.book.title }} — {{ item.chapter_title }}
                         </a>
                         <span class="recent-updated">{{ item.updated_at }}</span>
@@ -113,8 +114,8 @@
             {% for book in books %}
                 <div class="book-entry">
                     <h2>
-                        <a href="/read/{{ book.id }}/0">{{ book.title }}</a>
-                        <a class="inspect-button" href="{{ url_for('inspect_book', book_id=book.id) }}" title="Inspect">i</a>
+                        <a href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
+                        <a class="inspect-button" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
                     </h2>
                     <p class="book-meta">by {{ book.authors | join(", ") }}</p>
                     <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
@@ -122,7 +123,7 @@
                     {% if book.id in positions %}
                         <p>
                             <a class="continue-link"
-                               href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}">
+                               href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
                                 Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
                             </a>
                         </p>

@@ -20,10 +20,12 @@
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
     </head>
     <body>
+        {% set back_qs = request.args.get('back', '') %}
+        {% set back_suffix = ('?back=' + (back_qs | urlencode)) if back_qs else '' %}
         <div class="library-header">
             <div class="header-top">
                 <div class="header-left">
-                    <a href="{{ url_for('library_list') }}">&larr; Back to library</a>
+                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
@@ -86,7 +88,7 @@
             {% else %}
                 <ol class="inspect-toc">
                     {% for chapter in chapters %}
-                        <li><a href="/read/{{ book.id }}/{{ chapter.index }}">{{ chapter.title }}</a></li>
+                        <li><a href="/read/{{ book.id }}/{{ chapter.index }}{{ back_suffix }}">{{ chapter.title }}</a></li>
                     {% endfor %}
                 </ol>
             {% endif %}

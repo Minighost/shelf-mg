@@ -21,18 +21,20 @@
     <body data-book-id="{{ book.id }}"
           data-chapter-index="{{ chapter.index }}"
           {% if known_updated_at is not none %}data-known-updated-at="{{ known_updated_at }}"{% endif %}>
+        {% set back_qs = request.args.get('back', '') %}
+        {% set back_suffix = ('?back=' + (back_qs | urlencode)) if back_qs else '' %}
         {% macro chapter_nav() %}
             <nav class="chapter-nav">
                 <span>
                     {% if prev_index is not none %}
-                        <a href="/read/{{ book.id }}/{{ prev_index }}"
+                        <a href="/read/{{ book.id }}/{{ prev_index }}{{ back_suffix }}"
                            class="chapter-nav-link"
                            data-target-chapter="{{ prev_index }}">&larr; Previous</a>
                     {% endif %}
                 </span>
                 <span>
                     {% if next_index is not none %}
-                        <a href="/read/{{ book.id }}/{{ next_index }}"
+                        <a href="/read/{{ book.id }}/{{ next_index }}{{ back_suffix }}"
                            class="chapter-nav-link"
                            data-target-chapter="{{ next_index }}">Next &rarr;</a>
                     {% endif %}
@@ -42,7 +44,7 @@
         <div class="reader-header">
             <div class="header-top">
                 <div class="header-left">
-                    <a href="/"
+                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}"
                        class="chapter-nav-link"
                        data-target-chapter="{{ chapter.index }}">&larr; Back to library</a>
                 </div>
@@ -52,7 +54,7 @@
             </div>
             <h1 class="header-title">{{ book.title }}</h1>
             <p class="header-author">{{ book.authors | join(", ") }}</p>
-            <select class="chapter-select" id="chapter-select">
+            <select class="chapter-select" id="chapter-select" data-back="{{ back_qs }}">
                 {% for c in chapters %}
                     <option value="{{ c.index }}"
                             {% if c.index == chapter.index %}selected{% endif %}>{{ c.title }}</option>
@@ -212,11 +214,14 @@
                 });
             });
 
+            const backParam = select.dataset.back;
+            const backSuffix = backParam ? `?back=${encodeURIComponent(backParam)}` : "";
+
             const initialSelectValue = select.value;
             select.addEventListener("change", () => {
                 const target = select.value;
                 select.value = initialSelectValue; // revert until the navigation actually happens
-                goToChapter(parseInt(target, 10), `/read/${bookId}/${target}`);
+                goToChapter(parseInt(target, 10), `/read/${bookId}/${target}${backSuffix}`);
             });
 
             // pagehide (not beforeunload) is what reliably fires when the
