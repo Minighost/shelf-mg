@@ -172,7 +172,12 @@
                     current = null; // if the live check fails, fall through and save/navigate anyway
                 }
 
-                if (current && knownUpdatedAt && current.updated_at > knownUpdatedAt) {
+                if (
+                    current &&
+                    knownUpdatedAt &&
+                    current.updated_at > knownUpdatedAt &&
+                    current.chapter_index !== targetIndex
+                ) {
                     const isLeaving = targetIndex === chapterIndex;
                     const message = isLeaving
                         ? `Reading progress was updated elsewhere (now at "${chapterTitle(current.chapter_index)}"). ` +
