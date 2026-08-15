@@ -2,6 +2,7 @@
 /fics/
 test_*
 /.claude/
+CLAUDE.md
 pyproject.toml
 shelf-mg.db
 
