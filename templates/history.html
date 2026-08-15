@@ -43,13 +43,21 @@
         </div>
         {% if total_pages > 1 %}
             <nav class="pagination">
-                {% if page > 1 %}
-                    <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
-                {% endif %}
-                <span>Page {{ page }} of {{ total_pages }}</span>
-                {% if page < total_pages %}
-                    <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
-                {% endif %}
+                <div class="pagination-controls">
+                    <div class="pagination-side pagination-side-left">
+                        {% if page > 1 %}
+                            <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
+                            <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
+                        {% endif %}
+                    </div>
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    <div class="pagination-side pagination-side-right">
+                        {% if page < total_pages %}
+                            <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
+                            <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
+                        {% endif %}
+                    </div>
+                </div>
             </nav>
         {% endif %}
         {% if entries %}
@@ -77,13 +85,21 @@
         {% endif %}
         {% if total_pages > 1 %}
             <nav class="pagination">
-                {% if page > 1 %}
-                    <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
-                {% endif %}
-                <span>Page {{ page }} of {{ total_pages }}</span>
-                {% if page < total_pages %}
-                    <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
-                {% endif %}
+                <div class="pagination-controls">
+                    <div class="pagination-side pagination-side-left">
+                        {% if page > 1 %}
+                            <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
+                            <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
+                        {% endif %}
+                    </div>
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    <div class="pagination-side pagination-side-right">
+                        {% if page < total_pages %}
+                            <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
+                            <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
+                        {% endif %}
+                    </div>
+                </div>
             </nav>
         {% endif %}
     </body>

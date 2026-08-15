@@ -444,23 +444,41 @@ html.view-grid .book-grid {
 .pagination {
     max-width: var(--content-max-width);
     margin: 1.5rem auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
     color: var(--text-muted);
     font-size: 0.9em;
 }
 
 .pagination-top {
+    display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0.5rem;
 }
 
+.pagination-top > .settings-link {
+    align-self: center;
+}
+
 .pagination-controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pagination-controls > span {
+    justify-self: center;
+    text-align: center;
+}
+
+.pagination-side {
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.pagination-side-right {
+    justify-content: flex-end;
 }
 
 /* --- reader page --- */

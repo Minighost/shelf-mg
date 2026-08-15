@@ -103,13 +103,19 @@
         <nav class="pagination pagination-top">
             {% if total_pages > 1 %}
                 <div class="pagination-controls">
-                    {% if page > 1 %}
-                        <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
-                    {% endif %}
+                    <div class="pagination-side pagination-side-left">
+                        {% if page > 1 %}
+                            <a href="{{ url_for('library_list', page=1, **page_args) }}">&laquo; First</a>
+                            <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
+                        {% endif %}
+                    </div>
                     <span>Page {{ page }} of {{ total_pages }}</span>
-                    {% if page < total_pages %}
-                        <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
-                    {% endif %}
+                    <div class="pagination-side pagination-side-right">
+                        {% if page < total_pages %}
+                            <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
+                            <a href="{{ url_for('library_list', page=total_pages, **page_args) }}">Last &raquo;</a>
+                        {% endif %}
+                    </div>
                 </div>
             {% endif %}
             <a class="settings-link" href="{{ url_for('library_list', page=page, **toggle_view_args) }}">Toggle list display</a>
@@ -157,13 +163,21 @@
         </div>
         {% if total_pages > 1 %}
             <nav class="pagination">
-                {% if page > 1 %}
-                    <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
-                {% endif %}
-                <span>Page {{ page }} of {{ total_pages }}</span>
-                {% if page < total_pages %}
-                    <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
-                {% endif %}
+                <div class="pagination-controls">
+                    <div class="pagination-side pagination-side-left">
+                        {% if page > 1 %}
+                            <a href="{{ url_for('library_list', page=1, **page_args) }}">&laquo; First</a>
+                            <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
+                        {% endif %}
+                    </div>
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    <div class="pagination-side pagination-side-right">
+                        {% if page < total_pages %}
+                            <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
+                            <a href="{{ url_for('library_list', page=total_pages, **page_args) }}">Last &raquo;</a>
+                        {% endif %}
+                    </div>
+                </div>
             </nav>
         {% endif %}
     </body>
