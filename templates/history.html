@@ -28,10 +28,11 @@
         </script>
     </head>
     <body>
+        {% set back_qs = request.args.get('back', '') %}
         <div class="library-header">
             <div class="header-top">
                 <div class="header-left">
-                    <a href="{{ url_for('library_list') }}">&larr; Back to library</a>
+                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
@@ -43,11 +44,11 @@
         {% if total_pages > 1 %}
             <nav class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('history_page', page=page - 1) }}">&larr; Previous</a>
+                    <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
                 {% endif %}
                 <span>Page {{ page }} of {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('history_page', page=page + 1) }}">Next &rarr;</a>
+                    <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
                 {% endif %}
             </nav>
         {% endif %}
@@ -77,11 +78,11 @@
         {% if total_pages > 1 %}
             <nav class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('history_page', page=page - 1) }}">&larr; Previous</a>
+                    <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
                 {% endif %}
                 <span>Page {{ page }} of {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('history_page', page=page + 1) }}">Next &rarr;</a>
+                    <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
                 {% endif %}
             </nav>
         {% endif %}

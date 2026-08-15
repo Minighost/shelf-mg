@@ -315,6 +315,75 @@ button::-moz-focus-inner {
     margin: 0 auto;
 }
 
+html.view-grid .book-list {
+    display: none;
+}
+
+.book-grid {
+    display: none;
+}
+
+html.view-grid .book-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+}
+
+.book-card-info {
+    margin-top: 0.5rem;
+}
+
+.book-cover-wrap {
+    position: relative;
+}
+
+.book-cover {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    display: block;
+}
+
+.book-cover-placeholder {
+    display: none;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 0.85em;
+    text-align: center;
+}
+
+.book-cover-placeholder.visible {
+    display: flex;
+}
+
+.book-card-title {
+    display: block;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.book-card-title:hover {
+    text-decoration: underline;
+}
+
+.book-card-author {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    margin: 0.2rem 0 0 0;
+}
+
 .book-entry {
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 0;

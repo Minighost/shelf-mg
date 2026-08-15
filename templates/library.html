@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"
+      class="view-{{ view }}"
       data-theme="{{ settings.theme }}"
       style="--reader-font-family: {{ settings.font_family_css }};
              --reader-font-size-base: {{ settings.font_size }}rem;
@@ -34,8 +35,9 @@
             <div class="header-top">
                 <div class="header-left"></div>
                 <div class="header-right">
+                    <a class="settings-link" href="{{ url_for('library_list', page=page, **toggle_view_args) }}">Toggle list display</a>
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
-                    <a class="settings-link" href="{{ url_for('history_page') }}">History</a>
+                    <a class="settings-link" href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
@@ -61,7 +63,7 @@
                        value="{{ query }}"
                        placeholder="Search title, author, or tag">
                 <button type="submit">Search</button>
-                <a href="{{ url_for('library_list') }}">Clear</a>
+                <a href="{{ url_for('library_list', **({'view': view} if view != 'list' else {})) }}">Clear</a>
             </div>
             {% if filter_fields %}
                 <div class="filter-bar">
@@ -128,6 +130,26 @@
                             </a>
                         </p>
                     {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="book-grid">
+            {% for book in books %}
+                <div class="book-card">
+                    <div class="book-cover-wrap">
+                        <img class="book-cover"
+                             src="{{ url_for('inspect_cover', book_id=book.id) }}"
+                             alt="Cover for {{ book.title }}"
+                             loading="lazy"
+                             onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
+                        <div class="book-cover-placeholder">No cover</div>
+                    </div>
+                    <div class="book-card-info">
+                        <a class="book-card-title"
+                           href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
+                        <a class="inspect-button" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
+                        <p class="book-card-author">{{ book.authors | join(", ") }}</p>
+                    </div>
                 </div>
             {% endfor %}
         </div>

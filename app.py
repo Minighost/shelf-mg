@@ -206,6 +206,9 @@ def library_list():
     page = request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
+    view = request.args.get("view", "list")
+    if view not in ("list", "grid"):
+        view = "list"
 
     filter_fields = _enabled_filter_fields()
     selected = {}
@@ -244,10 +247,18 @@ def library_list():
     recent = _build_history_entries(get_recent_positions(DB_PATH, recent_limit))
 
     # Active filter/query params, reusable for building pagination links that
-    # preserve the current search+filter state.
+    # preserve the current search+filter+view state.
     page_args = {"q": query} if query else {}
     for key, values in selected.items():
         page_args[key] = values
+    if view != "list":
+        page_args["view"] = view
+
+    # Same as page_args but with the view flipped, for the display-toggle link.
+    toggle_view = "grid" if view == "list" else "list"
+    toggle_view_args = {k: v for k, v in page_args.items() if k != "view"}
+    if toggle_view != "list":
+        toggle_view_args["view"] = toggle_view
 
     return render_template(
         "library.html",
@@ -261,6 +272,8 @@ def library_list():
         filter_options=filter_options,
         selected=selected,
         page_args=page_args,
+        view=view,
+        toggle_view_args=toggle_view_args,
         total_matches=len(all_books),
         total_library=total_library,
     )
