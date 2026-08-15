@@ -180,7 +180,9 @@ def save_settings(
     content_max_width_pct = max(20, min(80, content_max_width_pct))
 
     recent_list_limit = (
-        recent_list_limit if recent_list_limit is not None else existing.recent_list_limit
+        recent_list_limit
+        if recent_list_limit is not None
+        else existing.recent_list_limit
     )
     recent_list_limit = max(1, min(20, int(recent_list_limit)))
 

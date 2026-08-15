@@ -355,7 +355,9 @@ def position_api(book_id):
         return jsonify({"error": "chapter_index is required"}), 400
 
     saved = save_position(DB_PATH, book_id, int(chapter_index))
-    return jsonify({"chapter_index": saved.chapter_index, "updated_at": saved.updated_at})
+    return jsonify(
+        {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
+    )
 
 
 @app.errorhandler(404)

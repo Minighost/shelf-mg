@@ -15,9 +15,7 @@
         <meta charset="utf-8">
         <title>{{ chapter_title }}</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <style>
-            body { padding: 0; }
-        </style>
+        <style>body { padding: 0; }</style>
         <style>{{ css | safe }}</style>
         {% if settings.override_epub_font %}
             <style>

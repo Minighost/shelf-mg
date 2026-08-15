@@ -47,12 +47,17 @@ def get_recent_positions(db_path: str, limit: int = 5) -> list[tuple[int, Positi
     ).fetchall()
     conn.close()
     return [
-        (row["book_id"], Position(chapter_index=row["chapter_index"], updated_at=row["updated_at"]))
+        (
+            row["book_id"],
+            Position(chapter_index=row["chapter_index"], updated_at=row["updated_at"]),
+        )
         for row in rows
     ]
 
 
-def get_positions_page(db_path: str, limit: int, offset: int) -> list[tuple[int, Position]]:
+def get_positions_page(
+    db_path: str, limit: int, offset: int
+) -> list[tuple[int, Position]]:
     """Return one page of (book_id, Position) pairs, most-recently-updated first."""
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -63,7 +68,10 @@ def get_positions_page(db_path: str, limit: int, offset: int) -> list[tuple[int,
     ).fetchall()
     conn.close()
     return [
-        (row["book_id"], Position(chapter_index=row["chapter_index"], updated_at=row["updated_at"]))
+        (
+            row["book_id"],
+            Position(chapter_index=row["chapter_index"], updated_at=row["updated_at"]),
+        )
         for row in rows
     ]
 
