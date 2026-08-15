@@ -18,6 +18,14 @@
         <title>shelf-mg</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
+        <script>
+            // If this page is restored from bfcache (e.g. via the back
+            // button), its "Recently read"/"Continue reading" data may be
+            // stale — force a fresh request so it reflects the latest saves.
+            window.addEventListener("pageshow", (event) => {
+                if (event.persisted) window.location.reload();
+            });
+        </script>
     </head>
     <body>
         <div class="library-header">
@@ -25,6 +33,7 @@
                 <div class="header-left"></div>
                 <div class="header-right">
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+                    <a class="settings-link" href="{{ url_for('history_page') }}">History</a>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>

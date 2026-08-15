@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size-base: {{ settings.font_size }}rem;
+             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
+             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
+             --surface-color: {{ settings.custom_surface_color }};
+             --text-color: {{ settings.custom_text_color }};
+             --text-muted: {{ settings.custom_text_muted }};
+             --border-color: {{ settings.custom_border_color }};
+             --accent-color: {{ settings.custom_accent_color }};
+             --accent-hover: {{ settings.custom_accent_hover }};
+             {% endif %}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>shelf-mg</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <script src="{{ url_for('static', filename='theme.js') }}"></script>
+        <script>
+            // If this page is restored from bfcache (e.g. via the back
+            // button), its history data may be stale — force a fresh
+            // request so it reflects the latest saves.
+            window.addEventListener("pageshow", (event) => {
+                if (event.persisted) window.location.reload();
+            });
+        </script>
+    </head>
+    <body>
+        <div class="library-header">
+            <div class="header-top">
+                <div class="header-left">
+                    <a class="settings-link" href="{{ url_for('library_list') }}">&larr; Library</a>
+                </div>
+                <div class="header-right">
+                    <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+                    <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+                </div>
+            </div>
+            <h1 class="library-title header-title">Reading history</h1>
+        </div>
+        {% if total_pages > 1 %}
+            <nav class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('history_page', page=page - 1) }}">&larr; Previous</a>
+                {% endif %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('history_page', page=page + 1) }}">Next &rarr;</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+        {% if entries %}
+            <div class="book-list">
+                {% for item in entries %}
+                    <div class="book-entry">
+                        <h2>
+                            <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}">{{ item.book.title }}</a>
+                        </h2>
+                        <p class="book-meta">by {{ item.book.authors | join(", ") }}</p>
+                        <p class="book-meta book-tags">Tags: {{ item.book.tags | join(", ") }}</p>
+                        <div class="book-summary">{{ item.book.summary_html | safe }}</div>
+                        <p>
+                            <a class="continue-link" href="/read/{{ item.book.id }}/{{ item.chapter_index }}">
+                                Continue reading (Chapter {{ item.chapter_index + 1 }}: {{ item.chapter_title }})
+                            </a>
+                        </p>
+                        <p class="book-meta recent-updated">Last read: {{ item.updated_at }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="book-meta">No reading history yet.</p>
+        {% endif %}
+        {% if total_pages > 1 %}
+            <nav class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('history_page', page=page - 1) }}">&larr; Previous</a>
+                {% endif %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('history_page', page=page + 1) }}">Next &rarr;</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </body>
+</html>

@@ -52,6 +52,30 @@ def get_recent_positions(db_path: str, limit: int = 5) -> list[tuple[int, Positi
     ]
 
 
+def get_positions_page(db_path: str, limit: int, offset: int) -> list[tuple[int, Position]]:
+    """Return one page of (book_id, Position) pairs, most-recently-updated first."""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT book_id, chapter_index, updated_at FROM positions "
+        "ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+        (limit, offset),
+    ).fetchall()
+    conn.close()
+    return [
+        (row["book_id"], Position(chapter_index=row["chapter_index"], updated_at=row["updated_at"]))
+        for row in rows
+    ]
+
+
+def count_positions(db_path: str) -> int:
+    """Return the total number of books with a saved reading position."""
+    conn = sqlite3.connect(db_path)
+    count = conn.execute("SELECT COUNT(*) FROM positions").fetchone()[0]
+    conn.close()
+    return count
+
+
 def reset_all_positions(db_path: str) -> None:
     """Reset every book's saved chapter back to the first chapter, keeping the row
     (and its place in the "recently read" list) intact. Irreversible."""

@@ -25,7 +25,9 @@ from epub_parser import (
 from positions import (
     init_db as init_positions_db,
     clear_all_positions,
+    count_positions,
     get_position,
+    get_positions_page,
     get_recent_positions,
     reset_all_positions,
     save_position,
@@ -98,6 +100,30 @@ def _book_matches(book, query):
     return False
 
 
+def _build_history_entries(rows):
+    """Turn (book_id, Position) pairs into display dicts, resolving chapter
+    titles and skipping books/chapters that no longer exist."""
+    entries = []
+    for book_id, pos in rows:
+        book = _get_calibre_book(book_id)
+        if book is None:
+            continue
+        try:
+            epub_book = parse_book(book.epub_path)
+            chapter_title = epub_book.chapters[pos.chapter_index].title
+        except (IndexError, OSError):
+            continue
+        entries.append(
+            {
+                "book": book,
+                "chapter_index": pos.chapter_index,
+                "chapter_title": chapter_title,
+                "updated_at": pos.updated_at,
+            }
+        )
+    return entries
+
+
 @app.route("/")
 def library_list():
     query = request.args.get("q", "").strip()
@@ -119,24 +145,7 @@ def library_list():
     positions = {k: v for k, v in positions.items() if v is not None}
 
     recent_limit = get_settings(DB_PATH).recent_list_limit
-    recent = []
-    for recent_book_id, pos in get_recent_positions(DB_PATH, recent_limit):
-        recent_book = _get_calibre_book(recent_book_id)
-        if recent_book is None:
-            continue
-        try:
-            recent_epub = parse_book(recent_book.epub_path)
-            chapter_title = recent_epub.chapters[pos.chapter_index].title
-        except (IndexError, OSError):
-            continue
-        recent.append(
-            {
-                "book": recent_book,
-                "chapter_index": pos.chapter_index,
-                "chapter_title": chapter_title,
-                "updated_at": pos.updated_at,
-            }
-        )
+    recent = _build_history_entries(get_recent_positions(DB_PATH, recent_limit))
 
     return render_template(
         "library.html",
@@ -146,6 +155,28 @@ def library_list():
         page=page,
         total_pages=total_pages,
         query=query,
+    )
+
+
+@app.route("/history")
+def history_page():
+    page = request.args.get("page", 1, type=int)
+    if page < 1:
+        page = 1
+
+    total = count_positions(DB_PATH)
+    total_pages = max(1, (total + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
+    page = min(page, total_pages)
+
+    offset = (page - 1) * BOOKS_PER_PAGE
+    rows = get_positions_page(DB_PATH, BOOKS_PER_PAGE, offset)
+    entries = _build_history_entries(rows)
+
+    return render_template(
+        "history.html",
+        entries=entries,
+        page=page,
+        total_pages=total_pages,
     )
 
 

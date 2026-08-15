@@ -214,7 +214,10 @@
                 goToChapter(parseInt(target, 10), `/read/${bookId}/${target}`);
             });
 
-            window.addEventListener("beforeunload", () => {
+            // pagehide (not beforeunload) is what reliably fires when the
+            // browser navigates away via bfcache-eligible paths like the
+            // back/forward buttons — beforeunload is often skipped there.
+            window.addEventListener("pagehide", () => {
                 if (navigating) return;
                 saveBeacon(chapterIndex);
             });
