@@ -1,3 +1,4 @@
+import os
 import zipfile
 from xml.etree import ElementTree as ET
 from dataclasses import dataclass
@@ -223,3 +224,69 @@ def get_stylesheets(epub_path: str, book: Book) -> str:
             except KeyError:
                 continue  # manifest lists it but it's missing from the zip — skip, don't crash
         return "\n".join(parts)
+
+
+def find_cover_image(epub_path: str) -> str | None:
+    """
+    Calibre stores a book's cover as cover.jpg beside the EPUB file in the
+    book's own library folder (not inside the EPUB zip itself) — this is a
+    Calibre library-layout convention, not an EPUB-format one.
+    """
+    cover_path = os.path.join(os.path.dirname(epub_path), "cover.jpg")
+    return cover_path if os.path.isfile(cover_path) else None
+
+
+@dataclass
+class EpubStats:
+    file_size_bytes: int
+    epub_version: str  # "EPUB 3" or "EPUB 2"
+    spine_item_count: int
+    image_count: int
+    css_count: int
+    manifest_item_count: int
+
+
+def get_epub_stats(epub_path: str, book: Book) -> EpubStats:
+    """
+    Technical/file details for the inspection page. Re-reads the manifest
+    directly rather than having parse_book() expose it, to keep parse_book's
+    return shape unchanged for the routes that already depend on it.
+    """
+    file_size_bytes = os.path.getsize(epub_path)
+
+    with zipfile.ZipFile(epub_path) as zf:
+        opf_xml = ET.fromstring(zf.read(book.opf_path))
+
+        manifest_items = opf_xml.findall(".//opf:manifest/opf:item", NS)
+        manifest = {item.attrib["id"]: item.attrib for item in manifest_items}
+
+        spine_ids = [
+            itemref.attrib["idref"]
+            for itemref in opf_xml.findall(".//opf:spine/opf:itemref", NS)
+        ]
+
+        # Same detection order as _parse_nav(): an EPUB3 nav document
+        # (properties="nav") takes precedence; a toc.ncx item means EPUB2.
+        # Kept in sync with _parse_nav so the version label always matches
+        # which nav source parse_book() actually used for the chapter list.
+        has_nav = opf_xml.find(".//opf:manifest/opf:item[@properties='nav']", NS) is not None
+        has_ncx = opf_xml.find(".//opf:manifest/opf:item[@id='ncx']", NS) is not None
+        epub_version = "EPUB 3" if has_nav else "EPUB 2" if has_ncx else "Unknown"
+
+        image_count = sum(
+            1 for attrib in manifest.values()
+            if attrib.get("media-type", "").startswith("image/")
+        )
+        css_count = sum(
+            1 for attrib in manifest.values()
+            if attrib.get("media-type") == "text/css"
+        )
+
+    return EpubStats(
+        file_size_bytes=file_size_bytes,
+        epub_version=epub_version,
+        spine_item_count=len(spine_ids),
+        image_count=image_count,
+        css_count=css_count,
+        manifest_item_count=len(manifest),
+    )

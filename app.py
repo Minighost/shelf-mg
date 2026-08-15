@@ -2,6 +2,7 @@ import mimetypes
 import os
 import re
 import zipfile
+from xml.etree import ElementTree as ET
 
 from flask import (
     Flask,
@@ -11,16 +12,19 @@ from flask import (
     Response,
     abort,
     redirect,
+    send_file,
     url_for,
 )
 
-from calibre_reader import list_books, get_custom_columns
+from calibre_reader import list_books, get_custom_columns, get_book_details
 from epub_parser import (
     parse_book,
     get_chapter_content,
     get_stylesheets,
     get_chapter_dir,
     resolve_relative_path,
+    find_cover_image,
+    get_epub_stats,
 )
 from positions import (
     init_db as init_positions_db,
@@ -313,6 +317,74 @@ def read_chapter(book_id, chapter_index):
         next_index=next_index,
         known_updated_at=known_updated_at,
     )
+
+
+@app.route("/inspect/<int:book_id>")
+def inspect_book(book_id):
+    calibre_book = _get_calibre_book(book_id)
+    if calibre_book is None:
+        abort(404, description="That book doesn't exist in your library.")
+
+    details = get_book_details(LIBRARY_PATH, book_id)
+    if details is None:
+        abort(404, description="That book doesn't exist in your library.")
+
+    # The epub itself might be corrupt/missing even though Calibre has a
+    # record of it — this page should still render the Calibre-side info
+    # rather than 500ing, so chapter/technical data degrades gracefully.
+    try:
+        epub_book = parse_book(calibre_book.epub_path)
+        stats = get_epub_stats(calibre_book.epub_path, epub_book)
+        parse_error = None
+    except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
+        epub_book, stats, parse_error = None, None, str(e)
+
+    has_cover = find_cover_image(calibre_book.epub_path) is not None
+
+    position = get_position(DB_PATH, book_id)
+    progress = None
+    if position is not None and epub_book is not None and epub_book.chapters:
+        total = len(epub_book.chapters)
+        current_title = (
+            epub_book.chapters[position.chapter_index].title
+            if 0 <= position.chapter_index < total
+            else None
+        )
+        progress = {
+            "chapter_index": position.chapter_index,
+            "chapter_title": current_title,
+            "percent": round((position.chapter_index / total) * 100),
+            "updated_at": position.updated_at,
+        }
+
+    file_size = None
+    if stats is not None:
+        file_size = f"{stats.file_size_bytes / 1024 / 1024:.1f} MB"
+
+    return render_template(
+        "inspect.html",
+        book=calibre_book,
+        details=details,
+        chapters=(epub_book.chapters if epub_book else []),
+        stats=stats,
+        file_size=file_size,
+        parse_error=parse_error,
+        has_cover=has_cover,
+        progress=progress,
+    )
+
+
+@app.route("/inspect/<int:book_id>/cover")
+def inspect_cover(book_id):
+    calibre_book = _get_calibre_book(book_id)
+    if calibre_book is None:
+        abort(404, description="That book doesn't exist in your library.")
+
+    cover_path = find_cover_image(calibre_book.epub_path)
+    if cover_path is None:
+        abort(404, description="No cover image for that book.")
+
+    return send_file(cover_path, mimetype="image/jpeg")
 
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/frame")

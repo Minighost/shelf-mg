@@ -189,3 +189,55 @@ def list_books(library_path: str) -> list[Book]:
 
     conn.close()
     return books
+
+
+@dataclass
+class BookDetails:
+    rating: float | None  # 0-5 stars
+    date_added: str | None  # books.timestamp
+    pubdate: str | None  # books.pubdate
+    identifiers: dict[str, str]  # free-form Calibre keys, e.g. isbn/amazon/url/goodreads
+
+
+def get_book_details(library_path: str, book_id: int) -> BookDetails | None:
+    """
+    Extra Calibre metadata not needed by the main library list (rating, dates,
+    identifiers) — queried separately, on demand, so the per-book cost here
+    doesn't get paid on every `/` request by list_books().
+    """
+    db_path = os.path.join(library_path, "metadata.db")
+    conn = _connect_readonly(db_path)
+    conn.row_factory = sqlite3.Row
+
+    book_row = conn.execute(
+        "SELECT timestamp, pubdate FROM books WHERE id = ?", (book_id,)
+    ).fetchone()
+    if book_row is None:
+        conn.close()
+        return None
+
+    # Calibre stores rating as 0-10 (2x the star count) to allow half-stars.
+    rating_row = conn.execute(
+        """
+        SELECT r.rating FROM ratings r
+        JOIN books_ratings_link brl ON brl.rating = r.id
+        WHERE brl.book = ?
+        """,
+        (book_id,),
+    ).fetchone()
+    rating = rating_row["rating"] / 2 if rating_row else None
+
+    identifiers = {
+        r["type"]: r["val"]
+        for r in conn.execute(
+            "SELECT type, val FROM identifiers WHERE book = ?", (book_id,)
+        )
+    }
+
+    conn.close()
+    return BookDetails(
+        rating=rating,
+        date_added=book_row["timestamp"],
+        pubdate=book_row["pubdate"],
+        identifiers=identifiers,
+    )

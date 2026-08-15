@@ -93,6 +93,28 @@ a:hover {
     text-decoration: none;
 }
 
+.inspect-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4em;
+    height: 1.4em;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: var(--text-muted);
+    text-decoration: none;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+}
+
+.inspect-button:hover {
+    color: var(--text-color);
+    border-color: var(--accent-color);
+    text-decoration: none;
+}
+
 .theme-toggle,
 .settings-save {
     appearance: none;
@@ -768,6 +790,55 @@ button::-moz-focus-inner {
 
 .error-message {
     margin-bottom: 1.5rem;
+}
+
+/* --- inspect page --- */
+
+.inspect-top {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    max-width: var(--content-max-width);
+    margin: 0 auto 1.5rem auto;
+}
+
+.inspect-cover {
+    width: 160px;
+    height: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.inspect-cover-placeholder {
+    width: 160px;
+    height: 220px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+.inspect-basic-meta {
+    flex: 1;
+}
+
+.inspect-section {
+    max-width: var(--content-max-width);
+    margin: 0 auto 1.5rem auto;
+}
+
+.inspect-section h2 {
+    font-size: 1.1em;
+    margin-bottom: 0.5rem;
+}
+
+.inspect-toc {
+    padding-left: 1.5rem;
 }
 
 /* --- device specific --- */
