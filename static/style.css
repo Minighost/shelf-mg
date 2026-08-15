@@ -160,9 +160,15 @@ button::-moz-focus-inner {
     font-size: 0.95em;
 }
 
+.search-form button,
+.search-form a {
+    min-width: 5rem;
+    text-align: center;
+}
+
 .search-form button {
     background: var(--accent-color);
-    color: white;
+    color: var(--text-color);
     border: none;
     padding: 0.6rem 1.2rem;
     border-radius: 4px;
@@ -175,8 +181,18 @@ button::-moz-focus-inner {
 }
 
 .search-form a {
-    font-size: 0.9em;
-    color: var(--text-muted);
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid;
+    border-color: var(--accent-color);
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.search-form a:hover {
+    filter: brightness(0.9);
 }
 
 .search-form-wrapper {

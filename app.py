@@ -225,6 +225,7 @@ def library_list():
     all_books = [
         b for b in all_books if _book_matches_filters(b, filter_fields, selected)
     ]
+    all_books.sort(key=lambda b: b.title.lower())
 
     total_pages = max(1, (len(all_books) + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
     page = min(page, total_pages)
