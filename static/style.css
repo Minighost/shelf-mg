@@ -795,7 +795,13 @@ html.view-grid .book-grid {
     margin-bottom: 1.2rem;
     color: var(--text-color);
     font-family: var(--reader-font-family);
-    font-size: var(--reader-font-size-base, 1.1rem);
+    /* Locally-scoped copy of :root's clamp formula so this box scales
+       the same way body text does, using its own --reader-font-size-base
+       override rather than the root one. */
+    --reader-font-size: clamp(calc(var(--reader-font-size-base, 1.1rem) * 0.5),
+            calc(var(--reader-font-size-base, 1.1rem) * 0.3 + 2vw),
+            var(--reader-font-size-base, 1.1rem));
+    font-size: var(--reader-font-size);
 }
 
 .settings-preview .preview-body {
@@ -972,6 +978,10 @@ html.view-grid .book-grid {
 
     :root {
         --content-max-width: clamp(700px, var(--content-max-width-vw, 40vw), 1800px);
+        --reader-font-size: var(--reader-font-size-base, 1.1rem);
+    }
+
+    .settings-preview {
         --reader-font-size: var(--reader-font-size-base, 1.1rem);
     }
 
