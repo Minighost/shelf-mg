@@ -55,11 +55,29 @@ def _opf_dir(opf_path: str) -> str:
     return ""
 
 
+# Module-level cache: epub_path -> (mtime_at_cache_time, Book). One entry
+# per book ever opened this session — a Book here is just chapter titles/
+# hrefs, not chapter content, so caching every book in the library
+# simultaneously costs very little memory. Invalidated per-file: if a
+# specific EPUB is replaced on disk, only that book's cache entry goes
+# stale, not the whole cache.
+_parse_book_cache: dict[str, tuple[float, "Book"]] = {}
+
+
 def parse_book(epub_path: str) -> Book:
     """
     Parse an EPUB file and return its spine (chapter order) plus titles.
     Does NOT extract chapter body content yet — see get_chapter_content().
+
+    Cached per epub_path, invalidated automatically whenever that specific
+    file's mtime changes.
     """
+    current_mtime = os.path.getmtime(epub_path)
+
+    cached = _parse_book_cache.get(epub_path)
+    if cached is not None and cached[0] == current_mtime:
+        return cached[1]
+
     with zipfile.ZipFile(epub_path) as zf:
         opf_path = _find_opf_path(zf)
         opf_dir = _opf_dir(opf_path)
@@ -111,7 +129,10 @@ def parse_book(epub_path: str) -> Book:
         # chapter list here is exactly what the EPUB's own nav declares.
         # If you want AO3-style folded display, that's a display-layer
         # decision to make later, not something to bake in here.
-        return Book(title=title, opf_path=opf_path, opf_dir=opf_dir, chapters=chapters)
+        book = Book(title=title, opf_path=opf_path, opf_dir=opf_dir, chapters=chapters)
+
+    _parse_book_cache[epub_path] = (current_mtime, book)
+    return book
 
 
 def _parse_nav(zf: zipfile.ZipFile, opf_dir: str, opf_xml) -> list[tuple[str, str]]:
@@ -226,16 +247,6 @@ def get_stylesheets(epub_path: str, book: Book) -> str:
         return "\n".join(parts)
 
 
-def find_cover_image(epub_path: str) -> str | None:
-    """
-    Calibre stores a book's cover as cover.jpg beside the EPUB file in the
-    book's own library folder (not inside the EPUB zip itself) — this is a
-    Calibre library-layout convention, not an EPUB-format one.
-    """
-    cover_path = os.path.join(os.path.dirname(epub_path), "cover.jpg")
-    return cover_path if os.path.isfile(cover_path) else None
-
-
 @dataclass
 class EpubStats:
     file_size_bytes: int
@@ -269,17 +280,19 @@ def get_epub_stats(epub_path: str, book: Book) -> EpubStats:
         # (properties="nav") takes precedence; a toc.ncx item means EPUB2.
         # Kept in sync with _parse_nav so the version label always matches
         # which nav source parse_book() actually used for the chapter list.
-        has_nav = opf_xml.find(".//opf:manifest/opf:item[@properties='nav']", NS) is not None
+        has_nav = (
+            opf_xml.find(".//opf:manifest/opf:item[@properties='nav']", NS) is not None
+        )
         has_ncx = opf_xml.find(".//opf:manifest/opf:item[@id='ncx']", NS) is not None
         epub_version = "EPUB 3" if has_nav else "EPUB 2" if has_ncx else "Unknown"
 
         image_count = sum(
-            1 for attrib in manifest.values()
+            1
+            for attrib in manifest.values()
             if attrib.get("media-type", "").startswith("image/")
         )
         css_count = sum(
-            1 for attrib in manifest.values()
-            if attrib.get("media-type") == "text/css"
+            1 for attrib in manifest.values() if attrib.get("media-type") == "text/css"
         )
 
     return EpubStats(

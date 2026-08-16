@@ -3,6 +3,7 @@ import os
 import re
 import zipfile
 from xml.etree import ElementTree as ET
+from werkzeug.http import http_date
 
 from flask import (
     Flask,
@@ -22,6 +23,8 @@ from calibre_reader import (
     get_book_epub_path,
     get_custom_columns,
     get_book_details,
+    find_cover_image,
+    get_cover_thumbnail,
 )
 from epub_parser import (
     parse_book,
@@ -29,7 +32,6 @@ from epub_parser import (
     get_stylesheets,
     get_chapter_dir,
     resolve_relative_path,
-    find_cover_image,
     get_epub_stats,
 )
 from positions import (
@@ -402,7 +404,16 @@ def inspect_cover(book_id):
     if cover_path is None:
         abort(404, description="No cover image for that book.")
 
-    return send_file(cover_path, mimetype="image/jpeg")
+    thumbnail_bytes = get_cover_thumbnail(cover_path)
+
+    return Response(
+        thumbnail_bytes,
+        mimetype="image/jpeg",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Last-Modified": http_date(os.path.getmtime(cover_path)),
+        },
+    )
 
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/frame")

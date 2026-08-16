@@ -1,11 +1,16 @@
 import os
 import sqlite3
 from dataclasses import dataclass
+from io import BytesIO
+
+from PIL import Image
 
 # Custom-column datatypes with a bounded, listable set of values — the only
 # ones that make sense as a filter dropdown/checklist. Skips comments
 # (long-form), int/float/datetime (continuous), and composite (computed).
 FILTERABLE_CUSTOM_DATATYPES = {"text", "enumeration", "series", "rating", "bool"}
+
+COVER_THUMBNAIL_MAX_SIZE = (160, 240)  # matches the inspect page's 160px display width
 
 
 @dataclass
@@ -32,13 +37,29 @@ def _connect_readonly(db_path: str) -> sqlite3.Connection:
     return sqlite3.connect(uri, uri=True)
 
 
+# Module-level cache: library_path -> (mtime_at_cache_time, columns_list).
+# Separate from _list_books_cache since callers like _all_filter_fields()
+# only need columns, not the full book list — no reason to force a full
+# library scan just to answer "what custom columns exist."
+_custom_columns_cache: dict[str, tuple[float, list[dict]]] = {}
+
+
 def get_custom_columns(library_path: str) -> list[dict]:
     """
     Discover this library's user-defined custom columns, keeping only the
     datatypes with a bounded, listable set of values (see
     FILTERABLE_CUSTOM_DATATYPES) — the ones that make sense as a filter.
+
+    Cached per library_path, invalidated automatically whenever
+    metadata.db's mtime changes.
     """
     db_path = os.path.join(library_path, "metadata.db")
+    current_mtime = os.path.getmtime(db_path)
+
+    cached = _custom_columns_cache.get(library_path)
+    if cached is not None and cached[0] == current_mtime:
+        return cached[1]
+
     conn = _connect_readonly(db_path)
     conn.row_factory = sqlite3.Row
 
@@ -59,6 +80,8 @@ def get_custom_columns(library_path: str) -> list[dict]:
     ]
 
     conn.close()
+
+    _custom_columns_cache[library_path] = (current_mtime, columns)
     return columns
 
 
@@ -186,12 +209,31 @@ def _build_book(
     )
 
 
+# Module-level cache: library_path -> (mtime_at_cache_time, books_list).
+# Invalidated by comparing metadata.db's current mtime against what's
+# stored — if the file hasn't changed since we last scanned it, the
+# scan result is still valid, so skip re-querying Calibre entirely.
+_list_books_cache: dict[str, tuple[float, list[Book]]] = {}
+
+
 def list_books(library_path: str) -> list[Book]:
     """
     Return every book in the Calibre library at library_path, with tags,
     summary, and the resolved on-disk path to its EPUB file.
+
+    Cached per library_path, invalidated automatically whenever
+    metadata.db's mtime changes (i.e. whenever Calibre itself — or
+    anything else — modifies the library). Safe to call this on every
+    request; repeated calls with no underlying change are O(1) after
+    the first.
     """
     db_path = os.path.join(library_path, "metadata.db")
+    current_mtime = os.path.getmtime(db_path)
+
+    cached = _list_books_cache.get(library_path)
+    if cached is not None and cached[0] == current_mtime:
+        return cached[1]
+
     conn = _connect_readonly(db_path)
     conn.row_factory = sqlite3.Row
 
@@ -212,6 +254,8 @@ def list_books(library_path: str) -> list[Book]:
             books.append(book)
 
     conn.close()
+
+    _list_books_cache[library_path] = (current_mtime, books)
     return books
 
 
@@ -324,3 +368,50 @@ def get_book_details(library_path: str, book_id: int) -> BookDetails | None:
         pubdate=book_row["pubdate"],
         identifiers=identifiers,
     )
+
+
+def find_cover_image(epub_path: str) -> str | None:
+    """
+    Calibre stores a book's cover as cover.jpg beside the EPUB file in the
+    book's own library folder (not inside the EPUB zip itself) — this is a
+    Calibre library-layout convention, not an EPUB-format one. Moved here
+    from epub_parser.py for that reason.
+    """
+    cover_path = os.path.join(os.path.dirname(epub_path), "cover.jpg")
+    return cover_path if os.path.isfile(cover_path) else None
+
+
+# Module-level cache: cover_path -> (mtime_at_cache_time, resized_jpeg_bytes).
+_cover_thumbnail_cache: dict[str, tuple[float, bytes]] = {}
+
+
+def get_cover_thumbnail(cover_path: str) -> bytes:
+    """
+    Return a resized (COVER_THUMBNAIL_MAX_SIZE), JPEG-encoded thumbnail of
+    a cover image, generated on first request and cached thereafter.
+
+    Cached per cover_path, invalidated automatically whenever that specific
+    file's mtime changes (e.g. a replaced cover.jpg). In-memory only —
+    doesn't persist across app restarts.
+    """
+    current_mtime = os.path.getmtime(cover_path)
+
+    cached = _cover_thumbnail_cache.get(cover_path)
+    if cached is not None and cached[0] == current_mtime:
+        return cached[1]
+
+    with Image.open(cover_path) as img:
+        # Hint the JPEG decoder to decode at a reduced resolution directly,
+        # instead of fully decoding a multi-megapixel source image just to
+        # immediately throw most of that resolution away. Cheap no-op for
+        # already-small sources; real speedup for large Amazon/Goodreads-
+        # sourced covers, which can be several MB / 2000px+ wide.
+        img.draft("RGB", COVER_THUMBNAIL_MAX_SIZE)
+        img = img.convert("RGB")
+        img.thumbnail(COVER_THUMBNAIL_MAX_SIZE)
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        thumbnail_bytes = buffer.getvalue()
+
+    _cover_thumbnail_cache[cover_path] = (current_mtime, thumbnail_bytes)
+    return thumbnail_bytes
