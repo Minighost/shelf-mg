@@ -18,6 +18,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>shelf-mg</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        {% if page > 1 %}
+            <link rel="prefetch" href="{{ url_for('library_list', page=page - 1, **page_args) }}">
+        {% endif %}
+        {% if page < total_pages %}
+            <link rel="prefetch" href="{{ url_for('library_list', page=page + 1, **page_args) }}">
+        {% endif %}
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
         <script src="{{ url_for('static', filename='filter-search.js') }}"></script>
         <script>
