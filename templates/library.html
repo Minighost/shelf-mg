@@ -35,12 +35,35 @@
             <div class="header-top">
                 <div class="header-left"></div>
                 <div class="header-right">
+                    <form method="post" id="refresh-library-form" action="{{ url_for('refresh_library') }}"></form>
+                    <button type="button" class="theme-toggle" onclick="confirmRefreshLibrary()">Refresh library</button>
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
             <h1 class="library-title header-title">Library</h1>
         </div>
+        <dialog id="refresh-dialog" class="conflict-dialog">
+            <button type="button"
+                    id="refresh-dialog-x"
+                    class="conflict-dialog-x"
+                    aria-label="Close"
+                    onclick="document.getElementById('refresh-dialog').close()">&times;</button>
+            <p>Refresh all data from Calibre?<br>This may take a second.</p>
+            <div class="conflict-dialog-actions">
+                <button type="button"
+                        class="conflict-dialog-cancel"
+                        onclick="document.getElementById('refresh-dialog').close()">Cancel</button>
+                <button type="button"
+                        class="conflict-dialog-confirm"
+                        onclick="document.getElementById('refresh-library-form').submit()">Refresh</button>
+            </div>
+        </dialog>
+        <script>
+            function confirmRefreshLibrary() {
+                document.getElementById("refresh-dialog").showModal();
+            }
+        </script>
         {% if recent %}
             <div class="recent-list">
                 <div class="recent-header">

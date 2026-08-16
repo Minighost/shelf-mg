@@ -544,6 +544,13 @@ def position_api(book_id):
     )
 
 
+@app.route("/settings/refresh-library", methods=["POST"])
+def refresh_library():
+    calibre_reader.clear_cache()
+    epub_parser.clear_cache()
+    return flask.redirect(flask.url_for("library_list"))
+
+
 @app.errorhandler(404)
 def not_found(error):
     message = getattr(error, "description", None)

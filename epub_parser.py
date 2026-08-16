@@ -303,3 +303,10 @@ def get_epub_stats(epub_path: str, book: Book) -> EpubStats:
         css_count=css_count,
         manifest_item_count=len(manifest),
     )
+
+
+def clear_cache() -> None:
+    """Manually drop every cached parsed EPUB, regardless of mtime. See
+    calibre_reader.clear_cache() for why this exists alongside automatic
+    mtime invalidation."""
+    _parse_book_cache.clear()

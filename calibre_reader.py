@@ -415,3 +415,17 @@ def get_cover_thumbnail(cover_path: str) -> bytes:
 
     _cover_thumbnail_cache[cover_path] = (current_mtime, thumbnail_bytes)
     return thumbnail_bytes
+
+
+def clear_cache() -> None:
+    """
+    Manually drop every cached Calibre-derived value (book list, custom
+    columns, cover thumbnails) regardless of mtime. Normally unnecessary —
+    the mtime checks already catch real changes automatically — but useful
+    as an explicit "I just edited something in Calibre, refresh now" escape
+    hatch, and as a safety net in case a change doesn't bump mtime the way
+    it's expected to.
+    """
+    _list_books_cache.clear()
+    _custom_columns_cache.clear()
+    _cover_thumbnail_cache.clear()

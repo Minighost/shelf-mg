@@ -529,8 +529,8 @@ html.view-grid .book-grid {
 }
 
 .conflict-dialog {
-    max-width: 420px;
-    width: calc(100% - 2rem);
+    max-width: min(420px, calc(100% - 2rem));
+    width: fit-content;
     padding: 1.2rem;
     background: var(--surface-color);
     color: var(--text-color);
@@ -583,19 +583,19 @@ html.view-grid .book-grid {
     border-radius: 4px;
 }
 
-#conflict-dialog-cancel {
+.conflict-dialog-cancel {
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-color);
 }
 
-#conflict-dialog-confirm {
+.conflict-dialog-confirm {
     background: var(--accent-color);
     border: none;
     color: white;
 }
 
-#conflict-dialog-confirm:hover {
+.conflict-dialog-confirm:hover {
     background: var(--accent-hover);
 }
 
