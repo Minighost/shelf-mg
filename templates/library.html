@@ -36,7 +36,6 @@
                 <div class="header-left"></div>
                 <div class="header-right">
                     <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
-                    <a class="settings-link" href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
@@ -44,7 +43,10 @@
         </div>
         {% if recent %}
             <div class="recent-list">
-                <h2 class="recent-title">Recently read</h2>
+                <div class="recent-header">
+                    <h2 class="recent-title">Recently read</h2>
+                    <a class="settings-link" href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Full history</a>
+                </div>
                 {% for item in recent %}
                     <div class="recent-entry">
                         <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">

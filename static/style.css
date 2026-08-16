@@ -495,9 +495,17 @@ html.view-grid .book-grid {
     margin: 0 auto 1.5rem auto;
 }
 
+.recent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 0 0.5rem 0;
+}
+
 .recent-title {
     font-size: 1.1em;
-    margin: 0 0 0.5rem 0;
+    margin: 0;
     color: var(--text-muted);
 }
 
