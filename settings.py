@@ -6,6 +6,8 @@ DEFAULT_FONT_FAMILY = "serif"
 DEFAULT_FONT_SIZE = 1.1  # rem
 DEFAULT_CONTENT_MAX_WIDTH_PCT = 40  # % of viewport width, desktop only
 DEFAULT_RECENT_LIST_LIMIT = 5  # books shown in the library's "Recently read" list
+DEFAULT_LIBRARY_VIEW = "list"
+LIBRARY_VIEW_CHOICES = ["list", "grid", "card"]
 
 FONT_CHOICES = {
     "serif": "Georgia, 'Times New Roman', serif",
@@ -59,6 +61,7 @@ class Settings:
     reader_font_size: float
     content_max_width_pct: float
     recent_list_limit: int
+    library_view: str
     custom_bg_color: str
     custom_surface_color: str
     custom_text_color: str
@@ -90,6 +93,7 @@ def init_db(db_path: str) -> None:
         "content_max_width_pct",
         "recent_list_limit",
         "enabled_filters",
+        "library_view",
     ]
     for field in new_columns:
         try:
@@ -107,7 +111,7 @@ def get_settings(db_path: str) -> Settings:
     row = conn.execute(
         "SELECT theme, font_family_key, font_size, override_epub_font, "
         "reader_font_family_key, reader_font_size, content_max_width_pct, "
-        "recent_list_limit, enabled_filters, "
+        "recent_list_limit, enabled_filters, library_view, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -126,6 +130,7 @@ def get_settings(db_path: str) -> Settings:
             content_max_width_pct=DEFAULT_CONTENT_MAX_WIDTH_PCT,
             recent_list_limit=DEFAULT_RECENT_LIST_LIMIT,
             enabled_filters=DEFAULT_ENABLED_FILTERS,
+            library_view=DEFAULT_LIBRARY_VIEW,
             **DEFAULT_CUSTOM_COLORS,
         )
 
@@ -154,6 +159,7 @@ def get_settings(db_path: str) -> Settings:
         enabled_filters=row["enabled_filters"]
         if row["enabled_filters"] is not None
         else DEFAULT_ENABLED_FILTERS,
+        library_view=row["library_view"] or DEFAULT_LIBRARY_VIEW,
         **custom_colors,
     )
 
@@ -170,6 +176,7 @@ def save_settings(
     recent_list_limit: int | None = None,
     custom_colors: dict | None = None,
     enabled_filters: list[str] | None = None,
+    library_view: str | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
         raise ValueError(f"invalid theme: {theme}")
@@ -206,6 +213,10 @@ def save_settings(
     )
     recent_list_limit = max(1, min(20, int(recent_list_limit)))
 
+    library_view = library_view or existing.library_view
+    if library_view not in LIBRARY_VIEW_CHOICES:
+        raise ValueError(f"invalid library_view: {library_view}")
+
     if enabled_filters is None:
         resolved_enabled_filters = existing.enabled_filters
     else:
@@ -237,6 +248,7 @@ def save_settings(
         "content_max_width_pct",
         "recent_list_limit",
         "enabled_filters",
+        "library_view",
     ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
@@ -252,6 +264,7 @@ def save_settings(
         content_max_width_pct,
         recent_list_limit,
         resolved_enabled_filters,
+        library_view,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)

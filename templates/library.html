@@ -87,7 +87,7 @@
                        value="{{ query }}"
                        placeholder="Search title, author, or tag">
                 <button type="submit">Search</button>
-                <a href="{{ url_for('library_list', **({'view': view} if view != 'list' else {})) }}">Clear</a>
+                <a href="{{ url_for('library_list') }}">Clear</a>
             </div>
             {% if filter_fields %}
                 <div class="filter-bar">

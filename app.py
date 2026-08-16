@@ -172,9 +172,21 @@ def library_list():
     page = flask.request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
-    view = flask.request.args.get("view", "list")
-    if view not in ("list", "grid", "card"):
-        view = "list"
+
+    current_settings = settings.get_settings(DB_PATH)
+    view_param = flask.request.args.get("view")
+    if view_param in settings.LIBRARY_VIEW_CHOICES:
+        view = view_param
+        if view != current_settings.library_view:
+            settings.save_settings(
+                DB_PATH,
+                theme=current_settings.theme,
+                font_family_key=current_settings.font_family_key,
+                font_size=current_settings.font_size,
+                library_view=view,
+            )
+    else:
+        view = current_settings.library_view
 
     filter_fields = _enabled_filter_fields()
     selected = {}
@@ -211,7 +223,7 @@ def library_list():
     }
     book_positions = {k: v for k, v in book_positions.items() if v is not None}
 
-    recent_limit = settings.get_settings(DB_PATH).recent_list_limit
+    recent_limit = current_settings.recent_list_limit
     recent = _build_history_entries(
         positions.get_recent_positions(DB_PATH, recent_limit)
     )
@@ -221,17 +233,14 @@ def library_list():
     page_args = {"q": query} if query else {}
     for key, values in selected.items():
         page_args[key] = values
-    if view != "list":
-        page_args["view"] = view
 
     # Same as page_args but with the view fixed to each option, for the
     # view-switch links.
-    base_view_args = {k: v for k, v in page_args.items() if k != "view"}
+    base_view_args = dict(page_args)
     view_links = {}
     for v in ("list", "grid", "card"):
         args = dict(base_view_args)
-        if v != "list":
-            args["view"] = v
+        args["view"] = v
         view_links[v] = args
 
     return flask.render_template(
