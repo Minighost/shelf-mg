@@ -504,7 +504,7 @@ def settings_page():
         except ValueError as e:
             return str(e), 400
 
-        return redirect(url_for("settings_page"))
+        return redirect(url_for("library_list"))
 
     return render_template(
         "settings.html",
