@@ -135,6 +135,10 @@
                 return option ? option.textContent : `Chapter ${index + 1}`;
             }
 
+            function chapterLabel(index) {
+                return `Chapter ${index + 1}: "${chapterTitle(index)}"`;
+            }
+
             function savePosition(targetChapterIndex) {
                 return fetch(`/api/position/${bookId}`, {
                     method: "POST",
@@ -182,10 +186,10 @@
                 ) {
                     const isLeaving = targetIndex === chapterIndex;
                     const message = isLeaving
-                        ? `Reading progress was updated elsewhere (now at "${chapterTitle(current.chapter_index)}"). ` +
-                          `Save your current position ("${chapterTitle(targetIndex)}") anyway?`
-                        : `Reading progress was updated elsewhere (now at "${chapterTitle(current.chapter_index)}"). ` +
-                          `Overwrite it with "${chapterTitle(targetIndex)}"?`;
+                        ? `Reading progress was updated elsewhere (now at ${chapterLabel(current.chapter_index)}). ` +
+                          `Save your current position (${chapterLabel(targetIndex)}) anyway?`
+                        : `Reading progress was updated elsewhere (now at ${chapterLabel(current.chapter_index)}). ` +
+                          `Overwrite it with (${chapterLabel(targetIndex)})?`;
                     const cancelLabel = isLeaving
                         ? "Don't overwrite, just leave"
                         : "Don't overwrite, jump there";
