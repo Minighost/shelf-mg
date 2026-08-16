@@ -2,58 +2,17 @@ import mimetypes
 import os
 import re
 import zipfile
-from xml.etree import ElementTree as ET
-from werkzeug.http import http_date
+import xml.etree.ElementTree as ET
+import werkzeug.http
 
-from flask import (
-    Flask,
-    render_template,
-    request,
-    jsonify,
-    Response,
-    abort,
-    redirect,
-    send_file,
-    url_for,
-)
+import flask
 
-from calibre_reader import (
-    list_books,
-    get_book,
-    get_book_epub_path,
-    get_custom_columns,
-    get_book_details,
-    find_cover_image,
-    get_cover_thumbnail,
-)
-from epub_parser import (
-    parse_book,
-    get_chapter_content,
-    get_stylesheets,
-    get_chapter_dir,
-    resolve_relative_path,
-    get_epub_stats,
-)
-from positions import (
-    init_db as init_positions_db,
-    clear_all_positions,
-    count_positions,
-    get_position,
-    get_positions_page,
-    get_recent_positions,
-    reset_all_positions,
-    save_position,
-)
-from settings import (
-    init_db as init_settings_db,
-    get_settings,
-    save_settings,
-    FONT_CHOICES,
-    THEME_CHOICES,
-    CUSTOM_COLOR_FIELDS,
-)
+import calibre_reader
+import epub_parser
+import positions
+import settings
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 
 LIBRARY_PATH = os.environ.get("SHELF_MG_LIBRARY_PATH")
 if not LIBRARY_PATH:
@@ -63,8 +22,8 @@ if not LIBRARY_PATH:
     )
 
 DB_PATH = os.environ.get("SHELF_MG_DB_PATH", "shelf-mg.db")
-init_positions_db(DB_PATH)
-init_settings_db(DB_PATH)
+positions.init_db(DB_PATH)
+settings.init_db(DB_PATH)
 
 BOOKS_PER_PAGE = 20
 
@@ -77,11 +36,11 @@ def inject_settings():
     need to render correctly on every page, not just the ones a developer
     remembered to wire up.
     """
-    return {"settings": get_settings(DB_PATH)}
+    return {"settings": settings.get_settings(DB_PATH)}
 
 
 def _get_calibre_book(book_id):
-    return get_book(LIBRARY_PATH, book_id)
+    return calibre_reader.get_book(LIBRARY_PATH, book_id)
 
 
 def _rewrite_image_srcs(
@@ -93,7 +52,7 @@ def _rewrite_image_srcs(
         prefix, quote, src = match.group(1), match.group(2), match.group(3)
         if src.startswith(("http://", "https://", "data:")):
             return match.group(0)
-        resolved = resolve_relative_path(chapter_dir, src)
+        resolved = epub_parser.resolve_relative_path(chapter_dir, src)
         new_src = f"/read/{book_id}/{chapter_index}/image/{resolved}"
         return f"{prefix}{quote}{new_src}{quote}"
 
@@ -141,7 +100,7 @@ def _custom_filter_fields():
             "label": column["name"],
             "type": "multi" if column["is_multiple"] else "single",
         }
-        for column in get_custom_columns(LIBRARY_PATH)
+        for column in calibre_reader.get_custom_columns(LIBRARY_PATH)
     ]
 
 
@@ -157,7 +116,7 @@ def _filter_values(book, field):
 
 
 def _enabled_filter_fields():
-    enabled = set(get_settings(DB_PATH).enabled_filter_keys())
+    enabled = set(settings.get_settings(DB_PATH).enabled_filter_keys())
     return [field for field in _all_filter_fields() if field["key"] in enabled]
 
 
@@ -192,7 +151,7 @@ def _build_history_entries(rows):
         if book is None:
             continue
         try:
-            epub_book = parse_book(book.epub_path)
+            epub_book = epub_parser.parse_book(book.epub_path)
             chapter_title = epub_book.chapters[pos.chapter_index].title
         except (IndexError, OSError):
             continue
@@ -209,11 +168,11 @@ def _build_history_entries(rows):
 
 @app.route("/")
 def library_list():
-    query = request.args.get("q", "").strip()
-    page = request.args.get("page", 1, type=int)
+    query = flask.request.args.get("q", "").strip()
+    page = flask.request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
-    view = request.args.get("view", "list")
+    view = flask.request.args.get("view", "list")
     if view not in ("list", "grid"):
         view = "list"
 
@@ -221,14 +180,14 @@ def library_list():
     selected = {}
     for field in filter_fields:
         if field["type"] == "multi":
-            values = request.args.getlist(field["key"])
+            values = flask.request.args.getlist(field["key"])
         else:
-            value = request.args.get(field["key"], "").strip()
+            value = flask.request.args.get(field["key"], "").strip()
             values = [value] if value else []
         if values:
             selected[field["key"]] = values
 
-    all_books = list_books(LIBRARY_PATH)
+    all_books = calibre_reader.list_books(LIBRARY_PATH)
     total_library = len(all_books)
     filter_options = {
         field["key"]: _filter_options(all_books, field) for field in filter_fields
@@ -247,11 +206,15 @@ def library_list():
     start = (page - 1) * BOOKS_PER_PAGE
     books = all_books[start : start + BOOKS_PER_PAGE]
 
-    positions = {book.id: get_position(DB_PATH, book.id) for book in books}
-    positions = {k: v for k, v in positions.items() if v is not None}
+    book_positions = {
+        book.id: positions.get_position(DB_PATH, book.id) for book in books
+    }
+    book_positions = {k: v for k, v in book_positions.items() if v is not None}
 
-    recent_limit = get_settings(DB_PATH).recent_list_limit
-    recent = _build_history_entries(get_recent_positions(DB_PATH, recent_limit))
+    recent_limit = settings.get_settings(DB_PATH).recent_list_limit
+    recent = _build_history_entries(
+        positions.get_recent_positions(DB_PATH, recent_limit)
+    )
 
     # Active filter/query params, reusable for building pagination links that
     # preserve the current search+filter+view state.
@@ -267,10 +230,10 @@ def library_list():
     if toggle_view != "list":
         toggle_view_args["view"] = toggle_view
 
-    return render_template(
+    return flask.render_template(
         "library.html",
         books=books,
-        positions=positions,
+        positions=book_positions,
         recent=recent,
         page=page,
         total_pages=total_pages,
@@ -288,19 +251,19 @@ def library_list():
 
 @app.route("/history")
 def history_page():
-    page = request.args.get("page", 1, type=int)
+    page = flask.request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
 
-    total = count_positions(DB_PATH)
+    total = positions.count_positions(DB_PATH)
     total_pages = max(1, (total + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
     page = min(page, total_pages)
 
     offset = (page - 1) * BOOKS_PER_PAGE
-    rows = get_positions_page(DB_PATH, BOOKS_PER_PAGE, offset)
+    rows = positions.get_positions_page(DB_PATH, BOOKS_PER_PAGE, offset)
     entries = _build_history_entries(rows)
 
-    return render_template(
+    return flask.render_template(
         "history.html",
         entries=entries,
         page=page,
@@ -312,11 +275,11 @@ def history_page():
 def read_chapter(book_id, chapter_index):
     calibre_book = _get_calibre_book(book_id)
     if calibre_book is None:
-        abort(404, description="That book doesn't exist in your library.")
+        flask.abort(404, description="That book doesn't exist in your library.")
 
-    epub_book = parse_book(calibre_book.epub_path)
+    epub_book = epub_parser.parse_book(calibre_book.epub_path)
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
-        abort(404, description="That chapter doesn't exist.")
+        flask.abort(404, description="That chapter doesn't exist.")
 
     chapter = epub_book.chapters[chapter_index]
 
@@ -325,10 +288,10 @@ def read_chapter(book_id, chapter_index):
         chapter_index + 1 if chapter_index < len(epub_book.chapters) - 1 else None
     )
 
-    saved = get_position(DB_PATH, book_id)
+    saved = positions.get_position(DB_PATH, book_id)
     known_updated_at = saved.updated_at if saved is not None else None
 
-    return render_template(
+    return flask.render_template(
         "reader.html",
         book=calibre_book,
         chapter={"index": chapter.index, "title": chapter.title},
@@ -343,25 +306,25 @@ def read_chapter(book_id, chapter_index):
 def inspect_book(book_id):
     calibre_book = _get_calibre_book(book_id)
     if calibre_book is None:
-        abort(404, description="That book doesn't exist in your library.")
+        flask.abort(404, description="That book doesn't exist in your library.")
 
-    details = get_book_details(LIBRARY_PATH, book_id)
+    details = calibre_reader.get_book_details(LIBRARY_PATH, book_id)
     if details is None:
-        abort(404, description="That book doesn't exist in your library.")
+        flask.abort(404, description="That book doesn't exist in your library.")
 
     # The epub itself might be corrupt/missing even though Calibre has a
     # record of it — this page should still render the Calibre-side info
     # rather than 500ing, so chapter/technical data degrades gracefully.
     try:
-        epub_book = parse_book(calibre_book.epub_path)
-        stats = get_epub_stats(calibre_book.epub_path, epub_book)
+        epub_book = epub_parser.parse_book(calibre_book.epub_path)
+        stats = epub_parser.get_epub_stats(calibre_book.epub_path, epub_book)
         parse_error = None
     except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
         epub_book, stats, parse_error = None, None, str(e)
 
-    has_cover = find_cover_image(calibre_book.epub_path) is not None
+    has_cover = calibre_reader.find_cover_image(calibre_book.epub_path) is not None
 
-    position = get_position(DB_PATH, book_id)
+    position = positions.get_position(DB_PATH, book_id)
     progress = None
     if position is not None and epub_book is not None and epub_book.chapters:
         total = len(epub_book.chapters)
@@ -381,7 +344,7 @@ def inspect_book(book_id):
     if stats is not None:
         file_size = f"{stats.file_size_bytes / 1024 / 1024:.1f} MB"
 
-    return render_template(
+    return flask.render_template(
         "inspect.html",
         book=calibre_book,
         details=details,
@@ -396,42 +359,44 @@ def inspect_book(book_id):
 
 @app.route("/inspect/<int:book_id>/cover")
 def inspect_cover(book_id):
-    epub_path = get_book_epub_path(LIBRARY_PATH, book_id)
+    epub_path = calibre_reader.get_book_epub_path(LIBRARY_PATH, book_id)
     if epub_path is None:
-        abort(404, description="That book doesn't exist in your library.")
+        flask.abort(404, description="That book doesn't exist in your library.")
 
-    cover_path = find_cover_image(epub_path)
+    cover_path = calibre_reader.find_cover_image(epub_path)
     if cover_path is None:
-        abort(404, description="No cover image for that book.")
+        flask.abort(404, description="No cover image for that book.")
 
-    thumbnail_bytes = get_cover_thumbnail(cover_path)
+    thumbnail_bytes = calibre_reader.get_cover_thumbnail(cover_path)
 
-    return Response(
+    return flask.Response(
         thumbnail_bytes,
         mimetype="image/jpeg",
         headers={
             "Cache-Control": "public, max-age=86400",
-            "Last-Modified": http_date(os.path.getmtime(cover_path)),
+            "Last-Modified": werkzeug.http.http_date(os.path.getmtime(cover_path)),
         },
     )
 
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/frame")
 def read_chapter_frame(book_id, chapter_index):
-    epub_path = get_book_epub_path(LIBRARY_PATH, book_id)
+    epub_path = calibre_reader.get_book_epub_path(LIBRARY_PATH, book_id)
     if epub_path is None:
-        abort(404, description="That book doesn't exist in your library.")
+        flask.abort(404, description="That book doesn't exist in your library.")
 
-    epub_book = parse_book(epub_path)
+    epub_book = epub_parser.parse_book(epub_path)
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
-        abort(404, description="That chapter doesn't exist.")
+        flask.abort(404, description="That chapter doesn't exist.")
 
-    content = get_chapter_content(epub_path, epub_book, chapter_index)
-    chapter_dir = get_chapter_dir(epub_book, epub_book.chapters[chapter_index])
+    content = epub_parser.get_chapter_content(epub_path, epub_book, chapter_index)
+    chapter_dir = epub_parser.get_chapter_dir(
+        epub_book, epub_book.chapters[chapter_index]
+    )
     content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
-    css = get_stylesheets(epub_path, epub_book)
+    css = epub_parser.get_stylesheets(epub_path, epub_book)
 
-    return render_template(
+    return flask.render_template(
         "chapter_frame.html",
         css=css,
         content=content,
@@ -441,32 +406,34 @@ def read_chapter_frame(book_id, chapter_index):
 
 @app.route("/read/<int:book_id>/<int:chapter_index>/image/<path:img_path>")
 def read_chapter_image(book_id, chapter_index, img_path):
-    epub_path = get_book_epub_path(LIBRARY_PATH, book_id)
+    epub_path = calibre_reader.get_book_epub_path(LIBRARY_PATH, book_id)
     if epub_path is None:
-        abort(404)
+        flask.abort(404)
 
     try:
         with zipfile.ZipFile(epub_path) as zf:
             data = zf.read(img_path)
     except KeyError:
-        abort(404)
+        flask.abort(404)
 
     mime_type, _ = mimetypes.guess_type(img_path)
-    return Response(data, mimetype=mime_type or "application/octet-stream")
+    return flask.Response(data, mimetype=mime_type or "application/octet-stream")
 
 
 @app.route("/settings", methods=["GET", "POST"])
 def settings_page():
-    if request.method == "POST":
-        theme = request.form.get("theme", "").strip()
-        font_family_key = request.form.get("font_family", "").strip()
-        font_size_raw = request.form.get("font_size", "")
-        override_epub_font = request.form.get("override_epub_font") is not None
-        reader_font_family_key = request.form.get("reader_font_family", "").strip()
-        reader_font_size_raw = request.form.get("reader_font_size", "")
-        content_max_width_pct_raw = request.form.get("content_max_width_pct", "")
-        recent_list_limit_raw = request.form.get("recent_list_limit", "")
-        enabled_filters = request.form.getlist("enabled_filters")
+    if flask.request.method == "POST":
+        theme = flask.request.form.get("theme", "").strip()
+        font_family_key = flask.request.form.get("font_family", "").strip()
+        font_size_raw = flask.request.form.get("font_size", "")
+        override_epub_font = flask.request.form.get("override_epub_font") is not None
+        reader_font_family_key = flask.request.form.get(
+            "reader_font_family", ""
+        ).strip()
+        reader_font_size_raw = flask.request.form.get("reader_font_size", "")
+        content_max_width_pct_raw = flask.request.form.get("content_max_width_pct", "")
+        recent_list_limit_raw = flask.request.form.get("recent_list_limit", "")
+        enabled_filters = flask.request.form.getlist("enabled_filters")
 
         try:
             font_size = float(font_size_raw)
@@ -487,7 +454,8 @@ def settings_page():
             return "Invalid recent list limit", 400
 
         custom_colors = {
-            field: request.form.get(field, "").strip() for field in CUSTOM_COLOR_FIELDS
+            field: flask.request.form.get(field, "").strip()
+            for field in settings.CUSTOM_COLOR_FIELDS
         }
 
         valid_filter_keys = {field["key"] for field in _all_filter_fields()}
@@ -499,7 +467,7 @@ def settings_page():
             )
 
         try:
-            save_settings(
+            settings.save_settings(
                 DB_PATH,
                 theme=theme,
                 font_family_key=font_family_key,
@@ -515,63 +483,63 @@ def settings_page():
         except ValueError as e:
             return str(e), 400
 
-        return redirect(url_for("library_list"))
+        return flask.redirect(flask.url_for("library_list"))
 
-    return render_template(
+    return flask.render_template(
         "settings.html",
-        theme_choices=THEME_CHOICES,
-        font_choices=FONT_CHOICES,
+        theme_choices=settings.THEME_CHOICES,
+        font_choices=settings.FONT_CHOICES,
         filter_fields=_all_filter_fields(),
     )
 
 
 @app.route("/settings/theme", methods=["POST"])
 def update_theme():
-    data = request.get_json(silent=True) or {}
+    data = flask.request.get_json(silent=True) or {}
     theme = data.get("theme", "").strip()
     if theme not in ("light", "dark"):  # custom isn't reachable from the quick toggle
-        return jsonify({"error": "invalid theme"}), 400
+        return flask.jsonify({"error": "invalid theme"}), 400
 
-    current = get_settings(DB_PATH)
-    save_settings(
+    current = settings.get_settings(DB_PATH)
+    settings.save_settings(
         DB_PATH,
         theme=theme,
         font_family_key=current.font_family_key,
         font_size=current.font_size,
     )
-    return jsonify({"status": "ok"})
+    return flask.jsonify({"status": "ok"})
 
 
 @app.route("/settings/reset-progress", methods=["POST"])
 def reset_progress():
-    reset_all_positions(DB_PATH)
-    return redirect(url_for("settings_page"))
+    positions.reset_all_positions(DB_PATH)
+    return flask.redirect(flask.url_for("settings_page"))
 
 
 @app.route("/settings/clear-recent", methods=["POST"])
 def clear_recent():
-    clear_all_positions(DB_PATH)
-    return redirect(url_for("settings_page"))
+    positions.clear_all_positions(DB_PATH)
+    return flask.redirect(flask.url_for("settings_page"))
 
 
 @app.route("/api/position/<int:book_id>", methods=["GET", "POST"])
 def position_api(book_id):
-    if request.method == "GET":
-        saved = get_position(DB_PATH, book_id)
+    if flask.request.method == "GET":
+        saved = positions.get_position(DB_PATH, book_id)
         if saved is None:
-            return jsonify(None)
-        return jsonify(
+            return flask.jsonify(None)
+        return flask.jsonify(
             {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
         )
 
-    data = request.get_json(silent=True) or {}
+    data = flask.request.get_json(silent=True) or {}
     chapter_index = data.get("chapter_index")
 
     if chapter_index is None:
-        return jsonify({"error": "chapter_index is required"}), 400
+        return flask.jsonify({"error": "chapter_index is required"}), 400
 
-    saved = save_position(DB_PATH, book_id, int(chapter_index))
-    return jsonify(
+    saved = positions.save_position(DB_PATH, book_id, int(chapter_index))
+    return flask.jsonify(
         {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
     )
 
@@ -579,12 +547,12 @@ def position_api(book_id):
 @app.errorhandler(404)
 def not_found(error):
     message = getattr(error, "description", None)
-    return render_template("404.html", message=message), 404
+    return flask.render_template("404.html", message=message), 404
 
 
 @app.errorhandler(500)
 def server_error(error):
-    return render_template("500.html"), 500
+    return flask.render_template("500.html"), 500
 
 
 if __name__ == "__main__":
