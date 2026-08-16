@@ -163,7 +163,7 @@ def save_settings(
     theme: str,
     font_family_key: str,
     font_size: float,
-    override_epub_font: bool = False,
+    override_epub_font: bool | None = None,
     reader_font_family_key: str | None = None,
     reader_font_size: float | None = None,
     content_max_width_pct: float | None = None,
@@ -178,6 +178,10 @@ def save_settings(
     font_size = max(0.7, min(2.5, font_size))
 
     existing = get_settings(db_path)
+
+    override_epub_font = (
+        override_epub_font if override_epub_font is not None else existing.override_epub_font
+    )
 
     reader_font_family_key = reader_font_family_key or existing.reader_font_family_key
     if reader_font_family_key not in FONT_CHOICES:
