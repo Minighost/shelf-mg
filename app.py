@@ -173,7 +173,7 @@ def library_list():
     if page < 1:
         page = 1
     view = flask.request.args.get("view", "list")
-    if view not in ("list", "grid"):
+    if view not in ("list", "grid", "card"):
         view = "list"
 
     filter_fields = _enabled_filter_fields()
@@ -224,11 +224,15 @@ def library_list():
     if view != "list":
         page_args["view"] = view
 
-    # Same as page_args but with the view flipped, for the display-toggle link.
-    toggle_view = "grid" if view == "list" else "list"
-    toggle_view_args = {k: v for k, v in page_args.items() if k != "view"}
-    if toggle_view != "list":
-        toggle_view_args["view"] = toggle_view
+    # Same as page_args but with the view fixed to each option, for the
+    # view-switch links.
+    base_view_args = {k: v for k, v in page_args.items() if k != "view"}
+    view_links = {}
+    for v in ("list", "grid", "card"):
+        args = dict(base_view_args)
+        if v != "list":
+            args["view"] = v
+        view_links[v] = args
 
     return flask.render_template(
         "library.html",
@@ -243,7 +247,7 @@ def library_list():
         selected=selected,
         page_args=page_args,
         view=view,
-        toggle_view_args=toggle_view_args,
+        view_links=view_links,
         total_matches=len(all_books),
         total_library=total_library,
     )
