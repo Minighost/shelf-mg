@@ -176,11 +176,11 @@
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
                         <div class="book-cover-placeholder">No cover</div>
+                        <a class="inspect-button book-cover-inspect" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
                     </div>
                     <div class="book-card-info">
                         <a class="book-card-title"
                            href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
-                        <a class="inspect-button" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
                         <p class="book-card-author">{{ book.authors | join(", ") }}</p>
                     </div>
                 </div>

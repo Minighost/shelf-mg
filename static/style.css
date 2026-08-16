@@ -347,6 +347,13 @@ html.view-grid .book-grid {
     position: relative;
 }
 
+.book-cover-inspect {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    background: var(--surface-color);
+}
+
 .book-cover {
     width: 100%;
     height: auto;
