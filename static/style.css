@@ -281,11 +281,22 @@ button::-moz-focus-inner {
     margin: 0 0 0.6rem 0;
 }
 
+.filter-toggle {
+    margin-bottom: 0.6rem;
+}
+
+.filter-toggle summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
     align-items: flex-start;
+    margin-top: 0.6rem;
 }
 
 .filter-field {
