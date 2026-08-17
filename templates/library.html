@@ -81,6 +81,7 @@
                    href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
             </div>
         {% endif %}
+        {% macro range_bound_value(field, v) %}{% if v is not none %}{% if field.datatype == "datetime" %}{{ v.date().isoformat() }}{% elif field.datatype == "int" %}{{ v | int }}{% else %}{{ v }}{% endif %}{% endif %}{% endmacro %}
         <form method="get" class="search-form-wrapper">
             <div class="search-form">
                 <input type="text"
@@ -91,6 +92,24 @@
                 <a href="{{ url_for('library_list') }}">Clear</a>
             </div>
             {% if filter_fields %}
+                <div class="sort-bar">
+                    <label>
+                        Sort by
+                        <select name="sort">
+                            <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
+                            {% for field in filter_fields %}
+                                <option value="{{ field.key }}" {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <select name="dir">
+                            <option value="asc" {% if sort_dir == "asc" %}selected{% endif %}>Ascending</option>
+                            <option value="desc" {% if sort_dir == "desc" %}selected{% endif %}>Descending</option>
+                        </select>
+                    </label>
+                    <button type="submit">Apply</button>
+                </div>
                 <details class="filter-toggle">
                     <summary>
                         Filters
@@ -103,28 +122,45 @@
                                     {{ field.label }}
                                     {% if field.type == "multi" and selected.get(field.key) %} ({{ selected[field.key] | length }}){% endif %}
                                     {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
+                                    {% if field.type == "range" and selected.get(field.key) %}: {{ range_bound_value(field, selected[field.key][0]) }}&ndash;{{ range_bound_value(field, selected[field.key][1]) }}{% endif %}
                                 </summary>
-                                {% if field.type == "single" %}
-                                    <label class="filter-choice filter-any">
-                                        <input type="radio"
-                                               name="{{ field.key }}"
-                                               value=""
-                                               {% if not selected.get(field.key) %}checked{% endif %}>
-                                        Any
-                                    </label>
-                                {% endif %}
-                                <input type="text" class="filter-search" placeholder="Search…" oninput="filterOptions(this)">
-                                <div class="filter-options">
-                                    {% for value in filter_options[field.key] %}
-                                        <label class="filter-choice">
-                                            <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                {% if field.type == "range" %}
+                                    {% set bounds = range_bounds.get(field.key) %}
+                                    {% set selected_bounds = selected.get(field.key, (none, none)) %}
+                                    <div class="filter-range">
+                                        <input type="{{ 'date' if field.datatype == 'datetime' else 'number' }}"
+                                               name="{{ field.key }}_min"
+                                               placeholder="Min{% if bounds %}: {{ range_bound_value(field, bounds[0]) }}{% endif %}"
+                                               value="{{ range_bound_value(field, selected_bounds[0]) }}">
+                                        <span>to</span>
+                                        <input type="{{ 'date' if field.datatype == 'datetime' else 'number' }}"
+                                               name="{{ field.key }}_max"
+                                               placeholder="Max{% if bounds %}: {{ range_bound_value(field, bounds[1]) }}{% endif %}"
+                                               value="{{ range_bound_value(field, selected_bounds[1]) }}">
+                                    </div>
+                                {% else %}
+                                    {% if field.type == "single" %}
+                                        <label class="filter-choice filter-any">
+                                            <input type="radio"
                                                    name="{{ field.key }}"
-                                                   value="{{ value }}"
-                                                   {% if value in selected.get(field.key, []) %}checked{% endif %}>
-                                            {{ value }}
+                                                   value=""
+                                                   {% if not selected.get(field.key) %}checked{% endif %}>
+                                            Any
                                         </label>
-                                    {% endfor %}
-                                </div>
+                                    {% endif %}
+                                    <input type="text" class="filter-search" placeholder="Search…" oninput="filterOptions(this)">
+                                    <div class="filter-options">
+                                        {% for value in filter_options[field.key] %}
+                                            <label class="filter-choice">
+                                                <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                                       name="{{ field.key }}"
+                                                       value="{{ value }}"
+                                                       {% if value in selected.get(field.key, []) %}checked{% endif %}>
+                                                {{ value }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </details>
                         {% endfor %}
                     </div>

@@ -5,10 +5,13 @@ from io import BytesIO
 
 from PIL import Image
 
-# Custom-column datatypes with a bounded, listable set of values — the only
-# ones that make sense as a filter dropdown/checklist. Skips comments
-# (long-form), int/float/datetime (continuous), and composite (computed).
-FILTERABLE_CUSTOM_DATATYPES = {"text", "enumeration", "series", "rating", "bool"}
+# Custom-column datatypes with a bounded, listable set of values — filterable
+# as a checklist/dropdown.
+DISCRETE_CUSTOM_DATATYPES = {"text", "enumeration", "series", "rating", "bool"}
+# Continuous-valued datatypes — filterable/sortable as a min/max range instead.
+RANGE_CUSTOM_DATATYPES = {"int", "float", "datetime"}
+# Skips comments (long-form) and composite (computed from other columns).
+FILTERABLE_CUSTOM_DATATYPES = DISCRETE_CUSTOM_DATATYPES | RANGE_CUSTOM_DATATYPES
 
 COVER_THUMBNAIL_MAX_SIZE = (160, 240)  # matches the inspect page's 160px display width
 
@@ -18,13 +21,25 @@ class Book:
     id: int
     title: str
     authors: list[str]
-    tags: list[str]  # generic — fandom, ship, rating, whatever you tag with
-    summary_html: str  # Calibre's Comments field — stored as HTML, render accordingly
+    # generic — fandom, ship, rating, whatever you tag with
+    tags: list[str]
+    # Calibre's Comments field — stored as HTML, render accordingly
+    summary_html: str
     series: str | None
     series_index: float | None
     publisher: str | None
-    custom: dict[str, list[str]]  # custom-column label -> values, always list-valued
-    epub_path: str  # absolute path to the actual .epub file on disk
+    # custom-column label -> values, always list-valued
+    custom: dict[str, list[str]]
+    # absolute path to the actual .epub file on disk
+    epub_path: str
+    # books.timestamp, ISO 8601 text — None if that column is missing from this library's schema
+    date_added: str | None
+    # books.pubdate, ISO 8601 text — same caveat
+    pubdate: str | None
+    # data.uncompressed_size for the EPUB format row — same caveat
+    size_bytes: int | None
+    # 0-5 stars (Calibre stores 0-10 internally; halved here, same convention as get_book_details()) — same caveat
+    rating: float | None
 
 
 def _connect_readonly(db_path: str) -> sqlite3.Connection:
@@ -112,6 +127,57 @@ def _custom_column_values(
     return ["Yes" if row["value"] else "No"]
 
 
+_BUILTIN_FIELD_REQUIREMENTS = {
+    "date_added": ("books", "timestamp"),
+    "pubdate": ("books", "pubdate"),
+    "size": ("data", "uncompressed_size"),
+    "rating": ("ratings", "rating"),
+}
+
+# Module-level cache: library_path -> (mtime_at_cache_time, available_fields_set).
+_available_builtin_fields_cache: dict[str, tuple[float, set[str]]] = {}
+
+
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    """Actual column names present in this specific metadata.db's version
+    of a table — used to defensively skip built-in fields that don't exist
+    in an older/newer Calibre schema, instead of crashing on a missing
+    column."""
+    return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+
+
+def available_builtin_fields(library_path: str) -> set[str]:
+    """
+    Which of shelf-mg's optional built-in fields (date_added, pubdate,
+    size, rating) actually exist in this library's schema — guards against
+    older/newer Calibre versions that may be missing a column shelf-mg
+    otherwise assumes is there. tags/author/series/publisher aren't part
+    of this check since the app already depends on them unconditionally.
+
+    Cached per library_path, invalidated automatically whenever
+    metadata.db's mtime changes.
+    """
+    db_path = os.path.join(library_path, "metadata.db")
+    current_mtime = os.path.getmtime(db_path)
+
+    cached = _available_builtin_fields_cache.get(library_path)
+    if cached is not None and cached[0] == current_mtime:
+        return cached[1]
+
+    conn = _connect_readonly(db_path)
+    conn.row_factory = sqlite3.Row
+
+    available = set()
+    for field_key, (table, column) in _BUILTIN_FIELD_REQUIREMENTS.items():
+        if column in _table_columns(conn, table):
+            available.add(field_key)
+
+    conn.close()
+
+    _available_builtin_fields_cache[library_path] = (current_mtime, available)
+    return available
+
+
 def _build_book(
     conn: sqlite3.Connection,
     library_path: str,
@@ -187,13 +253,39 @@ def _build_book(
     # it's in `data`, one row per format the book has. We only care
     # about EPUB for this reader.
     data_row = conn.execute(
-        "SELECT name FROM data WHERE book = ? AND format = 'EPUB'",
+        "SELECT name, uncompressed_size FROM data WHERE book = ? AND format = 'EPUB'",
         (book_id,),
     ).fetchone()
     if data_row is None:
         return None  # book has no EPUB format — nothing for us to read
 
     epub_path = os.path.join(library_path, path, data_row["name"] + ".epub")
+    size_bytes = data_row["uncompressed_size"]
+
+    available_fields = available_builtin_fields(library_path)
+
+    date_added = None
+    pubdate = None
+    if "date_added" in available_fields or "pubdate" in available_fields:
+        book_row = conn.execute(
+            "SELECT timestamp, pubdate FROM books WHERE id = ?", (book_id,)
+        ).fetchone()
+        if "date_added" in available_fields:
+            date_added = book_row["timestamp"]
+        if "pubdate" in available_fields:
+            pubdate = book_row["pubdate"]
+
+    rating = None
+    if "rating" in available_fields:
+        rating_row = conn.execute(
+            """
+            SELECT r.rating FROM ratings r
+            JOIN books_ratings_link brl ON brl.rating = r.id
+            WHERE brl.book = ?
+            """,
+            (book_id,),
+        ).fetchone()
+        rating = rating_row["rating"] / 2 if rating_row else None
 
     return Book(
         id=book_id,
@@ -206,6 +298,10 @@ def _build_book(
         publisher=publisher,
         custom=custom,
         epub_path=epub_path,
+        date_added=date_added,
+        pubdate=pubdate,
+        size_bytes=size_bytes,
+        rating=rating,
     )
 
 

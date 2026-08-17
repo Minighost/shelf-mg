@@ -3,6 +3,8 @@ import os
 import re
 import zipfile
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+
 import werkzeug.http
 
 import flask
@@ -70,19 +72,43 @@ def _book_matches(book, query):
     return False
 
 
-# Filters tied to fixed Book fields — always available regardless of library.
-BUILTIN_FILTER_FIELDS = [
-    {"key": "tags", "label": "Tags", "type": "multi"},
-    {"key": "author", "label": "Author", "type": "single"},
-    {"key": "series", "label": "Series", "type": "single"},
-    {"key": "publisher", "label": "Publisher", "type": "single"},
-]
+def _builtin_filter_fields():
+    """
+    Filters tied to fixed Book fields. tags/author/series/publisher are
+    always available (the app already depends on them unconditionally);
+    date_added/pubdate/size/rating are conditionally included based on
+    whether this specific library's Calibre schema actually has them —
+    see calibre_reader.available_builtin_fields().
+    """
+    fields = [
+        {"key": "tags", "label": "Tags", "type": "multi", "datatype": "text"},
+        {"key": "author", "label": "Author", "type": "single", "datatype": "text"},
+        {"key": "series", "label": "Series", "type": "single", "datatype": "text"},
+        {"key": "publisher", "label": "Publisher", "type": "single", "datatype": "text"},
+    ]
+
+    available = calibre_reader.available_builtin_fields(LIBRARY_PATH)
+    if "date_added" in available:
+        fields.append({"key": "date_added", "label": "Date added", "type": "range", "datatype": "datetime"})
+    if "pubdate" in available:
+        fields.append({"key": "pubdate", "label": "Published", "type": "range", "datatype": "datetime"})
+    if "size" in available:
+        fields.append({"key": "size", "label": "Size (MB)", "type": "range", "datatype": "float"})
+    if "rating" in available:
+        fields.append({"key": "rating", "label": "Rating", "type": "range", "datatype": "float"})
+
+    return fields
+
 
 BUILTIN_FILTER_GETTERS = {
     "tags": lambda book: book.tags,
     "author": lambda book: book.authors,
     "series": lambda book: [book.series] if book.series else [],
     "publisher": lambda book: [book.publisher] if book.publisher else [],
+    "date_added": lambda book: [book.date_added] if book.date_added else [],
+    "pubdate": lambda book: [book.pubdate] if book.pubdate else [],
+    "size": lambda book: [str(book.size_bytes / 1024 / 1024)] if book.size_bytes else [],
+    "rating": lambda book: [str(book.rating)] if book.rating is not None else [],
 }
 
 CUSTOM_FILTER_KEY_PREFIX = "custom:"
@@ -94,18 +120,27 @@ def _custom_filter_fields():
     Unlike BUILTIN_FILTER_FIELDS, this set varies per library, so it's
     recomputed from the live schema rather than hard-coded.
     """
-    return [
-        {
-            "key": CUSTOM_FILTER_KEY_PREFIX + column["label"],
-            "label": column["name"],
-            "type": "multi" if column["is_multiple"] else "single",
-        }
-        for column in calibre_reader.get_custom_columns(LIBRARY_PATH)
-    ]
+    fields = []
+    for column in calibre_reader.get_custom_columns(LIBRARY_PATH):
+        if column["datatype"] in calibre_reader.RANGE_CUSTOM_DATATYPES:
+            field_type = "range"
+        elif column["is_multiple"]:
+            field_type = "multi"
+        else:
+            field_type = "single"
+        fields.append(
+            {
+                "key": CUSTOM_FILTER_KEY_PREFIX + column["label"],
+                "label": column["name"],
+                "type": field_type,
+                "datatype": column["datatype"],
+            }
+        )
+    return fields
 
 
 def _all_filter_fields():
-    return BUILTIN_FILTER_FIELDS + _custom_filter_fields()
+    return _builtin_filter_fields() + _custom_filter_fields()
 
 
 def _filter_values(book, field):
@@ -127,8 +162,57 @@ def _filter_options(books, field):
     return sorted(values)
 
 
+def _typed_value(book, field):
+    """
+    A single, type-appropriate comparable value for this book+field, or
+    None if the book has no value for it. Multi-value fields (e.g. tags)
+    use the alphabetically-first value — same convention title-sort
+    already used for tie-breaking. Shared by range-filtering and sorting
+    so there's one place that understands how to compare each datatype.
+    """
+    raw_values = _filter_values(book, field)
+    if not raw_values:
+        return None
+
+    datatype = field.get("datatype", "text")
+    if datatype in ("int", "float"):
+        try:
+            return float(raw_values[0])
+        except (TypeError, ValueError):
+            return None
+    if datatype == "datetime":
+        try:
+            return datetime.fromisoformat(raw_values[0])
+        except (TypeError, ValueError):
+            return None
+    return min(v.lower() for v in raw_values)
+
+
+def _range_bounds(books, field):
+    """Min/max typed value across all books for a range-type field, or
+    None if no book has a value for it — used to bound the filter UI."""
+    values = [v for v in (_typed_value(b, field) for b in books) if v is not None]
+    if not values:
+        return None
+    return (min(values), max(values))
+
+
 def _book_matches_filters(book, filter_fields, selected):
     for field in filter_fields:
+        if field["type"] == "range":
+            bounds = selected.get(field["key"])
+            if not bounds:
+                continue
+            min_v, max_v = bounds
+            value = _typed_value(book, field)
+            if value is None:
+                return False
+            if min_v is not None and value < min_v:
+                return False
+            if max_v is not None and value > max_v:
+                return False
+            continue
+
         chosen = selected.get(field["key"])
         if not chosen:
             continue
@@ -140,6 +224,22 @@ def _book_matches_filters(book, filter_fields, selected):
             if chosen[0] not in book_values:
                 return False
     return True
+
+
+def _sort_books(books, sort_by, sort_dir, filter_fields):
+    if sort_by == "title":
+        return sorted(
+            books, key=lambda b: b.title.lower(), reverse=(sort_dir == "desc")
+        )
+
+    field = next((f for f in filter_fields if f["key"] == sort_by), None)
+    if field is None:
+        return sorted(books, key=lambda b: b.title.lower())
+
+    with_value = [b for b in books if _typed_value(b, field) is not None]
+    without_value = [b for b in books if _typed_value(b, field) is None]
+    with_value.sort(key=lambda b: _typed_value(b, field), reverse=(sort_dir == "desc"))
+    return with_value + without_value
 
 
 def _build_history_entries(rows):
@@ -191,18 +291,56 @@ def library_list():
     filter_fields = _enabled_filter_fields()
     selected = {}
     for field in filter_fields:
-        if field["type"] == "multi":
+        if field["type"] == "range":
+            min_raw = flask.request.args.get(field["key"] + "_min", "").strip()
+            max_raw = flask.request.args.get(field["key"] + "_max", "").strip()
+            is_datetime = field["datatype"] == "datetime"
+            parse = datetime.fromisoformat if is_datetime else float
+            try:
+                min_v = parse(min_raw) if min_raw else None
+            except ValueError:
+                min_v = None
+            try:
+                max_v = parse(max_raw) if max_raw else None
+            except ValueError:
+                max_v = None
+            if is_datetime:
+                # The <input type="date"> posts a bare YYYY-MM-DD (timezone-
+                # naive), but Calibre's stored datetimes carry a UTC offset
+                # (confirmed via a real content.opf) — compare in UTC so
+                # naive/aware comparisons in _book_matches_filters/_sort_books
+                # don't raise.
+                if min_v is not None and min_v.tzinfo is None:
+                    min_v = min_v.replace(tzinfo=timezone.utc)
+                if max_v is not None and max_v.tzinfo is None:
+                    max_v = max_v.replace(tzinfo=timezone.utc)
+            if min_v is not None or max_v is not None:
+                selected[field["key"]] = (min_v, max_v)
+        elif field["type"] == "multi":
             values = flask.request.args.getlist(field["key"])
+            if values:
+                selected[field["key"]] = values
         else:
             value = flask.request.args.get(field["key"], "").strip()
-            values = [value] if value else []
-        if values:
-            selected[field["key"]] = values
+            if value:
+                selected[field["key"]] = [value]
+
+    sort_by = flask.request.args.get("sort", "title")
+    sort_dir = flask.request.args.get("dir", "asc")
+    if sort_dir not in ("asc", "desc"):
+        sort_dir = "asc"
 
     all_books = calibre_reader.list_books(LIBRARY_PATH)
     total_library = len(all_books)
     filter_options = {
-        field["key"]: _filter_options(all_books, field) for field in filter_fields
+        field["key"]: _filter_options(all_books, field)
+        for field in filter_fields
+        if field["type"] != "range"
+    }
+    range_bounds = {
+        field["key"]: _range_bounds(all_books, field)
+        for field in filter_fields
+        if field["type"] == "range"
     }
 
     if query:
@@ -210,7 +348,7 @@ def library_list():
     all_books = [
         b for b in all_books if _book_matches_filters(b, filter_fields, selected)
     ]
-    all_books.sort(key=lambda b: b.title.lower())
+    all_books = _sort_books(all_books, sort_by, sort_dir, filter_fields)
 
     total_pages = max(1, (len(all_books) + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
     page = min(page, total_pages)
@@ -228,11 +366,33 @@ def library_list():
     )
     continue_reading = continue_reading_entries[0] if continue_reading_entries else None
 
-    # Active filter/query params, reusable for building pagination links that
-    # preserve the current search+filter+view state.
+    # Active filter/query/sort params, reusable for building pagination links
+    # that preserve the current search+filter+sort+view state.
     page_args = {"q": query} if query else {}
-    for key, values in selected.items():
-        page_args[key] = values
+    if sort_by != "title":
+        page_args["sort"] = sort_by
+    if sort_dir != "asc":
+        page_args["dir"] = sort_dir
+    for field in filter_fields:
+        values = selected.get(field["key"])
+        if not values:
+            continue
+        if field["type"] == "range":
+            min_v, max_v = values
+            if min_v is not None:
+                page_args[field["key"] + "_min"] = (
+                    min_v.date().isoformat()
+                    if field["datatype"] == "datetime"
+                    else min_v
+                )
+            if max_v is not None:
+                page_args[field["key"] + "_max"] = (
+                    max_v.date().isoformat()
+                    if field["datatype"] == "datetime"
+                    else max_v
+                )
+        else:
+            page_args[field["key"]] = values
 
     # Same as page_args but with the view fixed to each option, for the
     # view-switch links.
@@ -253,7 +413,10 @@ def library_list():
         query=query,
         filter_fields=filter_fields,
         filter_options=filter_options,
+        range_bounds=range_bounds,
         selected=selected,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
         page_args=page_args,
         view=view,
         view_links=view_links,
