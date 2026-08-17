@@ -273,7 +273,7 @@ button::-moz-focus-inner {
 
 .search-form-wrapper {
     max-width: var(--content-max-width);
-    margin: 0 auto 2rem auto;
+    margin: 0 auto 1rem auto;
 }
 
 .search-form-wrapper .search-form {
@@ -601,6 +601,7 @@ html.view-card .card-view {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .pagination-top > .view-links {
