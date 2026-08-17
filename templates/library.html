@@ -82,6 +82,8 @@
             </div>
         {% endif %}
         {% macro range_bound_value(field, v) %}{% if v is not none %}{% if field.datatype == "datetime" %}{{ v.date().isoformat() }}{% elif field.datatype == "int" %}{{ v | int }}{% else %}{{ v }}{% endif %}{% endif %}{% endmacro %}
+        {% set filter_sort_args = page_args.copy() %}
+        {% set _ = filter_sort_args.pop('q', none) %}
         <form method="get" class="search-form-wrapper">
             <div class="search-form">
                 <input type="text"
@@ -89,40 +91,58 @@
                        value="{{ query }}"
                        placeholder="Search title, author, or tag">
                 <button type="submit">Search</button>
-                <a href="{{ url_for('library_list') }}">Clear</a>
+                <a href="{{ url_for('library_list', **filter_sort_args) }}">Clear</a>
             </div>
-            {% if filter_fields %}
-                <div class="sort-bar">
-                    <label>
-                        Sort by
-                        <select name="sort">
-                            <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
-                            {% for field in filter_fields %}
-                                <option value="{{ field.key }}" {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
-                            {% endfor %}
-                        </select>
-                    </label>
-                    <label>
-                        <select name="dir">
-                            <option value="asc" {% if sort_dir == "asc" %}selected{% endif %}>Ascending</option>
-                            <option value="desc" {% if sort_dir == "desc" %}selected{% endif %}>Descending</option>
-                        </select>
-                    </label>
-                    <button type="submit">Apply</button>
-                </div>
+            {% for key, value in filter_sort_args.items() %}
+                {% if value is iterable and value is not string %}
+                    {% for v in value %}
+                        <input type="hidden" name="{{ key }}" value="{{ v }}">
+                    {% endfor %}
+                {% else %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                {% endif %}
+            {% endfor %}
+        </form>
+        {% if filter_fields %}
+            <form method="get" class="filter-sort-form">
+                <input type="hidden" name="q" value="{{ query }}">
                 <details class="filter-toggle">
                     <summary>
-                        Filters
+                        Sort &amp; Filter
                         {% if selected %} ({{ selected|length }} filter{{ 's' if selected|length != 1 else '' }} applied){% endif %}
                     </summary>
+                    <div class="sort-bar">
+                        <label>
+                            Sort by
+                            <select name="sort">
+                                <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
+                                {% for field in filter_fields %}
+                                    <option value="{{ field.key }}" {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>
+                            <select name="dir">
+                                <option value="asc" {% if sort_dir == "asc" %}selected{% endif %}>Ascending</option>
+                                <option value="desc" {% if sort_dir == "desc" %}selected{% endif %}>Descending</option>
+                            </select>
+                        </label>
+                        <button type="submit">Apply</button>
+                        <button type="button" class="filter-clear-all-btn" onclick="clearAllFilters(event)">Clear all filters</button>
+                    </div>
                     <div class="filter-bar">
                         {% for field in filter_fields %}
                             <details class="filter-field">
                                 <summary>
-                                    {{ field.label }}
-                                    {% if field.type == "multi" and selected.get(field.key) %} ({{ selected[field.key] | length }}){% endif %}
-                                    {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
-                                    {% if field.type == "range" and selected.get(field.key) %}: {{ range_bound_value(field, selected[field.key][0]) }}&ndash;{{ range_bound_value(field, selected[field.key][1]) }}{% endif %}
+                                    <span class="filter-field-label">
+                                        {{ field.label }}
+                                        {% if field.type == "multi" and selected.get(field.key) %} ({{ selected[field.key] | length }}){% endif %}
+                                        {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
+                                        {% if field.type == "range" and selected.get(field.key) %}: {{ range_bound_value(field, selected[field.key][0]) }}&ndash;{{ range_bound_value(field, selected[field.key][1]) }}{% endif %}
+                                    </span>
+                                    {% if selected.get(field.key) %}
+                                        <button type="button" class="filter-clear-btn" onclick="clearFilterField(event, this)">Clear</button>
+                                    {% endif %}
                                 </summary>
                                 {% if field.type == "range" %}
                                     {% set bounds = range_bounds.get(field.key) %}
@@ -150,12 +170,25 @@
                                     {% endif %}
                                     <input type="text" class="filter-search" placeholder="Search…" oninput="filterOptions(this)">
                                     <div class="filter-options">
-                                        {% for value in filter_options[field.key] %}
+                                        {% set selected_values = selected.get(field.key, []) %}
+                                        {% set unselected_options = filter_options[field.key] | reject('in', selected_values) | list %}
+                                        {% for value in filter_options[field.key] if value in selected_values %}
                                             <label class="filter-choice">
                                                 <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
                                                        name="{{ field.key }}"
                                                        value="{{ value }}"
-                                                       {% if value in selected.get(field.key, []) %}checked{% endif %}>
+                                                       checked>
+                                                {{ value }}
+                                            </label>
+                                        {% endfor %}
+                                        {% if selected_values and unselected_options %}
+                                            <hr class="filter-options-divider">
+                                        {% endif %}
+                                        {% for value in unselected_options %}
+                                            <label class="filter-choice">
+                                                <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                                       name="{{ field.key }}"
+                                                       value="{{ value }}">
                                                 {{ value }}
                                             </label>
                                         {% endfor %}
@@ -165,8 +198,8 @@
                         {% endfor %}
                     </div>
                 </details>
-            {% endif %}
-        </form>
+            </form>
+        {% endif %}
         <p class="results-summary">Showing {{ total_matches }} out of {{ total_library }} total files</p>
         <nav class="pagination pagination-top">
             {% if total_pages > 1 %}

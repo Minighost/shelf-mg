@@ -6,6 +6,32 @@ function filterOptions(input) {
     }
 }
 
+function clearFieldInputs(field) {
+    const anyRadio = field.querySelector('input[type="radio"][value=""]');
+    if (anyRadio) {
+        anyRadio.checked = true;
+    }
+    field.querySelectorAll('input[type="checkbox"]').forEach((cb) => (cb.checked = false));
+    field.querySelectorAll(".filter-range input").forEach((input) => (input.value = ""));
+    const clearBtn = field.querySelector(".filter-clear-btn");
+    if (clearBtn) {
+        clearBtn.style.display = "none";
+    }
+}
+
+function clearFilterField(event, button) {
+    event.preventDefault();
+    event.stopPropagation(); // don't toggle the <details> open/closed
+    clearFieldInputs(button.closest(".filter-field"));
+}
+
+function clearAllFilters(event) {
+    event.preventDefault();
+    const form = event.target.closest("form");
+    form.querySelectorAll(".filter-field").forEach(clearFieldInputs);
+    form.requestSubmit();
+}
+
 // On mobile, the on-screen keyboard can cover the search input since it
 // isn't at the very top of the page. Scroll it into view after focusing,
 // once the keyboard has finished opening (an immediate scroll gets

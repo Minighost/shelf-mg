@@ -281,6 +281,11 @@ button::-moz-focus-inner {
     margin: 0 0 0.6rem 0;
 }
 
+.filter-sort-form {
+    max-width: var(--content-max-width);
+    margin: 0 auto 1rem auto;
+}
+
 .sort-bar {
     display: flex;
     flex-wrap: wrap;
@@ -312,6 +317,20 @@ button::-moz-focus-inner {
 
 .sort-bar button:hover {
     background: var(--accent-hover);
+}
+
+.filter-clear-all-btn {
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.filter-clear-all-btn:hover {
+    background: var(--border-color);
 }
 
 .filter-toggle {
@@ -351,9 +370,34 @@ button::-moz-focus-inner {
     cursor: pointer;
     color: var(--text-color);
     font-size: 0.9em;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.filter-field-label {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filter-clear-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85em;
+    white-space: nowrap;
+    cursor: pointer;
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.filter-clear-btn:hover {
+    color: var(--text-color);
+    background: var(--border-color);
 }
 
 .filter-field select {
@@ -406,6 +450,12 @@ button::-moz-focus-inner {
     gap: 0.4rem;
     font-size: 0.9em;
     color: var(--text-color);
+}
+
+.filter-options-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 0.3rem 0;
 }
 
 .filter-range {
