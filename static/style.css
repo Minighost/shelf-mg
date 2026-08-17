@@ -167,6 +167,50 @@ button::-moz-focus-inner {
     font-size: 0.9em;
 }
 
+/* --- library: continue reading --- */
+
+.continue-reading-bar {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    max-width: var(--content-max-width);
+    margin: 0 auto 1.5rem auto;
+    padding: 0.5rem 0;
+}
+
+.continue-reading-label {
+    flex: 0 0 auto;
+    font-size: 1.1em;
+    color: var(--text-muted);
+}
+
+.continue-reading-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    flex: 1 1 0;
+    min-width: 0;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.continue-reading-entry:hover .continue-reading-title {
+    text-decoration: underline;
+}
+
+.continue-reading-title {
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.continue-reading-history-link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
 /* --- library: search & filters --- */
 
 .library-title {
@@ -373,6 +417,11 @@ html.view-card .book-list {
     display: inline-block;
     margin-top: 0.5rem;
     font-weight: bold;
+}
+
+.history-updated {
+    font-size: 0.85em;
+    white-space: nowrap;
 }
 
 /* --- library: grid view --- */
@@ -601,44 +650,6 @@ html.view-card .card-view {
 .reader-header {
     max-width: var(--content-max-width);
     margin: 0 auto 1rem auto;
-}
-
-.recent-list {
-    max-width: var(--content-max-width);
-    margin: 0 auto 1.5rem auto;
-}
-
-.recent-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin: 0 0 0.5rem 0;
-}
-
-.recent-title {
-    font-size: 1.1em;
-    margin: 0;
-    color: var(--text-muted);
-}
-
-.recent-entry {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.recent-entry:last-child {
-    border-bottom: none;
-}
-
-.recent-updated {
-    color: var(--text-muted);
-    font-size: 0.85em;
-    white-space: nowrap;
 }
 
 .conflict-dialog {

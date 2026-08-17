@@ -52,10 +52,6 @@ function previewContentMaxWidth(pct) {
     document.getElementById("content-max-width-label").textContent = pct;
 }
 
-function previewRecentListLimit(count) {
-    document.getElementById("recent-list-limit-label").textContent = count;
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     const themeSelect = document.getElementById("theme");
     if (themeSelect) previewTheme(themeSelect.value);

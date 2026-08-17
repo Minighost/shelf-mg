@@ -70,20 +70,15 @@
                 document.getElementById("refresh-dialog").showModal();
             }
         </script>
-        {% if recent %}
-            <div class="recent-list">
-                <div class="recent-header">
-                    <h2 class="recent-title">Recently read</h2>
-                    <a class="settings-link" href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Full history</a>
-                </div>
-                {% for item in recent %}
-                    <div class="recent-entry">
-                        <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
-                            {{ item.book.title }} — {{ item.chapter_title }}
-                        </a>
-                        <span class="recent-updated">{{ item.updated_at }}</span>
-                    </div>
-                {% endfor %}
+        {% if continue_reading %}
+            <div class="continue-reading-bar">
+                <span class="continue-reading-label">Continue reading:</span>
+                <a class="continue-reading-entry"
+                   href="/read/{{ continue_reading.book.id }}/{{ continue_reading.chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
+                    <span class="continue-reading-title">{{ continue_reading.book.title }} (Chapter {{ continue_reading.chapter_index + 1 }} – {{ continue_reading.chapter_title }})</span>
+                </a>
+                <a class="settings-link continue-reading-history-link"
+                   href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
             </div>
         {% endif %}
         <form method="get" class="search-form-wrapper">

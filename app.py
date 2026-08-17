@@ -223,10 +223,10 @@ def library_list():
     }
     book_positions = {k: v for k, v in book_positions.items() if v is not None}
 
-    recent_limit = current_settings.recent_list_limit
-    recent = _build_history_entries(
-        positions.get_recent_positions(DB_PATH, recent_limit)
+    continue_reading_entries = _build_history_entries(
+        positions.get_recent_positions(DB_PATH, 1)
     )
+    continue_reading = continue_reading_entries[0] if continue_reading_entries else None
 
     # Active filter/query params, reusable for building pagination links that
     # preserve the current search+filter+view state.
@@ -247,7 +247,7 @@ def library_list():
         "library.html",
         books=books,
         positions=book_positions,
-        recent=recent,
+        continue_reading=continue_reading,
         page=page,
         total_pages=total_pages,
         query=query,
@@ -445,7 +445,6 @@ def settings_page():
         ).strip()
         reader_font_size_raw = flask.request.form.get("reader_font_size", "")
         content_max_width_pct_raw = flask.request.form.get("content_max_width_pct", "")
-        recent_list_limit_raw = flask.request.form.get("recent_list_limit", "")
         enabled_filters = flask.request.form.getlist("enabled_filters")
 
         try:
@@ -458,13 +457,6 @@ def settings_page():
             )
         except ValueError:
             return "Invalid font size", 400
-
-        try:
-            recent_list_limit = (
-                int(recent_list_limit_raw) if recent_list_limit_raw else None
-            )
-        except ValueError:
-            return "Invalid recent list limit", 400
 
         custom_colors = {
             field: flask.request.form.get(field, "").strip()
@@ -489,7 +481,6 @@ def settings_page():
                 reader_font_family_key=reader_font_family_key or None,
                 reader_font_size=reader_font_size,
                 content_max_width_pct=content_max_width_pct,
-                recent_list_limit=recent_list_limit,
                 custom_colors=custom_colors,
                 enabled_filters=enabled_filters,
             )

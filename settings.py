@@ -5,7 +5,6 @@ DEFAULT_THEME = "dark"
 DEFAULT_FONT_FAMILY = "serif"
 DEFAULT_FONT_SIZE = 1.1  # rem
 DEFAULT_CONTENT_MAX_WIDTH_PCT = 40  # % of viewport width, desktop only
-DEFAULT_RECENT_LIST_LIMIT = 5  # books shown in the library's "Recently read" list
 DEFAULT_LIBRARY_VIEW = "list"
 LIBRARY_VIEW_CHOICES = ["list", "grid", "card"]
 
@@ -60,7 +59,6 @@ class Settings:
     reader_font_family_css: str
     reader_font_size: float
     content_max_width_pct: float
-    recent_list_limit: int
     library_view: str
     custom_bg_color: str
     custom_surface_color: str
@@ -91,7 +89,6 @@ def init_db(db_path: str) -> None:
         "reader_font_family_key",
         "reader_font_size",
         "content_max_width_pct",
-        "recent_list_limit",
         "enabled_filters",
         "library_view",
     ]
@@ -111,7 +108,7 @@ def get_settings(db_path: str) -> Settings:
     row = conn.execute(
         "SELECT theme, font_family_key, font_size, override_epub_font, "
         "reader_font_family_key, reader_font_size, content_max_width_pct, "
-        "recent_list_limit, enabled_filters, library_view, "
+        "enabled_filters, library_view, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -128,7 +125,6 @@ def get_settings(db_path: str) -> Settings:
             reader_font_family_css=FONT_CHOICES[DEFAULT_FONT_FAMILY],
             reader_font_size=DEFAULT_FONT_SIZE,
             content_max_width_pct=DEFAULT_CONTENT_MAX_WIDTH_PCT,
-            recent_list_limit=DEFAULT_RECENT_LIST_LIMIT,
             enabled_filters=DEFAULT_ENABLED_FILTERS,
             library_view=DEFAULT_LIBRARY_VIEW,
             **DEFAULT_CUSTOM_COLORS,
@@ -155,10 +151,11 @@ def get_settings(db_path: str) -> Settings:
         content_max_width_pct=float(
             row["content_max_width_pct"] or DEFAULT_CONTENT_MAX_WIDTH_PCT
         ),
-        recent_list_limit=int(row["recent_list_limit"] or DEFAULT_RECENT_LIST_LIMIT),
-        enabled_filters=row["enabled_filters"]
-        if row["enabled_filters"] is not None
-        else DEFAULT_ENABLED_FILTERS,
+        enabled_filters=(
+            row["enabled_filters"]
+            if row["enabled_filters"] is not None
+            else DEFAULT_ENABLED_FILTERS
+        ),
         library_view=row["library_view"] or DEFAULT_LIBRARY_VIEW,
         **custom_colors,
     )
@@ -173,7 +170,6 @@ def save_settings(
     reader_font_family_key: str | None = None,
     reader_font_size: float | None = None,
     content_max_width_pct: float | None = None,
-    recent_list_limit: int | None = None,
     custom_colors: dict | None = None,
     enabled_filters: list[str] | None = None,
     library_view: str | None = None,
@@ -187,7 +183,9 @@ def save_settings(
     existing = get_settings(db_path)
 
     override_epub_font = (
-        override_epub_font if override_epub_font is not None else existing.override_epub_font
+        override_epub_font
+        if override_epub_font is not None
+        else existing.override_epub_font
     )
 
     reader_font_family_key = reader_font_family_key or existing.reader_font_family_key
@@ -205,13 +203,6 @@ def save_settings(
         else existing.content_max_width_pct
     )
     content_max_width_pct = max(20, min(80, content_max_width_pct))
-
-    recent_list_limit = (
-        recent_list_limit
-        if recent_list_limit is not None
-        else existing.recent_list_limit
-    )
-    recent_list_limit = max(1, min(20, int(recent_list_limit)))
 
     library_view = library_view or existing.library_view
     if library_view not in LIBRARY_VIEW_CHOICES:
@@ -246,7 +237,6 @@ def save_settings(
         "reader_font_family_key",
         "reader_font_size",
         "content_max_width_pct",
-        "recent_list_limit",
         "enabled_filters",
         "library_view",
     ] + CUSTOM_COLOR_FIELDS
@@ -262,7 +252,6 @@ def save_settings(
         reader_font_family_key,
         reader_font_size,
         content_max_width_pct,
-        recent_list_limit,
         resolved_enabled_filters,
         library_view,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
