@@ -39,7 +39,7 @@
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
-            <h1 class="library-title header-title">Reading history</h1>
+            <h1 class="page-title header-title">Reading history</h1>
         </div>
         {% if total_pages > 1 %}
             <nav class="pagination">
@@ -71,7 +71,7 @@
                         <p class="book-meta book-tags">Tags: {{ item.book.tags | join(", ") }}</p>
                         <div class="book-summary">{{ item.book.summary_html | safe }}</div>
                         <p>
-                            <a class="continue-link"
+                            <a class="book-continue-link"
                                href="/read/{{ item.book.id }}/{{ item.chapter_index }}">
                                 Continue reading (Chapter {{ item.chapter_index + 1 }}: {{ item.chapter_title }})
                             </a>

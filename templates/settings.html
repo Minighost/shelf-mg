@@ -26,7 +26,7 @@
                 </div>
                 <div class="header-right"></div>
             </div>
-            <h1 class="library-title header-title">Settings</h1>
+            <h1 class="page-title header-title">Settings</h1>
         </div>
         <form method="post" class="settings-form">
             <div class="settings-field settings-field-grouped">
@@ -207,7 +207,7 @@
                     <p class="preview-body">The quick brown fox jumps over the lazy dog.</p>
                     <p class="preview-muted">Muted text example</p>
                     <a href="#" class="preview-link" onclick="return false;">A sample link</a>
-                    <button type="button" class="preview-button">Sample button</button>
+                    <button type="button" class="preview-btn">Sample button</button>
                 </div>
                 <div class="settings-preview"
                      id="reader-font-preview"
@@ -226,12 +226,12 @@
             <form method="post"
                   action="{{ url_for('reset_progress') }}"
                   onsubmit="return confirm('Reset every story\'s progress back to chapter 1? This cannot be undone.');">
-                <button type="submit" class="danger-button">Reset all reading progress to chapter 1</button>
+                <button type="submit" class="danger-btn">Reset all reading progress to chapter 1</button>
             </form>
             <form method="post"
                   action="{{ url_for('clear_recent') }}"
                   onsubmit="return confirm('Clear all reading progress and the \'Recently read\' list? This cannot be undone.');">
-                <button type="submit" class="danger-button">Clear reading progress and "Recently read" list</button>
+                <button type="submit" class="danger-btn">Clear reading progress and "Recently read" list</button>
             </form>
         </details>
         <script src="{{ url_for('static', filename='settings-preview.js') }}"></script>

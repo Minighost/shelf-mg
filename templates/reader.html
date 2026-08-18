@@ -63,8 +63,8 @@
         </div>
         <dialog id="conflict-dialog" class="conflict-dialog">
             <button type="button"
-                    id="conflict-dialog-x"
-                    class="conflict-dialog-x"
+                    id="conflict-dialog-close"
+                    class="conflict-dialog-close"
                     aria-label="Close">&times;</button>
             <p id="conflict-dialog-message"></p>
             <div class="conflict-dialog-actions">
@@ -90,7 +90,7 @@
             const conflictMessage = document.getElementById("conflict-dialog-message");
             const conflictConfirmBtn = document.getElementById("conflict-dialog-confirm");
             const conflictCancelBtn = document.getElementById("conflict-dialog-cancel");
-            const conflictCloseBtn = document.getElementById("conflict-dialog-x");
+            const conflictCloseBtn = document.getElementById("conflict-dialog-close");
 
             // Three outcomes: "confirm" (overwrite), "alternate" (the labeled
             // cancel action, which navigates somewhere), or "dismiss" (×,

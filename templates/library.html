@@ -47,12 +47,12 @@
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
-            <h1 class="library-title header-title">Library</h1>
+            <h1 class="page-title header-title">Library</h1>
         </div>
         <dialog id="refresh-dialog" class="conflict-dialog">
             <button type="button"
                     id="refresh-dialog-x"
-                    class="conflict-dialog-x"
+                    class="conflict-dialog-close"
                     aria-label="Close"
                     onclick="document.getElementById('refresh-dialog').close()">&times;</button>
             <p>Refresh all data from Calibre?<br>This may take a second.</p>
@@ -122,7 +122,7 @@
                     <div class="filter-sort-section">
                         <span class="filter-sort-section-label">Sort by</span>
                         <hr class="filter-sort-section-divider">
-                        <div class="sort-bar">
+                        <div class="filter-sort-bar">
                             <select name="sort">
                                 <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
                                 {% for field in filter_fields %}
@@ -250,7 +250,7 @@
                     <div class="book-summary">{{ book.summary_html | safe }}</div>
                     {% if book.id in positions %}
                         <p>
-                            <a class="continue-link"
+                            <a class="book-continue-link"
                                href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
                                 Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
                             </a>
@@ -262,14 +262,14 @@
         <div class="book-grid">
             {% for book in books %}
                 <div class="grid-card">
-                    <div class="book-cover-wrap">
-                        <img class="book-cover"
+                    <div class="grid-cover-wrap">
+                        <img class="grid-cover"
                              src="{{ url_for('inspect_cover', book_id=book.id) }}"
                              alt="Cover for {{ book.title }}"
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
-                        <div class="book-cover-placeholder">No cover</div>
-                        <a class="inspect-button book-cover-inspect" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
+                        <div class="grid-cover-placeholder">No cover</div>
+                        <a class="inspect-button grid-cover-inspect" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
                     </div>
                     <div class="grid-card-info">
                         <a class="grid-card-title"

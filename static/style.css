@@ -213,7 +213,7 @@ button::-moz-focus-inner {
 
 /* --- library: search & filters --- */
 
-.library-title {
+.page-title {
     font-size: 1.8em;
     margin-bottom: 2rem;
 }
@@ -302,26 +302,26 @@ button::-moz-focus-inner {
     --filter-actions-gap: 0.6rem;
     display: flex;
     gap: var(--filter-actions-gap);
-    margin-top: 1rem;
     margin-bottom: 0.8rem;
+    margin-top: 1rem;
 }
 
 .filter-sort-actions button {
-    flex: 0 0 auto;
-    width: calc(50% - var(--filter-actions-gap) / 2);
-    min-width: 0;
-    height: 2.2rem;
-    box-sizing: border-box;
-    font-size: 0.9em;
-    font-family: inherit;
     border-radius: 4px;
+    box-sizing: border-box;
     cursor: pointer;
+    flex: 0 0 auto;
+    font-family: inherit;
+    font-size: 0.9em;
+    height: 2.2rem;
+    min-width: 0;
+    width: calc(50% - var(--filter-actions-gap) / 2);
 }
 
 .filter-apply-btn {
     background: var(--accent-color);
-    color: var(--text-color);
     border: 1px solid var(--accent-color);
+    color: var(--text-color);
 }
 
 .filter-apply-btn:hover {
@@ -330,8 +330,8 @@ button::-moz-focus-inner {
 
 .filter-clear-all-btn {
     background: var(--surface-color);
-    color: var(--text-color);
     border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 .filter-clear-all-btn:hover {
@@ -353,29 +353,29 @@ button::-moz-focus-inner {
     border-top: 1px solid var(--border-color);
 }
 
-.sort-bar {
-    --sort-bar-gap: 0.6rem;
+.filter-sort-bar {
+    --filter-sort-bar-gap: 0.6rem;
+    align-items: center;
+    color: var(--text-muted);
     display: flex;
     flex-wrap: wrap;
-    gap: var(--sort-bar-gap);
-    align-items: center;
     font-size: 0.9em;
-    color: var(--text-muted);
+    gap: var(--filter-sort-bar-gap);
 }
 
-.sort-bar select {
-    width: calc(50% - var(--sort-bar-gap) / 2);
-    min-width: 0;
-    flex: 0 0 auto;
-    height: 2.2rem;
-    padding: 0.3rem 0.6rem;
+.filter-sort-bar select {
     background: var(--surface-color);
-    color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    font-size: 0.9em;
-    font-family: inherit;
     box-sizing: border-box;
+    color: var(--text-color);
+    flex: 0 0 auto;
+    font-family: inherit;
+    font-size: 0.9em;
+    height: 2.2rem;
+    min-width: 0;
+    padding: 0.3rem 0.6rem;
+    width: calc(50% - var(--filter-sort-bar-gap) / 2);
 }
 
 .filter-clear-all-btn:hover {
@@ -608,7 +608,7 @@ html.view-card .book-list {
     border-left: 2px solid var(--border-color);
 }
 
-.continue-link {
+.book-continue-link {
     display: inline-block;
     margin-top: 0.5rem;
     font-weight: bold;
@@ -638,18 +638,18 @@ html.view-grid .book-grid {
     margin-top: 0.5rem;
 }
 
-.book-cover-wrap {
+.grid-cover-wrap {
     position: relative;
 }
 
-.book-cover-inspect {
+.grid-cover-inspect {
     position: absolute;
     top: 0.4rem;
     right: 0.4rem;
     background: var(--surface-color);
 }
 
-.book-cover {
+.grid-cover {
     width: 100%;
     height: auto;
     aspect-ratio: 2 / 3;
@@ -659,7 +659,7 @@ html.view-grid .book-grid {
     display: block;
 }
 
-.book-cover-placeholder {
+.grid-cover-placeholder {
     display: none;
     width: 100%;
     aspect-ratio: 2 / 3;
@@ -672,7 +672,7 @@ html.view-grid .book-grid {
     text-align: center;
 }
 
-.book-cover-placeholder.visible {
+.grid-cover-placeholder.visible {
     display: flex;
 }
 
@@ -916,7 +916,7 @@ html.view-card .card-view {
     background: rgba(0, 0, 0, 0.5);
 }
 
-.conflict-dialog-x {
+.conflict-dialog-close {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
@@ -930,7 +930,7 @@ html.view-card .card-view {
     border-radius: 4px;
 }
 
-.conflict-dialog-x:hover {
+.conflict-dialog-close:hover {
     color: var(--text-color);
 }
 
@@ -1178,7 +1178,7 @@ html.view-card .card-view {
     margin-bottom: 0.75rem;
 }
 
-.danger-button {
+.danger-btn {
     background: none;
     border: 1px solid var(--accent-color);
     color: var(--accent-color);
@@ -1188,7 +1188,7 @@ html.view-card .card-view {
     font-size: 0.95em;
 }
 
-.danger-button:hover {
+.danger-btn:hover {
     background: var(--accent-color);
     color: white;
 }
@@ -1232,7 +1232,7 @@ html.view-card .card-view {
     color: var(--accent-color);
 }
 
-.preview-button {
+.preview-btn {
     display: block;
     margin-top: 0.6rem;
     background: var(--accent-color);
@@ -1244,7 +1244,7 @@ html.view-card .card-view {
     font: inherit;
 }
 
-.preview-button:hover {
+.preview-btn:hover {
     background: var(--accent-hover);
 }
 
@@ -1382,7 +1382,7 @@ html.view-card .card-view {
         padding: 2rem;
     }
 
-    .library-title {
+    .page-title {
         font-size: 2.2em;
     }
 
@@ -1395,8 +1395,8 @@ html.view-card .card-view {
         width: calc(25% - var(--filter-actions-gap) / 2);
     }
 
-    .sort-bar select {
-        width: calc(25% - var(--sort-bar-gap) / 2);
+    .filter-sort-bar select {
+        width: calc(25% - var(--filter-sort-bar-gap) / 2);
     }
 
     .filter-field {
