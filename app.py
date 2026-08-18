@@ -76,13 +76,14 @@ def _book_matches(book, query):
 
 def _builtin_filter_fields():
     """
-    Filters tied to fixed Book fields. tags/author/series/publisher are
-    always available (the app already depends on them unconditionally);
+    Filters tied to fixed Book fields. tags/author/series/publisher/title
+    are always available (the app already depends on them unconditionally);
     date_added/pubdate/size/rating are conditionally included based on
     whether this specific library's Calibre schema actually has them —
     see calibre_reader.available_builtin_fields().
     """
     fields = [
+        {"key": "title", "label": "Title", "type": "single", "datatype": "text"},
         {"key": "tags", "label": "Tags", "type": "multi", "datatype": "text"},
         {"key": "author", "label": "Author", "type": "single", "datatype": "text"},
         {"key": "series", "label": "Series", "type": "single", "datatype": "text"},
@@ -103,6 +104,7 @@ def _builtin_filter_fields():
 
 
 BUILTIN_FILTER_GETTERS = {
+    "title": lambda book: [book.title] if book.title else [],
     "tags": lambda book: book.tags,
     "author": lambda book: book.authors,
     "series": lambda book: [book.series] if book.series else [],
