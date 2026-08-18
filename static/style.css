@@ -685,7 +685,7 @@ html.view-card .card-view {
 .card-item {
     display: flex;
     flex-direction: column;
-    height: 12rem;
+    aspect-ratio: 2 / 3;
     padding: 0.8rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -1316,6 +1316,6 @@ html.view-card .card-view {
     }
 
     html.view-card .card-view {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(4, 1fr);
     }
 }
