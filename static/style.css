@@ -70,7 +70,7 @@ a:hover {
 
 /* --- buttons --- */
 
-.theme-toggle {
+.header-btn {
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-color);
@@ -123,7 +123,7 @@ a:hover {
     text-decoration: none;
 }
 
-.theme-toggle,
+.header-btn,
 .settings-save {
     appearance: none;
     -webkit-appearance: none;
@@ -355,16 +355,16 @@ button::-moz-focus-inner {
     border-top: 1px solid var(--border-color);
 }
 
-.filter-sort-bar {
-    --filter-sort-bar-gap: 0.6rem;
+.sort-controls-bar {
+    --sort-controls-bar-gap: 0.6rem;
     align-items: center;
     color: var(--text-muted);
     display: flex;
     flex-wrap: wrap;
-    gap: var(--filter-sort-bar-gap);
+    gap: var(--sort-controls-bar-gap);
 }
 
-.filter-sort-bar select {
+.sort-controls-bar select {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -377,7 +377,7 @@ button::-moz-focus-inner {
     min-width: 0;
     padding-block: 0.3em;
     padding-inline: 0.6em;
-    width: calc(50% - var(--filter-sort-bar-gap) / 2);
+    width: calc(50% - var(--sort-controls-bar-gap) / 2);
 }
 
 .filter-clear-all-btn:hover {
@@ -395,11 +395,11 @@ button::-moz-focus-inner {
     line-height: 1;
 }
 
-.filter-bar {
-    --filter-bar-gap: 0.6rem;
+.filter-fields-bar {
+    --filter-fields-bar-gap: 0.6rem;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--filter-bar-gap);
+    gap: var(--filter-fields-bar-gap);
     align-items: flex-start;
 }
 
@@ -451,7 +451,7 @@ button::-moz-focus-inner {
     transform: rotate(90deg);
 }
 
-.filter-field-label {
+.filter-field-name {
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -907,7 +907,7 @@ html.view-card .card-view {
     margin: 0 auto 1rem auto;
 }
 
-.conflict-dialog {
+.confirm-dialog {
     max-width: min(var(--content-max-width), calc(100% - 2rem));
     width: fit-content;
     max-height: min(80vh, calc(100% - 2rem));
@@ -920,11 +920,11 @@ html.view-card .card-view {
     border-radius: 4px;
 }
 
-.conflict-dialog::backdrop {
+.confirm-dialog::backdrop {
     background: rgba(0, 0, 0, 0.5);
 }
 
-.conflict-dialog-close {
+.confirm-dialog-close {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
@@ -938,24 +938,24 @@ html.view-card .card-view {
     border-radius: 4px;
 }
 
-.conflict-dialog-close:hover {
+.confirm-dialog-close:hover {
     color: var(--text-color);
 }
 
-.conflict-dialog p {
+.confirm-dialog p {
     margin: 0 0 1rem 0;
     padding-right: 1.5rem;
     line-height: 1.5;
 }
 
-.conflict-dialog-actions {
+.confirm-dialog-actions {
     display: flex;
     justify-content: center;
     gap: 0.6rem;
     flex-wrap: wrap;
 }
 
-.conflict-dialog-actions button {
+.confirm-dialog-actions button {
     padding: 0.5rem 0.9rem;
     cursor: pointer;
     font-size: 0.9em;
@@ -965,19 +965,19 @@ html.view-card .card-view {
     border-radius: 4px;
 }
 
-.conflict-dialog-cancel {
+.confirm-dialog-cancel {
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-color);
 }
 
-.conflict-dialog-confirm {
+.confirm-dialog-confirm {
     background: var(--accent-color);
     border: none;
     color: white;
 }
 
-.conflict-dialog-confirm:hover {
+.confirm-dialog-confirm:hover {
     background: var(--accent-hover);
 }
 
@@ -1403,19 +1403,19 @@ html.view-card .card-view {
         width: calc(25% - var(--filter-actions-gap) / 2);
     }
 
-    .filter-sort-bar select {
-        width: calc(25% - var(--filter-sort-bar-gap) / 2);
+    .sort-controls-bar select {
+        width: calc(25% - var(--sort-controls-bar-gap) / 2);
     }
 
     .filter-field {
-        width: calc(25% - var(--filter-bar-gap) * 0.75);
+        width: calc(25% - var(--filter-fields-bar-gap) * 0.75);
     }
 
     .settings-preview {
         --reader-font-size: var(--reader-font-size-base, 1.1rem);
     }
 
-    .conflict-dialog {
+    .confirm-dialog {
         max-width: min(500px, calc(100% - 2rem));
     }
 

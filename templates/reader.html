@@ -49,7 +49,7 @@
                        data-target-chapter="{{ chapter.index }}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
-                    <a class="theme-toggle" href="/settings">Settings</a>
+                    <a class="header-btn" href="/settings">Settings</a>
                 </div>
             </div>
             <h1 class="header-title">{{ book.title }}</h1>
@@ -61,15 +61,15 @@
                 {% endfor %}
             </select>
         </div>
-        <dialog id="conflict-dialog" class="conflict-dialog">
+        <dialog id="conflict-dialog" class="confirm-dialog">
             <button type="button"
                     id="conflict-dialog-close"
-                    class="conflict-dialog-close"
+                    class="confirm-dialog-close"
                     aria-label="Close">&times;</button>
             <p id="conflict-dialog-message"></p>
-            <div class="conflict-dialog-actions">
-                <button type="button" id="conflict-dialog-cancel" class="conflict-dialog-cancel"></button>
-                <button type="button" id="conflict-dialog-confirm" class="conflict-dialog-confirm"></button>
+            <div class="confirm-dialog-actions">
+                <button type="button" id="conflict-dialog-cancel" class="confirm-dialog-cancel"></button>
+                <button type="button" id="conflict-dialog-confirm" class="confirm-dialog-confirm"></button>
             </div>
         </dialog>
         {{ chapter_nav() }}

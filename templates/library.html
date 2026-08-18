@@ -42,26 +42,26 @@
                 <div class="header-left"></div>
                 <div class="header-right">
                     <form method="post" id="refresh-library-form" action="{{ url_for('refresh_library') }}"></form>
-                    <button type="button" class="theme-toggle" onclick="confirmRefreshLibrary()">Refresh library</button>
-                    <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+                    <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
+                    <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
             <h1 class="page-title header-title">Library</h1>
         </div>
-        <dialog id="refresh-dialog" class="conflict-dialog">
+        <dialog id="refresh-dialog" class="confirm-dialog">
             <button type="button"
                     id="refresh-dialog-x"
-                    class="conflict-dialog-close"
+                    class="confirm-dialog-close"
                     aria-label="Close"
                     onclick="document.getElementById('refresh-dialog').close()">&times;</button>
             <p>Refresh all data from Calibre?<br>This may take a second.</p>
-            <div class="conflict-dialog-actions">
+            <div class="confirm-dialog-actions">
                 <button type="button"
-                        class="conflict-dialog-cancel"
+                        class="confirm-dialog-cancel"
                         onclick="document.getElementById('refresh-dialog').close()">Cancel</button>
                 <button type="button"
-                        class="conflict-dialog-confirm"
+                        class="confirm-dialog-confirm"
                         onclick="document.getElementById('refresh-library-form').submit()">Refresh</button>
             </div>
         </dialog>
@@ -122,7 +122,7 @@
                     <div class="filter-sort-section">
                         <span class="filter-sort-section-label">Sort by</span>
                         <hr class="filter-sort-section-divider">
-                        <div class="filter-sort-bar">
+                        <div class="sort-controls-bar">
                             <select name="sort">
                                 <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
                                 {% for field in filter_fields %}
@@ -138,11 +138,11 @@
                     <div class="filter-sort-section">
                         <span class="filter-sort-section-label">Filters</span>
                         <hr class="filter-sort-section-divider">
-                        <div class="filter-bar">
+                        <div class="filter-fields-bar">
                         {% for field in filter_fields %}
                             <details class="filter-field">
                                 <summary>
-                                    <span class="filter-field-label">
+                                    <span class="filter-field-name">
                                         {{ field.label }}
                                         {% if field.type == "multi" and selected.get(field.key) %} ({{ selected[field.key] | length }}){% endif %}
                                         {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
