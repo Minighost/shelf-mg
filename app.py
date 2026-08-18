@@ -1,3 +1,4 @@
+import dotenv
 import mimetypes
 import os
 import re
@@ -6,13 +7,14 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 import werkzeug.http
-
 import flask
 
 import calibre_reader
 import epub_parser
 import positions
 import settings
+
+dotenv.load_dotenv()
 
 app = flask.Flask(__name__)
 
