@@ -313,8 +313,10 @@ button::-moz-focus-inner {
     flex: 0 0 auto;
     font-family: inherit;
     font-size: 0.9em;
-    height: 2.2rem;
+    height: 2.2em;
     min-width: 0;
+    padding-block: 0.3em;
+    padding-inline: 0.6em;
     width: calc(50% - var(--filter-actions-gap) / 2);
 }
 
@@ -359,7 +361,6 @@ button::-moz-focus-inner {
     color: var(--text-muted);
     display: flex;
     flex-wrap: wrap;
-    font-size: 0.9em;
     gap: var(--filter-sort-bar-gap);
 }
 
@@ -372,9 +373,10 @@ button::-moz-focus-inner {
     flex: 0 0 auto;
     font-family: inherit;
     font-size: 0.9em;
-    height: 2.2rem;
+    height: 2.2em;
     min-width: 0;
-    padding: 0.3rem 0.6rem;
+    padding-block: 0.3em;
+    padding-inline: 0.6em;
     width: calc(50% - var(--filter-sort-bar-gap) / 2);
 }
 
@@ -405,11 +407,17 @@ button::-moz-focus-inner {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 0.55rem 0.6rem;
+    padding-block: 0.3em;
+    padding-inline: 0.6em;
+    height: 2.2em;
     width: 100%;
     min-width: 0;
     flex: 0 0 auto;
     box-sizing: border-box;
+}
+
+.filter-field[open] {
+    height: auto;
 }
 
 .filter-field label {
@@ -449,7 +457,7 @@ button::-moz-focus-inner {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1;
+    line-height: 1.2;
     padding-bottom: 0.15em;
 }
 
