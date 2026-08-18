@@ -615,7 +615,8 @@ html.view-card .book-list {
 
 html.view-grid .book-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
     gap: 1.5rem;
     max-width: var(--content-max-width);
     margin: 0 auto;
@@ -665,6 +666,7 @@ html.view-grid .book-grid {
 
 .grid-card-title {
     display: block;
+    overflow-wrap: break-word;
     font-size: 0.95em;
     font-weight: 600;
     color: var(--text-color);
@@ -1331,7 +1333,7 @@ html.view-card .card-view {
 
 @media (min-width: 600px) {
     html.view-grid .book-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     html.view-card .card-view {
@@ -1374,7 +1376,7 @@ html.view-card .card-view {
     }
 
     html.view-grid .book-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
     html.view-card .card-view {
