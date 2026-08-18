@@ -405,7 +405,7 @@ button::-moz-focus-inner {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 0.4rem 0.6rem;
+    padding: 0.55rem 0.6rem;
     width: 100%;
     min-width: 0;
     flex: 0 0 auto;
@@ -449,6 +449,8 @@ button::-moz-focus-inner {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1;
+    padding-bottom: 0.15em;
 }
 
 .filter-clear-btn {
