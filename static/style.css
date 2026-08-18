@@ -113,7 +113,7 @@ a:hover {
     font-weight: bold;
     color: var(--text-muted);
     text-decoration: none;
-    vertical-align: middle;
+    vertical-align: 0.15em;
     margin-left: 0.4rem;
 }
 
@@ -551,7 +551,7 @@ button::-moz-focus-inner {
 
 .book-list {
     max-width: var(--content-max-width);
-    margin: 0 auto;
+    margin: -0.3rem auto 0 auto;
 }
 
 html.view-grid .book-list,
@@ -561,12 +561,14 @@ html.view-card .book-list {
 
 .book-entry {
     border-bottom: 1px solid var(--border-color);
-    padding: 1rem 0;
+    padding: 1rem 0 1.3rem 0;
+}
+
+.book-entry:first-child {
+    padding-top: 0;
 }
 
 .book-entry h2 {
-    display: flex;
-    align-items: center;
     margin: 0 0 0.3rem 0;
     font-size: 1.2em;
 }
@@ -588,6 +590,14 @@ html.view-card .book-list {
 .book-summary {
     font-size: 0.9em;
     margin-top: 0.5rem;
+}
+
+.book-summary > :last-child {
+    margin-bottom: 0;
+}
+
+.book-entry > p:last-child {
+    margin-bottom: 0;
 }
 
 .book-summary blockquote {
