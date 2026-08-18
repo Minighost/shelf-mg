@@ -86,12 +86,16 @@
         {% set _ = filter_sort_args.pop('q', none) %}
         <form method="get" class="search-form-wrapper">
             <div class="search-form">
-                <input type="text"
-                       name="q"
-                       value="{{ query }}"
-                       placeholder="Search title, author, or tag">
+                <div class="search-input-wrap">
+                    <input type="text"
+                           name="q"
+                           value="{{ query }}"
+                           placeholder="Search title, author, or tag">
+                    <a href="{{ url_for('library_list', **filter_sort_args) }}"
+                       class="search-clear-btn"
+                       aria-label="Clear search">&times;</a>
+                </div>
                 <button type="submit">Search</button>
-                <a href="{{ url_for('library_list', **filter_sort_args) }}">Clear</a>
             </div>
             {% for key, value in filter_sort_args.items() %}
                 {% if value is iterable and value is not string %}

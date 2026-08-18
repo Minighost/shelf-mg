@@ -226,9 +226,16 @@ button::-moz-focus-inner {
     margin: 0 auto 2rem auto;
 }
 
-.search-form input[type="text"] {
+.search-input-wrap {
+    position: relative;
     flex: 1;
-    padding: 0.6rem 0.8rem;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrap input[type="text"] {
+    width: 100%;
+    padding: 0.6rem 2rem 0.6rem 0.8rem;
     background: var(--surface-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
@@ -236,13 +243,31 @@ button::-moz-focus-inner {
     font-size: 0.95em;
 }
 
-.search-form button,
-.search-form a {
-    min-width: 5rem;
-    text-align: center;
+.search-clear-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4em;
+    height: 1.4em;
+    line-height: 1;
+    font-size: 1.2em;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.search-clear-btn:hover {
+    color: var(--text-color);
+    text-decoration: none;
 }
 
 .search-form button {
+    min-width: 5rem;
+    text-align: center;
     background: var(--accent-color);
     color: var(--text-color);
     border: none;
@@ -254,21 +279,6 @@ button::-moz-focus-inner {
 
 .search-form button:hover {
     background: var(--accent-hover);
-}
-
-.search-form a {
-    background: var(--surface-color);
-    color: var(--text-color);
-    border: 1px solid;
-    border-color: var(--accent-color);
-    padding: 0.6rem 1.2rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.95em;
-}
-
-.search-form a:hover {
-    filter: brightness(0.9);
 }
 
 .search-form-wrapper {
