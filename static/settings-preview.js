@@ -89,6 +89,11 @@ function addActiveFilter(field) {
     li.className = "active-filter-chip";
     li.dataset.key = field.key;
 
+    const handle = document.createElement("span");
+    handle.className = "filter-drag-handle";
+    handle.setAttribute("aria-hidden", "true");
+    handle.textContent = "⠿";
+
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.name = "enabled_filters";
@@ -106,7 +111,7 @@ function addActiveFilter(field) {
     removeBtn.textContent = "×";
     removeBtn.onclick = () => removeActiveFilter(removeBtn);
 
-    li.append(checkbox, label, removeBtn);
+    li.append(handle, checkbox, label, removeBtn);
     list.appendChild(li);
 
     const search = document.getElementById("filter-search");
@@ -155,3 +160,72 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+// Drag-to-reorder for active filter chips. Uses Pointer Events (not the
+// HTML5 Drag and Drop API) so the same code path handles mouse and touch —
+// this app is mobile-first, and native HTML5 DnD has no touch support.
+// Reordering the <li> elements is sufficient: the form submits
+// "enabled_filters" checkboxes in DOM order, which becomes the saved order.
+function initFilterDragDrop() {
+    const list = document.getElementById("active-filters-list");
+    if (!list) return;
+
+    list.addEventListener("pointerdown", (event) => {
+        const handle = event.target.closest(".filter-drag-handle");
+        if (!handle) return;
+        const chip = handle.closest(".active-filter-chip");
+        if (!chip) return;
+
+        event.preventDefault();
+
+        const rect = chip.getBoundingClientRect();
+        const offsetX = event.clientX - rect.left;
+        const offsetY = event.clientY - rect.top;
+
+        const placeholder = document.createElement("li");
+        placeholder.className = "active-filter-chip filter-drop-placeholder";
+        placeholder.style.width = `${rect.width}px`;
+        placeholder.style.height = `${rect.height}px`;
+        chip.after(placeholder);
+
+        chip.classList.add("dragging");
+        chip.style.width = `${rect.width}px`;
+        chip.style.left = `${rect.left}px`;
+        chip.style.top = `${rect.top}px`;
+
+        chip.setPointerCapture(event.pointerId);
+
+        const onMove = (moveEvent) => {
+            chip.style.left = `${moveEvent.clientX - offsetX}px`;
+            chip.style.top = `${moveEvent.clientY - offsetY}px`;
+
+            const target = document
+                .elementsFromPoint(moveEvent.clientX, moveEvent.clientY)
+                .find((el) => el.classList.contains("active-filter-chip") && el !== chip && el !== placeholder);
+
+            if (target) {
+                const targetRect = target.getBoundingClientRect();
+                const before = moveEvent.clientX < targetRect.left + targetRect.width / 2;
+                target.parentNode.insertBefore(placeholder, before ? target : target.nextSibling);
+            }
+        };
+
+        const onEnd = () => {
+            chip.releasePointerCapture(event.pointerId);
+            chip.classList.remove("dragging");
+            chip.style.width = "";
+            chip.style.left = "";
+            chip.style.top = "";
+            placeholder.replaceWith(chip);
+            chip.removeEventListener("pointermove", onMove);
+            chip.removeEventListener("pointerup", onEnd);
+            chip.removeEventListener("pointercancel", onEnd);
+        };
+
+        chip.addEventListener("pointermove", onMove);
+        chip.addEventListener("pointerup", onEnd);
+        chip.addEventListener("pointercancel", onEnd);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initFilterDragDrop);

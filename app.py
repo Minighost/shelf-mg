@@ -155,8 +155,9 @@ def _filter_values(book, field):
 
 
 def _enabled_filter_fields():
-    enabled = set(settings.get_settings(DB_PATH).enabled_filter_keys())
-    return [field for field in _all_filter_fields() if field["key"] in enabled]
+    enabled = settings.get_settings(DB_PATH).enabled_filter_keys()
+    fields_by_key = {field["key"]: field for field in _all_filter_fields()}
+    return [fields_by_key[key] for key in enabled if key in fields_by_key]
 
 
 def _filter_options(books, field):
@@ -661,6 +662,7 @@ def settings_page():
         theme_choices=settings.THEME_CHOICES,
         font_choices=settings.FONT_CHOICES,
         filter_fields=_all_filter_fields(),
+        active_filter_fields=_enabled_filter_fields(),
     )
 
 

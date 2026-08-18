@@ -101,14 +101,20 @@
             <div class="settings-field settings-field-grouped">
                 <label>Library filters</label>
                 <ul id="active-filters-list" class="active-filters-list">
-                    {% for field in filter_fields %}
-                        {% if field.key in settings.enabled_filter_keys() %}
-                            <li class="active-filter-chip" data-key="{{ field.key }}">
-                                <input type="checkbox" name="enabled_filters" value="{{ field.key }}" checked hidden>
-                                <span>{{ field.label }}</span>
-                                <button type="button" class="remove-filter-btn" onclick="removeActiveFilter(this)" aria-label="Remove {{ field.label }}">&times;</button>
-                            </li>
-                        {% endif %}
+                    {% for field in active_filter_fields %}
+                        <li class="active-filter-chip" data-key="{{ field.key }}">
+                            <span class="filter-drag-handle" aria-hidden="true">&#10495;</span>
+                            <input type="checkbox"
+                                   name="enabled_filters"
+                                   value="{{ field.key }}"
+                                   checked
+                                   hidden>
+                            <span>{{ field.label }}</span>
+                            <button type="button"
+                                    class="remove-filter-btn"
+                                    onclick="removeActiveFilter(this)"
+                                    aria-label="Remove {{ field.label }}">&times;</button>
+                        </li>
                     {% endfor %}
                 </ul>
                 <div class="add-filter-control">
@@ -118,7 +124,10 @@
                            autocomplete="off"
                            oninput="renderFilterSuggestions(this.value)"
                            onfocus="renderFilterSuggestions(this.value)">
-                    <ul id="filter-suggestions" class="filter-suggestions" style="display: none;"></ul>
+                    <ul id="filter-suggestions"
+                        class="filter-suggestions"
+                        style="display: none">
+                    </ul>
                 </div>
                 <script type="application/json" id="all-filter-fields-data">{{ filter_fields | tojson }}</script>
             </div>
