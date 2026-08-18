@@ -286,36 +286,33 @@ button::-moz-focus-inner {
     margin: 0 auto 1rem auto;
 }
 
-.sort-bar {
+.filter-sort-actions {
+    --filter-actions-gap: 0.6rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    align-items: center;
-    margin-bottom: 0.6rem;
-    font-size: 0.9em;
-    color: var(--text-muted);
+    gap: var(--filter-actions-gap);
+    margin-top: 0.5rem;
+    margin-bottom: 0.8rem;
 }
 
-.sort-bar select {
-    padding: 0.3rem;
-    background: var(--surface-color);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+.filter-sort-actions button {
+    flex: 0 0 auto;
+    width: calc(50% - var(--filter-actions-gap) / 2);
+    min-width: 0;
+    height: 2.2rem;
+    box-sizing: border-box;
     font-size: 0.9em;
-}
-
-.sort-bar button {
-    background: var(--accent-color);
-    color: var(--text-color);
-    border: none;
-    padding: 0.4rem 0.9rem;
+    font-family: inherit;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9em;
 }
 
-.sort-bar button:hover {
+.filter-apply-btn {
+    background: var(--accent-color);
+    color: var(--text-color);
+    border: 1px solid var(--accent-color);
+}
+
+.filter-apply-btn:hover {
     background: var(--accent-hover);
 }
 
@@ -323,10 +320,50 @@ button::-moz-focus-inner {
     background: var(--surface-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    padding: 0.4rem 0.9rem;
-    border-radius: 4px;
-    cursor: pointer;
+}
+
+.filter-clear-all-btn:hover {
+    background: var(--border-color);
+}
+
+.filter-sort-section {
+    margin-bottom: 0.8rem;
+}
+
+.filter-sort-section-label {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.filter-sort-section-divider {
+    margin: 0.2rem 0 0.6rem 0;
+    border: none;
+    border-top: 1px solid var(--border-color);
+}
+
+.sort-bar {
+    --sort-bar-gap: 0.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sort-bar-gap);
+    align-items: center;
     font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.sort-bar select {
+    width: calc(50% - var(--sort-bar-gap) / 2);
+    min-width: 0;
+    flex: 0 0 auto;
+    height: 2.2rem;
+    padding: 0.3rem 0.6rem;
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: inherit;
+    box-sizing: border-box;
 }
 
 .filter-clear-all-btn:hover {
@@ -344,11 +381,11 @@ button::-moz-focus-inner {
 }
 
 .filter-bar {
+    --filter-bar-gap: 0.6rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
+    gap: var(--filter-bar-gap);
     align-items: flex-start;
-    margin-top: 0.6rem;
 }
 
 .filter-field {
@@ -356,7 +393,8 @@ button::-moz-focus-inner {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 0.4rem 0.6rem;
-    width: 15rem;
+    width: 100%;
+    min-width: 0;
     flex: 0 0 auto;
     box-sizing: border-box;
 }
@@ -373,6 +411,23 @@ button::-moz-focus-inner {
     display: flex;
     align-items: center;
     gap: 0.3rem;
+    list-style: none;
+}
+
+.filter-field summary::-webkit-details-marker {
+    display: none;
+}
+
+.filter-field summary::before {
+    content: "\25B8";
+    display: inline-block;
+    font-size: 1.1em;
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+}
+
+.filter-field[open] > summary::before {
+    transform: rotate(90deg);
 }
 
 .filter-field-label {
@@ -1234,6 +1289,18 @@ html.view-card .card-view {
     :root {
         --content-max-width: clamp(700px, var(--content-max-width-vw, 40vw), 1800px);
         --reader-font-size: var(--reader-font-size-base, 1.1rem);
+    }
+
+    .filter-sort-actions button {
+        width: calc(25% - var(--filter-actions-gap) / 2);
+    }
+
+    .sort-bar select {
+        width: calc(25% - var(--sort-bar-gap) / 2);
+    }
+
+    .filter-field {
+        width: calc(25% - var(--filter-bar-gap) * 0.75);
     }
 
     .settings-preview {

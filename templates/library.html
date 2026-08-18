@@ -111,26 +111,30 @@
                         Sort &amp; Filter
                         {% if selected %} ({{ selected|length }} filter{{ 's' if selected|length != 1 else '' }} applied){% endif %}
                     </summary>
-                    <div class="sort-bar">
-                        <label>
-                            Sort by
+                    <div class="filter-sort-actions">
+                        <button type="submit" class="filter-apply-btn">Apply</button>
+                        <button type="button" class="filter-clear-all-btn" onclick="clearAllFilters(event)">Clear all filters</button>
+                    </div>
+                    <div class="filter-sort-section">
+                        <span class="filter-sort-section-label">Sort by</span>
+                        <hr class="filter-sort-section-divider">
+                        <div class="sort-bar">
                             <select name="sort">
                                 <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
                                 {% for field in filter_fields %}
                                     <option value="{{ field.key }}" {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
                                 {% endfor %}
                             </select>
-                        </label>
-                        <label>
                             <select name="dir">
                                 <option value="asc" {% if sort_dir == "asc" %}selected{% endif %}>Ascending</option>
                                 <option value="desc" {% if sort_dir == "desc" %}selected{% endif %}>Descending</option>
                             </select>
-                        </label>
-                        <button type="submit">Apply</button>
-                        <button type="button" class="filter-clear-all-btn" onclick="clearAllFilters(event)">Clear all filters</button>
+                        </div>
                     </div>
-                    <div class="filter-bar">
+                    <div class="filter-sort-section">
+                        <span class="filter-sort-section-label">Filters</span>
+                        <hr class="filter-sort-section-divider">
+                        <div class="filter-bar">
                         {% for field in filter_fields %}
                             <details class="filter-field">
                                 <summary>
@@ -196,6 +200,7 @@
                                 {% endif %}
                             </details>
                         {% endfor %}
+                        </div>
                     </div>
                 </details>
             </form>
