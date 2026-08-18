@@ -157,7 +157,7 @@ button::-moz-focus-inner {
 
 .header-title {
     text-align: center;
-    margin: 2rem 0 0 0;
+    margin: 2.5rem 0 0 0;
 }
 
 .header-author {
@@ -174,8 +174,8 @@ button::-moz-focus-inner {
     align-items: baseline;
     gap: 0.4em;
     max-width: var(--content-max-width);
-    margin: 0 auto 1.5rem auto;
-    padding: 0.5rem 0;
+    margin: 0 auto 1rem auto;
+    padding-top: 0.5rem;
 }
 
 .continue-reading-label {
@@ -292,15 +292,17 @@ button::-moz-focus-inner {
 }
 
 .filter-sort-form {
+    display: flow-root;
     max-width: var(--content-max-width);
     margin: 0 auto 1rem auto;
+    padding-top: 0.3rem;
 }
 
 .filter-sort-actions {
     --filter-actions-gap: 0.6rem;
     display: flex;
     gap: var(--filter-actions-gap);
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     margin-bottom: 0.8rem;
 }
 
@@ -388,6 +390,7 @@ button::-moz-focus-inner {
     cursor: pointer;
     color: var(--text-muted);
     font-size: 0.9em;
+    line-height: 1;
 }
 
 .filter-bar {
@@ -738,8 +741,8 @@ html.view-card .card-view {
 
 .card-cover-inspect {
     position: absolute;
-    top: 0.4rem;
-    right: 0.4rem;
+    top: 0.3rem;
+    right: 0.3rem;
     background: var(--surface-color);
 }
 
@@ -817,7 +820,7 @@ html.view-card .card-view {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 1.5rem;
+    gap: 1.3rem;
     margin-top: 0;
     padding-top: 0.5rem;
 }
@@ -856,7 +859,7 @@ html.view-card .card-view {
 .pagination-controls {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: center;
+    align-items: end;
     gap: 1rem;
 }
 
