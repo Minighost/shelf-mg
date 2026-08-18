@@ -210,8 +210,8 @@
             </form>
         {% endif %}
         <p class="results-summary">Showing {{ total_matches }} out of {{ total_library }} total files</p>
-        <nav class="pagination pagination-top">
-            {% if total_pages > 1 %}
+        {% if total_pages > 1 %}
+            <nav class="pagination pagination-top">
                 <div class="pagination-controls">
                     <div class="pagination-side pagination-side-left">
                         {% if page > 1 %}
@@ -227,7 +227,9 @@
                         {% endif %}
                     </div>
                 </div>
-            {% endif %}
+            </nav>
+        {% endif %}
+        <div class="view-switcher">
             <div class="view-links">
                 {% for v, label in (('list', 'List'), ('grid', 'Grid'), ('card', 'Card')) %}
                     {% if view == v %}
@@ -237,7 +239,7 @@
                     {% endif %}
                 {% endfor %}
             </div>
-        </nav>
+        </div>
         <div class="book-list">
             {% for book in books %}
                 <div class="book-entry">

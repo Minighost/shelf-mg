@@ -174,7 +174,7 @@ button::-moz-focus-inner {
     align-items: baseline;
     gap: 0.4em;
     max-width: var(--content-max-width);
-    margin: 0 auto 1rem auto;
+    margin: 0 auto 0.5em auto;
     padding-top: 0.5rem;
 }
 
@@ -283,7 +283,7 @@ button::-moz-focus-inner {
 
 .search-form-wrapper {
     max-width: var(--content-max-width);
-    margin: 0 auto 1rem auto;
+    margin: 0 auto 0.5em auto;
 }
 
 .search-form-wrapper .search-form {
@@ -294,8 +294,8 @@ button::-moz-focus-inner {
 .filter-sort-form {
     display: flow-root;
     max-width: var(--content-max-width);
-    margin: 0 auto 1rem auto;
-    padding-top: 0.3rem;
+    margin: 0 auto 0.5em auto;
+    padding-top: 0.3em;
 }
 
 .filter-sort-actions {
@@ -318,6 +318,9 @@ button::-moz-focus-inner {
     padding-block: 0.3em;
     padding-inline: 0.6em;
     width: calc(50% - var(--filter-actions-gap) / 2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .filter-apply-btn {
@@ -433,6 +436,10 @@ button::-moz-focus-inner {
     align-items: center;
     gap: 0.3rem;
     list-style: none;
+    height: calc(2.2em - 0.6em - 2px);
+    /* content-box height when closed: 2.2em total, minus 0.3em top+bottom
+       padding, minus 1px top+bottom border. Explicit instead of 100% so it
+       still works when .filter-field switches to height: auto (open state). */
 }
 
 .filter-field summary::-webkit-details-marker {
@@ -445,10 +452,11 @@ button::-moz-focus-inner {
     font-size: 1.1em;
     color: var(--text-muted);
     transition: transform 0.15s ease;
+    transform: translateY(0.1em);
 }
 
-.filter-field[open] > summary::before {
-    transform: rotate(90deg);
+.filter-field[open]>summary::before {
+    transform: translateY(0.1em) rotate(90deg);
 }
 
 .filter-field-name {
@@ -458,7 +466,8 @@ button::-moz-focus-inner {
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 1.2;
-    padding-bottom: 0.15em;
+    padding-bottom: 0;
+    transform: translateY(0.1em);
 }
 
 .filter-clear-btn {
@@ -561,7 +570,7 @@ button::-moz-focus-inner {
 
 .book-list {
     max-width: var(--content-max-width);
-    margin: -0.3rem auto 0 auto;
+    margin: -0.3em auto 0 auto;
 }
 
 html.view-grid .book-list,
@@ -602,11 +611,11 @@ html.view-card .book-list {
     margin-top: 0.5rem;
 }
 
-.book-summary > :last-child {
+.book-summary> :last-child {
     margin-bottom: 0;
 }
 
-.book-entry > p:last-child {
+.book-entry>p:last-child {
     margin-bottom: 0;
 }
 
@@ -815,7 +824,7 @@ html.view-card .card-view {
     overflow: hidden;
 }
 
-.card-summary > :first-child {
+.card-summary> :first-child {
     margin-top: 0;
 }
 
@@ -823,7 +832,7 @@ html.view-card .card-view {
 
 .results-summary {
     max-width: var(--content-max-width);
-    margin: 0 auto;
+    margin: 0 auto 0.25em auto;
     text-align: center;
     color: var(--text-muted);
     font-size: 0.9em;
@@ -832,30 +841,33 @@ html.view-card .card-view {
 
 .pagination {
     max-width: var(--content-max-width);
-    margin: 1.5rem auto;
+    margin: 1em auto;
     color: var(--text-muted);
     font-size: 0.9em;
     line-height: 1;
 }
 
+/* Refers to the nav bar that the top,
+   different from the nav at the bottom */
 .pagination-top {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1.3rem;
     margin-top: 0;
-    padding-top: 0.5rem;
+    margin-bottom: 2em;
 }
 
-.pagination-top > .view-links {
-    align-self: center;
+.view-switcher {
+    max-width: var(--content-max-width);
+    margin: 0 auto 2em;
+    display: flex;
+    justify-content: center;
+}
+
+.view-links {
     display: flex;
     gap: 0.4rem;
 }
 
 .view-btn {
     box-sizing: border-box;
-    width: 3.5rem;
     text-align: center;
     background: none;
     border: 1px solid var(--border-color);
@@ -879,14 +891,16 @@ html.view-card .card-view {
 }
 
 .pagination-controls {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: end;
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.25em 1.5rem;
 }
 
-.pagination-controls > span {
-    justify-self: center;
+.pagination-controls>span {
+    order: -1;
+    flex: 1 0 100%;
     text-align: center;
 }
 
@@ -894,10 +908,6 @@ html.view-card .card-view {
     display: flex;
     align-items: center;
     gap: 1rem;
-}
-
-.pagination-side-right {
-    justify-content: flex-end;
 }
 
 /* --- reader page --- */
@@ -1425,5 +1435,24 @@ html.view-card .card-view {
 
     html.view-card .card-view {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pagination-controls {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        flex-wrap: nowrap;
+        justify-content: initial;
+        align-items: end;
+        gap: 1rem;
+    }
+
+    .pagination-controls>span {
+        order: 0;
+        flex: initial;
+        justify-self: center;
+    }
+
+    .pagination-side-right {
+        justify-content: flex-end;
     }
 }
