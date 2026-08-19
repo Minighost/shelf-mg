@@ -49,10 +49,10 @@
                        data-target-chapter="{{ chapter.index }}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
-                    <a class="header-btn" href="/settings">Settings</a>
+                    <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
                 </div>
             </div>
-            <h1 class="header-title">{{ book.title }}</h1>
+            <h1 class="header-title reader-title">{{ book.title }}</h1>
             <p class="header-author">{{ book.authors | join(", ") }}</p>
             <select class="chapter-select" id="chapter-select" data-back="{{ back_qs }}">
                 {% for c in chapters %}

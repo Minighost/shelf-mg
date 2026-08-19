@@ -145,6 +145,8 @@ button::-moz-focus-inner {
     justify-content: space-between;
     align-items: center;
     gap: 0.5rem;
+    line-height: 1;
+    margin: 0 0;
 }
 
 .header-top .header-right {
@@ -156,13 +158,22 @@ button::-moz-focus-inner {
 }
 
 .header-title {
+    display: flex;
+    justify-content: center;
     text-align: center;
-    margin: 2.5rem 0 0 0;
+    align-items: center;
+    margin: 0.5em 0 0.5em 0;
+    font-size: 1.8em;
+    line-height: 1em;
+}
+
+.reader-title {
+    margin-bottom: 0;
 }
 
 .header-author {
     text-align: center;
-    margin: 0 0 2rem 0;
+    margin: 0 0 1.25em 0;
     color: var(--text-muted);
     font-size: 0.9em;
 }
@@ -175,7 +186,7 @@ button::-moz-focus-inner {
     gap: 0.4em;
     max-width: var(--content-max-width);
     margin: 0 auto 0.5em auto;
-    padding-top: 0.5rem;
+    line-height: 1;
 }
 
 .continue-reading-label {
@@ -212,11 +223,6 @@ button::-moz-focus-inner {
 }
 
 /* --- library: search & filters --- */
-
-.page-title {
-    font-size: 1.8em;
-    margin-bottom: 2rem;
-}
 
 .search-form {
     display: flex;
@@ -941,7 +947,7 @@ html.view-card .card-view {
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 1.3rem;
+    font-size: 1.3em;
     line-height: 1;
     padding: 0.2rem 0.5rem;
     cursor: pointer;
@@ -1243,7 +1249,7 @@ html.view-card .card-view {
 
 .preview-muted {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.9em;
 }
 
 .preview-link {
@@ -1279,7 +1285,7 @@ html.view-card .card-view {
 
 .preview-reader-label {
     margin: 0 0 0.5rem 0;
-    font-size: 0.8rem;
+    font-size: 0.8em;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -1325,7 +1331,7 @@ html.view-card .card-view {
 }
 
 .error-code {
-    font-size: 4rem;
+    font-size: 4em;
     margin: 0 0 0.5rem 0;
     color: var(--text-muted);
 }
@@ -1400,7 +1406,7 @@ html.view-card .card-view {
         padding: 2rem;
     }
 
-    .page-title {
+    .header-title {
         font-size: 2.2em;
     }
 
