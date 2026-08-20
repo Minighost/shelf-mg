@@ -48,6 +48,9 @@
                         {% if page > 1 %}
                             <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
                             <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
+                        {% else %}
+                            <span class="pagination-disabled">&laquo; First</span>
+                            <span class="pagination-disabled">&larr; Previous</span>
                         {% endif %}
                     </div>
                     <span>Page {{ page }} of {{ total_pages }}</span>
@@ -55,6 +58,9 @@
                         {% if page < total_pages %}
                             <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
                             <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
+                        {% else %}
+                            <span class="pagination-disabled">Next &rarr;</span>
+                            <span class="pagination-disabled">Last &raquo;</span>
                         {% endif %}
                     </div>
                 </div>
@@ -90,6 +96,9 @@
                         {% if page > 1 %}
                             <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
                             <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
+                        {% else %}
+                            <span class="pagination-disabled">&laquo; First</span>
+                            <span class="pagination-disabled">&larr; Previous</span>
                         {% endif %}
                     </div>
                     <span>Page {{ page }} of {{ total_pages }}</span>
@@ -97,10 +106,16 @@
                         {% if page < total_pages %}
                             <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
                             <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
+                        {% else %}
+                            <span class="pagination-disabled">Next &rarr;</span>
+                            <span class="pagination-disabled">Last &raquo;</span>
                         {% endif %}
                     </div>
                 </div>
             </nav>
         {% endif %}
+        <div class="footer footer-insert">
+            Made with <3 by Minighost
+        </div>
     </body>
 </html>

@@ -19,10 +19,12 @@
         <title>shelf-mg</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         {% if page > 1 %}
-            <link rel="prefetch" href="{{ url_for('library_list', page=page - 1, **page_args) }}">
+            <link rel="prefetch"
+                  href="{{ url_for('library_list', page=page - 1, **page_args) }}">
         {% endif %}
         {% if page < total_pages %}
-            <link rel="prefetch" href="{{ url_for('library_list', page=page + 1, **page_args) }}">
+            <link rel="prefetch"
+                  href="{{ url_for('library_list', page=page + 1, **page_args) }}">
         {% endif %}
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
         <script src="{{ url_for('static', filename='filter-search.js') }}"></script>
@@ -41,7 +43,10 @@
             <div class="header-top">
                 <div class="header-left"></div>
                 <div class="header-right">
-                    <form method="post" id="refresh-library-form" action="{{ url_for('refresh_library') }}"></form>
+                    <form method="post"
+                          id="refresh-library-form"
+                          action="{{ url_for('refresh_library') }}">
+                    </form>
                     <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
                     <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
                     <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
@@ -55,7 +60,11 @@
                     class="confirm-dialog-close"
                     aria-label="Close"
                     onclick="document.getElementById('refresh-dialog').close()">&times;</button>
-            <p>Refresh all data from Calibre?<br>This may take a second.</p>
+            <p>
+                Refresh all data from Calibre?
+                <br>
+                This may take a second.
+            </p>
             <div class="confirm-dialog-actions">
                 <button type="button"
                         class="confirm-dialog-cancel"
@@ -85,18 +94,17 @@
         {% set filter_sort_args = page_args.copy() %}
         {% set _ = filter_sort_args.pop('q', none) %}
         <form method="get" class="search-form-wrapper">
-            <div class="search-form">
-                <div class="search-input-wrap">
-                    <input type="text"
-                           name="q"
-                           value="{{ query }}"
-                           placeholder="Search title, author, or tag">
-                    <a href="{{ url_for('library_list', **filter_sort_args) }}"
-                       class="search-clear-btn"
-                       aria-label="Clear search">&times;</a>
-                </div>
-                <button type="submit">Search</button>
+            <div class="search-bar-combined">
+                <input class="search-text-entry"
+                        type="text"
+                        name="q"
+                        value="{{ query }}"
+                        placeholder="Search title, author, or tag">
+                <a href="{{ url_for('library_list', **filter_sort_args) }}"
+                    class="search-clear-btn"
+                    aria-label="Clear search">&times;</a>
             </div>
+            <button type="submit" class="search-submit-btn">Search</button>
             {% for key, value in filter_sort_args.items() %}
                 {% if value is iterable and value is not string %}
                     {% for v in value %}
@@ -113,11 +121,13 @@
                 <details class="filter-toggle">
                     <summary>
                         Sort &amp; Filter
-                        {% if selected %} ({{ selected|length }} filter{{ 's' if selected|length != 1 else '' }} applied){% endif %}
+                        {% if selected %}({{ selected|length }} filter{{ 's' if selected|length != 1 else '' }} applied){% endif %}
                     </summary>
                     <div class="filter-sort-actions">
                         <button type="submit" class="filter-apply-btn">Apply</button>
-                        <button type="button" class="filter-clear-all-btn" onclick="clearAllFilters(event)">Clear all filters</button>
+                        <button type="button"
+                                class="filter-clear-all-btn"
+                                onclick="clearAllFilters(event)">Clear all filters</button>
                     </div>
                     <div class="filter-sort-section">
                         <span class="filter-sort-section-label">Sort by</span>
@@ -126,7 +136,8 @@
                             <select name="sort">
                                 <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
                                 {% for field in filter_fields %}
-                                    <option value="{{ field.key }}" {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
+                                    <option value="{{ field.key }}"
+                                            {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
                                 {% endfor %}
                             </select>
                             <select name="dir">
@@ -139,71 +150,76 @@
                         <span class="filter-sort-section-label">Filters</span>
                         <hr class="filter-sort-section-divider">
                         <div class="filter-fields-bar">
-                        {% for field in filter_fields %}
-                            <details class="filter-field">
-                                <summary>
-                                    <span class="filter-field-name">
-                                        {{ field.label }}
-                                        {% if field.type == "multi" and selected.get(field.key) %} ({{ selected[field.key] | length }}){% endif %}
-                                        {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
-                                        {% if field.type == "range" and selected.get(field.key) %}: {{ range_bound_value(field, selected[field.key][0]) }}&ndash;{{ range_bound_value(field, selected[field.key][1]) }}{% endif %}
-                                    </span>
-                                    {% if selected.get(field.key) %}
-                                        <button type="button" class="filter-clear-btn" onclick="clearFilterField(event, this)">Clear</button>
-                                    {% endif %}
-                                </summary>
-                                {% if field.type == "range" %}
-                                    {% set bounds = range_bounds.get(field.key) %}
-                                    {% set selected_bounds = selected.get(field.key, (none, none)) %}
-                                    <div class="filter-range">
-                                        <input type="{{ 'date' if field.datatype == 'datetime' else 'number' }}"
-                                               name="{{ field.key }}_min"
-                                               placeholder="Min{% if bounds %}: {{ range_bound_value(field, bounds[0]) }}{% endif %}"
-                                               value="{{ range_bound_value(field, selected_bounds[0]) }}">
-                                        <span>to</span>
-                                        <input type="{{ 'date' if field.datatype == 'datetime' else 'number' }}"
-                                               name="{{ field.key }}_max"
-                                               placeholder="Max{% if bounds %}: {{ range_bound_value(field, bounds[1]) }}{% endif %}"
-                                               value="{{ range_bound_value(field, selected_bounds[1]) }}">
-                                    </div>
-                                {% else %}
-                                    {% if field.type == "single" %}
-                                        <label class="filter-choice filter-any">
-                                            <input type="radio"
-                                                   name="{{ field.key }}"
-                                                   value=""
-                                                   {% if not selected.get(field.key) %}checked{% endif %}>
-                                            Any
-                                        </label>
-                                    {% endif %}
-                                    <input type="text" class="filter-search" placeholder="Search…" oninput="filterOptions(this)">
-                                    <div class="filter-options">
-                                        {% set selected_values = selected.get(field.key, []) %}
-                                        {% set unselected_options = filter_options[field.key] | reject('in', selected_values) | list %}
-                                        {% for value in filter_options[field.key] if value in selected_values %}
-                                            <label class="filter-choice">
-                                                <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
-                                                       name="{{ field.key }}"
-                                                       value="{{ value }}"
-                                                       checked>
-                                                {{ value }}
-                                            </label>
-                                        {% endfor %}
-                                        {% if selected_values and unselected_options %}
-                                            <hr class="filter-options-divider">
+                            {% for field in filter_fields %}
+                                <details class="filter-field">
+                                    <summary>
+                                        <span class="filter-field-name">
+                                            {{ field.label }}
+                                            {% if field.type == "multi" and selected.get(field.key) %}({{ selected[field.key] | length }}){% endif %}
+                                            {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
+                                            {% if field.type == "range" and selected.get(field.key) %}: {{ range_bound_value(field, selected[field.key][0]) }}&ndash;{{ range_bound_value(field, selected[field.key][1]) }}{% endif %}
+                                        </span>
+                                        {% if selected.get(field.key) %}
+                                            <button type="button"
+                                                    class="filter-clear-btn"
+                                                    onclick="clearFilterField(event, this)">Clear</button>
                                         {% endif %}
-                                        {% for value in unselected_options %}
-                                            <label class="filter-choice">
-                                                <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                    </summary>
+                                    {% if field.type == "range" %}
+                                        {% set bounds = range_bounds.get(field.key) %}
+                                        {% set selected_bounds = selected.get(field.key, (none, none)) %}
+                                        <div class="filter-range">
+                                            <input type="{{ 'date' if field.datatype == 'datetime' else 'number' }}"
+                                                   name="{{ field.key }}_min"
+                                                   placeholder="Min{% if bounds %}: {{ range_bound_value(field, bounds[0]) }}{% endif %}"
+                                                   value="{{ range_bound_value(field, selected_bounds[0]) }}">
+                                            <span>to</span>
+                                            <input type="{{ 'date' if field.datatype == 'datetime' else 'number' }}"
+                                                   name="{{ field.key }}_max"
+                                                   placeholder="Max{% if bounds %}: {{ range_bound_value(field, bounds[1]) }}{% endif %}"
+                                                   value="{{ range_bound_value(field, selected_bounds[1]) }}">
+                                        </div>
+                                    {% else %}
+                                        {% if field.type == "single" %}
+                                            <label class="filter-choice filter-any">
+                                                <input type="radio"
                                                        name="{{ field.key }}"
-                                                       value="{{ value }}">
-                                                {{ value }}
+                                                       value=""
+                                                       {% if not selected.get(field.key) %}checked{% endif %}>
+                                                Any
                                             </label>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </details>
-                        {% endfor %}
+                                        {% endif %}
+                                        <input type="text"
+                                               class="filter-search"
+                                               placeholder="Search…"
+                                               oninput="filterOptions(this)">
+                                        <div class="filter-options">
+                                            {% set selected_values = selected.get(field.key, []) %}
+                                            {% set unselected_options = filter_options[field.key] | reject('in', selected_values) | list %}
+                                            {% for value in filter_options[field.key] if value in selected_values %}
+                                                <label class="filter-choice">
+                                                    <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                                           name="{{ field.key }}"
+                                                           value="{{ value }}"
+                                                           checked>
+                                                    {{ value }}
+                                                </label>
+                                            {% endfor %}
+                                            {% if selected_values and unselected_options %}
+                                                <hr class="filter-options-divider">
+                                            {% endif %}
+                                            {% for value in unselected_options %}
+                                                <label class="filter-choice">
+                                                    <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
+                                                           name="{{ field.key }}"
+                                                           value="{{ value }}">
+                                                    {{ value }}
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </details>
+                            {% endfor %}
                         </div>
                     </div>
                 </details>
@@ -217,6 +233,9 @@
                         {% if page > 1 %}
                             <a href="{{ url_for('library_list', page=1, **page_args) }}">&laquo; First</a>
                             <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
+                        {% else %}
+                            <span class="pagination-disabled">&laquo; First</span>
+                            <span class="pagination-disabled">&larr; Previous</span>
                         {% endif %}
                     </div>
                     <span>Page {{ page }} of {{ total_pages }}</span>
@@ -224,6 +243,9 @@
                         {% if page < total_pages %}
                             <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
                             <a href="{{ url_for('library_list', page=total_pages, **page_args) }}">Last &raquo;</a>
+                        {% else %}
+                            <span class="pagination-disabled">Next &rarr;</span>
+                            <span class="pagination-disabled">Last &raquo;</span>
                         {% endif %}
                     </div>
                 </div>
@@ -235,7 +257,8 @@
                     {% if view == v %}
                         <span class="view-btn view-btn-active">{{ label }}</span>
                     {% else %}
-                        <a class="view-btn" href="{{ url_for('library_list', page=page, **view_links[v]) }}">{{ label }}</a>
+                        <a class="view-btn"
+                           href="{{ url_for('library_list', page=page, **view_links[v]) }}">{{ label }}</a>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -245,7 +268,9 @@
                 <div class="book-entry">
                     <h2>
                         <a href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
-                        <a class="inspect-button" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
+                        <a class="inspect-button"
+                           href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
+                           title="Inspect">i</a>
                     </h2>
                     <p class="book-meta">by {{ book.authors | join(", ") }}</p>
                     <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
@@ -271,7 +296,9 @@
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
                         <div class="grid-cover-placeholder">No cover</div>
-                        <a class="inspect-button grid-cover-inspect" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
+                        <a class="inspect-button grid-cover-inspect"
+                           href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
+                           title="Inspect">i</a>
                     </div>
                     <div class="grid-card-info">
                         <a class="grid-card-title"
@@ -291,10 +318,13 @@
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
                         <div class="card-cover-placeholder">No cover</div>
-                        <a class="inspect-button card-cover-inspect" href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}" title="Inspect">i</a>
+                        <a class="inspect-button card-cover-inspect"
+                           href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
+                           title="Inspect">i</a>
                     </div>
                     <div class="card-body">
-                        <a class="card-title" href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
+                        <a class="card-title"
+                           href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
                         <p class="card-author">{{ book.authors | join(", ") }}</p>
                         <div class="book-summary card-summary">{{ book.summary_html | safe }}</div>
                     </div>
@@ -302,12 +332,15 @@
             {% endfor %}
         </div>
         {% if total_pages > 1 %}
-            <nav class="pagination">
+            <nav class="pagination pagination-bottom">
                 <div class="pagination-controls">
                     <div class="pagination-side pagination-side-left">
                         {% if page > 1 %}
                             <a href="{{ url_for('library_list', page=1, **page_args) }}">&laquo; First</a>
                             <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
+                        {% else %}
+                            <span class="pagination-disabled">&laquo; First</span>
+                            <span class="pagination-disabled">&larr; Previous</span>
                         {% endif %}
                     </div>
                     <span>Page {{ page }} of {{ total_pages }}</span>
@@ -315,10 +348,16 @@
                         {% if page < total_pages %}
                             <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
                             <a href="{{ url_for('library_list', page=total_pages, **page_args) }}">Last &raquo;</a>
+                        {% else %}
+                            <span class="pagination-disabled">Next &rarr;</span>
+                            <span class="pagination-disabled">Last &raquo;</span>
                         {% endif %}
                     </div>
                 </div>
             </nav>
         {% endif %}
+        <div class="footer footer-insert">
+            Made with <3 by Minighost
+        </div>
     </body>
 </html>
