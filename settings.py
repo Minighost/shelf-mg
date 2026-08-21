@@ -47,6 +47,13 @@ DEFAULT_OVERRIDE_EPUB_FONT = False
 # schema — this module just stores whichever keys the user has enabled.
 DEFAULT_ENABLED_FILTERS = "tags,author,series"
 
+# Book-list-item fields enabled by default in the library's list view. The
+# full set of *available* fields (filter fields minus title, plus the
+# synthetic "summary" field) is computed live in app.py's
+# _list_view_fields() — mirrors the enabled_filters/DEFAULT_ENABLED_FILTERS
+# split above.
+DEFAULT_ENABLED_LIST_FIELDS = "author,tags,summary"
+
 
 @dataclass
 class Settings:
@@ -68,9 +75,13 @@ class Settings:
     custom_accent_color: str
     custom_accent_hover: str
     enabled_filters: str
+    enabled_list_fields: str
 
     def enabled_filter_keys(self) -> list[str]:
         return [key for key in self.enabled_filters.split(",") if key]
+
+    def enabled_list_field_keys(self) -> list[str]:
+        return [key for key in self.enabled_list_fields.split(",") if key]
 
 
 def init_db(db_path: str) -> None:
@@ -91,6 +102,7 @@ def init_db(db_path: str) -> None:
         "content_max_width_pct",
         "enabled_filters",
         "library_view",
+        "enabled_list_fields",
     ]
     for field in new_columns:
         try:
@@ -108,7 +120,7 @@ def get_settings(db_path: str) -> Settings:
     row = conn.execute(
         "SELECT theme, font_family_key, font_size, override_epub_font, "
         "reader_font_family_key, reader_font_size, content_max_width_pct, "
-        "enabled_filters, library_view, "
+        "enabled_filters, library_view, enabled_list_fields, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -126,6 +138,7 @@ def get_settings(db_path: str) -> Settings:
             reader_font_size=DEFAULT_FONT_SIZE,
             content_max_width_pct=DEFAULT_CONTENT_MAX_WIDTH_PCT,
             enabled_filters=DEFAULT_ENABLED_FILTERS,
+            enabled_list_fields=DEFAULT_ENABLED_LIST_FIELDS,
             library_view=DEFAULT_LIBRARY_VIEW,
             **DEFAULT_CUSTOM_COLORS,
         )
@@ -156,6 +169,11 @@ def get_settings(db_path: str) -> Settings:
             if row["enabled_filters"] is not None
             else DEFAULT_ENABLED_FILTERS
         ),
+        enabled_list_fields=(
+            row["enabled_list_fields"]
+            if row["enabled_list_fields"] is not None
+            else DEFAULT_ENABLED_LIST_FIELDS
+        ),
         library_view=row["library_view"] or DEFAULT_LIBRARY_VIEW,
         **custom_colors,
     )
@@ -172,6 +190,7 @@ def save_settings(
     content_max_width_pct: float | None = None,
     custom_colors: dict | None = None,
     enabled_filters: list[str] | None = None,
+    enabled_list_fields: list[str] | None = None,
     library_view: str | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
@@ -217,6 +236,12 @@ def save_settings(
         deduped = dict.fromkeys(key for key in enabled_filters if key)
         resolved_enabled_filters = ",".join(deduped)
 
+    if enabled_list_fields is None:
+        resolved_enabled_list_fields = existing.enabled_list_fields
+    else:
+        deduped_list_fields = dict.fromkeys(key for key in enabled_list_fields if key)
+        resolved_enabled_list_fields = ",".join(deduped_list_fields)
+
     custom_colors = custom_colors or {}
     resolved_colors = {}
     for field in CUSTOM_COLOR_FIELDS:
@@ -239,6 +264,7 @@ def save_settings(
         "content_max_width_pct",
         "enabled_filters",
         "library_view",
+        "enabled_list_fields",
     ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
@@ -254,6 +280,7 @@ def save_settings(
         content_max_width_pct,
         resolved_enabled_filters,
         library_view,
+        resolved_enabled_list_fields,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)

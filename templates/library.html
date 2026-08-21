@@ -271,9 +271,38 @@
                            href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
                            title="Inspect">i</a>
                     </h2>
-                    <p class="book-meta">by {{ book.authors | join(", ") }}</p>
-                    <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
-                    <div class="book-summary">{{ book.summary_html | safe }}</div>
+                    {% if 'author' in enabled_list_keys %}
+                        <p class="book-meta">by {{ book.authors | join(", ") }}</p>
+                    {% endif %}
+                    {% if 'tags' in enabled_list_keys and book.tags %}
+                        <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
+                    {% endif %}
+                    {% if 'series' in enabled_list_keys and book.series %}
+                        <p class="book-meta book-list-field">Series: {{ book.series }}{% if book.series_index %} #{{ book.series_index }}{% endif %}</p>
+                    {% endif %}
+                    {% if 'publisher' in enabled_list_keys and book.publisher %}
+                        <p class="book-meta book-list-field">Publisher: {{ book.publisher }}</p>
+                    {% endif %}
+                    {% if 'rating' in enabled_list_keys and book.rating %}
+                        <p class="book-meta book-list-field">Rating: {{ book.rating }}/5</p>
+                    {% endif %}
+                    {% if 'date_added' in enabled_list_keys and book.date_added %}
+                        <p class="book-meta book-list-field">Added: {{ book.date_added }}</p>
+                    {% endif %}
+                    {% if 'pubdate' in enabled_list_keys and book.pubdate %}
+                        <p class="book-meta book-list-field">Published: {{ book.pubdate }}</p>
+                    {% endif %}
+                    {% if 'size' in enabled_list_keys and book.size_bytes %}
+                        <p class="book-meta book-list-field">Size: {{ book.size_bytes | filesizeformat }}</p>
+                    {% endif %}
+                    {% for custom_key, values in book.custom.items() %}
+                        {% if ('custom:' ~ custom_key) in enabled_list_keys and values %}
+                            <p class="book-meta book-list-field">{{ list_field_labels.get('custom:' ~ custom_key, custom_key) }}: {{ values | join(", ") }}</p>
+                        {% endif %}
+                    {% endfor %}
+                    {% if 'summary' in enabled_list_keys %}
+                        <div class="book-summary">{{ book.summary_html | safe }}</div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

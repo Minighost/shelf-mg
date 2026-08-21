@@ -207,6 +207,23 @@
                     </div>
                 </div>
             </details>
+            <details class="settings-category" name="settings-category">
+                <summary>List View</summary>
+                <div class="settings-field settings-field-grouped">
+                    <label>Book list fields (besides title)</label>
+                    <div class="checkbox-list">
+                        {% for field in list_fields %}
+                            <label class="checkbox-list-item">
+                                <input type="checkbox"
+                                       name="enabled_list_fields"
+                                       value="{{ field.key }}"
+                                       {% if field.key in active_list_field_keys %}checked{% endif %}>
+                                {{ field.label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </details>
         </form>
         <details class="settings-category advanced-settings" name="settings-category">
             <summary>Advanced</summary>

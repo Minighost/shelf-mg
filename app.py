@@ -160,6 +160,24 @@ def _enabled_filter_fields():
     return [fields_by_key[key] for key in enabled if key in fields_by_key]
 
 
+def _list_view_fields():
+    """
+    Fields togglable in the library's list view: every filter/sort field
+    except title (title always shows, it's needed to start reading), plus
+    a synthetic "summary" field — summary isn't a filter field, but list
+    view has always shown it, so it needs its own toggle.
+    """
+    fields = [f for f in _all_filter_fields() if f["key"] != "title"]
+    fields.append({"key": "summary", "label": "Summary", "type": "text", "datatype": None})
+    return fields
+
+
+def _enabled_list_fields():
+    enabled = settings.get_settings(DB_PATH).enabled_list_field_keys()
+    fields_by_key = {field["key"]: field for field in _list_view_fields()}
+    return [fields_by_key[key] for key in enabled if key in fields_by_key]
+
+
 def _filter_options(books, field):
     values = set()
     for book in books:
@@ -295,6 +313,8 @@ def library_list():
 
     filter_fields = _enabled_filter_fields()
     sort_fields = _all_filter_fields()
+    enabled_list_keys = {f["key"] for f in _enabled_list_fields()}
+    list_field_labels = {f["key"]: f["label"] for f in _list_view_fields()}
     selected = {}
     for field in filter_fields:
         if field["type"] == "range":
@@ -429,6 +449,8 @@ def library_list():
         view_links=view_links,
         total_matches=len(all_books),
         total_library=total_library,
+        enabled_list_keys=enabled_list_keys,
+        list_field_labels=list_field_labels,
     )
 
 
@@ -616,6 +638,7 @@ def settings_page():
         reader_font_size_raw = flask.request.form.get("reader_font_size", "")
         content_max_width_pct_raw = flask.request.form.get("content_max_width_pct", "")
         enabled_filters = flask.request.form.getlist("enabled_filters")
+        enabled_list_fields = flask.request.form.getlist("enabled_list_fields")
 
         try:
             font_size = float(font_size_raw)
@@ -641,6 +664,14 @@ def settings_page():
                 400,
             )
 
+        valid_list_field_keys = {field["key"] for field in _list_view_fields()}
+        invalid_list_field_keys = set(enabled_list_fields) - valid_list_field_keys
+        if invalid_list_field_keys:
+            return (
+                f"Invalid list field key(s): {', '.join(sorted(invalid_list_field_keys))}",
+                400,
+            )
+
         try:
             settings.save_settings(
                 DB_PATH,
@@ -653,6 +684,7 @@ def settings_page():
                 content_max_width_pct=content_max_width_pct,
                 custom_colors=custom_colors,
                 enabled_filters=enabled_filters,
+                enabled_list_fields=enabled_list_fields,
             )
         except ValueError as e:
             return str(e), 400
@@ -665,6 +697,8 @@ def settings_page():
         font_choices=settings.FONT_CHOICES,
         filter_fields=_all_filter_fields(),
         active_filter_fields=_enabled_filter_fields(),
+        list_fields=_list_view_fields(),
+        active_list_field_keys={f["key"] for f in _enabled_list_fields()},
     )
 
 

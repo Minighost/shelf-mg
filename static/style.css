@@ -612,7 +612,8 @@ html.view-card .book-list {
     margin: 0 0 0.2rem 0;
 }
 
-.book-tags {
+.book-tags,
+.book-list-field {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
@@ -1068,6 +1069,26 @@ html.view-card .card-view {
     color: var(--text-muted);
     font-size: 0.9em;
     line-height: 1;
+}
+
+.checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+}
+
+.settings-field .checkbox-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0;
+    color: var(--text-color);
+    font-size: 0.95em;
+    width: auto;
+}
+
+.checkbox-list-item input[type="checkbox"] {
+    width: auto;
 }
 
 .settings-field select,
