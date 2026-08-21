@@ -96,13 +96,13 @@
         <form method="get" class="search-form-wrapper">
             <div class="search-bar-combined">
                 <input class="search-text-entry"
-                        type="text"
-                        name="q"
-                        value="{{ query }}"
-                        placeholder="Search title, author, or tag">
+                       type="text"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Search title, author, or tag">
                 <a href="{{ url_for('library_list', **filter_sort_args) }}"
-                    class="search-clear-btn"
-                    aria-label="Clear search">&times;</a>
+                   class="search-clear-btn"
+                   aria-label="Clear search">&times;</a>
             </div>
             <button type="submit" class="search-submit-btn">Search</button>
             {% for key, value in filter_sort_args.items() %}

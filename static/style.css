@@ -189,6 +189,7 @@ button::-moz-focus-inner {
 
 .footer-insert {
     margin-top: 2rem;
+    margin-bottom: 1rem;
 }
 
 /* --- library: continue reading --- */
@@ -244,7 +245,7 @@ button::-moz-focus-inner {
     height: 2.5em;
     gap: 0.5rem;
     max-width: var(--content-max-width);
-    margin: 0 auto 0.5rem auto;
+    margin: 0 auto 1rem auto;
 }
 
 .search-bar-combined {
@@ -398,7 +399,7 @@ button::-moz-focus-inner {
 }
 
 .filter-toggle {
-    padding: 0.4rem 0 0 0;
+    padding: 0;
 }
 
 .filter-toggle summary {
@@ -598,14 +599,14 @@ html.view-card .book-list {
 }
 
 .book-entry h2 {
-    margin: 0 0 0.3rem 0;
+    margin: 0 0 0.5rem 0;
     font-size: 1.2em;
 }
 
 .book-meta {
     color: var(--text-muted);
     font-size: 0.9em;
-    margin: 0.2rem 0;
+    margin: 0 0 0.2rem 0;
 }
 
 .book-tags {
@@ -614,11 +615,11 @@ html.view-card .book-list {
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin-bottom: 0.5rem;
 }
 
 .book-summary {
     font-size: 0.9em;
-    margin-top: 0.5rem;
 }
 
 .book-summary> :last-child {
@@ -638,6 +639,7 @@ html.view-card .book-list {
 .history-updated {
     font-size: 0.85em;
     white-space: nowrap;
+    margin-top: 1rem;
 }
 
 /* --- library: grid view --- */
@@ -653,14 +655,13 @@ html.view-grid .book-grid {
     gap: 1.5rem;
     max-width: var(--content-max-width);
     margin: 0 auto;
-}
-
-.grid-card-info {
-    margin-top: 0.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .grid-cover-wrap {
     position: relative;
+    margin-bottom: 0.5rem;
 }
 
 .grid-cover-inspect {
@@ -704,6 +705,7 @@ html.view-grid .book-grid {
     font-weight: 600;
     color: var(--text-color);
     text-decoration: none;
+    margin-bottom: 0.2rem;
 }
 
 .grid-card-title:hover {
@@ -713,7 +715,7 @@ html.view-grid .book-grid {
 .grid-card-author {
     color: var(--text-muted);
     font-size: 0.85em;
-    margin: 0.2rem 0 0 0;
+    margin: 0;
 }
 
 /* --- library: card view --- */
@@ -728,6 +730,8 @@ html.view-card .card-view {
     gap: 1rem;
     max-width: var(--content-max-width);
     margin: 0 auto;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .card-item {
@@ -800,6 +804,7 @@ html.view-card .card-view {
     font-weight: 600;
     color: var(--text-color);
     text-decoration: none;
+    margin-bottom: 0.2rem;
 }
 
 .card-title:hover {
@@ -810,7 +815,7 @@ html.view-card .card-view {
     flex-shrink: 0;
     color: var(--text-muted);
     font-size: 0.85em;
-    margin: 0.2rem 0 0 0;
+    margin: 0 0 0.2rem 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -819,7 +824,6 @@ html.view-card .card-view {
 .card-summary {
     flex: 1 1 auto;
     min-height: 0;
-    margin-top: 0.2rem;
     font-size: 0.85em;
     display: -webkit-box;
     -webkit-line-clamp: 4;
@@ -863,7 +867,7 @@ html.view-card .card-view {
 
 .view-switcher {
     max-width: var(--content-max-width);
-    margin: 0 auto 2em;
+    margin: 0 auto 1rem;
     display: flex;
     justify-content: center;
 }
@@ -1459,5 +1463,9 @@ html.view-card .card-view {
 
     html.view-card .card-view {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer {
+        margin-bottom: 0;
     }
 }
