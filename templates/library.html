@@ -133,7 +133,7 @@
                     <hr class="filter-sort-section-divider">
                     <div class="sort-controls-bar">
                         <select name="sort">
-                            {% for field in filter_fields %}
+                            {% for field in sort_fields %}
                                 <option value="{{ field.key }}"
                                         {% if sort_by == field.key %}selected{% endif %}>{{ field.label }}</option>
                             {% endfor %}

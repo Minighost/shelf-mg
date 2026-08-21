@@ -231,13 +231,13 @@ def _book_matches_filters(book, filter_fields, selected):
     return True
 
 
-def _sort_books(books, sort_by, sort_dir, filter_fields):
+def _sort_books(books, sort_by, sort_dir, sort_fields):
     if sort_by == "title":
         return sorted(
             books, key=lambda b: b.title.lower(), reverse=(sort_dir == "desc")
         )
 
-    field = next((f for f in filter_fields if f["key"] == sort_by), None)
+    field = next((f for f in sort_fields if f["key"] == sort_by), None)
     if field is None:
         return sorted(books, key=lambda b: b.title.lower())
 
@@ -294,6 +294,7 @@ def library_list():
         view = current_settings.library_view
 
     filter_fields = _enabled_filter_fields()
+    sort_fields = _all_filter_fields()
     selected = {}
     for field in filter_fields:
         if field["type"] == "range":
@@ -353,7 +354,7 @@ def library_list():
     all_books = [
         b for b in all_books if _book_matches_filters(b, filter_fields, selected)
     ]
-    all_books = _sort_books(all_books, sort_by, sort_dir, filter_fields)
+    all_books = _sort_books(all_books, sort_by, sort_dir, sort_fields)
 
     total_pages = max(1, (len(all_books) + BOOKS_PER_PAGE - 1) // BOOKS_PER_PAGE)
     page = min(page, total_pages)
@@ -417,6 +418,7 @@ def library_list():
         total_pages=total_pages,
         query=query,
         filter_fields=filter_fields,
+        sort_fields=sort_fields,
         filter_options=filter_options,
         range_bounds=range_bounds,
         selected=selected,
