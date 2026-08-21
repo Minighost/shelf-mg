@@ -267,7 +267,7 @@
             {% for book in books %}
                 <div class="book-entry">
                     <h2>
-                        <a href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
+                        <a href="/read/{{ book.id }}/{{ positions[book.id].chapter_index if book.id in positions else 0 }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
                         <a class="inspect-button"
                            href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
                            title="Inspect">i</a>
@@ -275,14 +275,6 @@
                     <p class="book-meta">by {{ book.authors | join(", ") }}</p>
                     <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
                     <div class="book-summary">{{ book.summary_html | safe }}</div>
-                    {% if book.id in positions %}
-                        <p>
-                            <a class="book-continue-link"
-                               href="/read/{{ book.id }}/{{ positions[book.id].chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
-                                Continue reading (Chapter {{ positions[book.id].chapter_index + 1 }})
-                            </a>
-                        </p>
-                    {% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -302,7 +294,7 @@
                     </div>
                     <div class="grid-card-info">
                         <a class="grid-card-title"
-                           href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
+                           href="/read/{{ book.id }}/{{ positions[book.id].chapter_index if book.id in positions else 0 }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
                         <p class="grid-card-author">{{ book.authors | join(", ") }}</p>
                     </div>
                 </div>
@@ -324,7 +316,7 @@
                     </div>
                     <div class="card-body">
                         <a class="card-title"
-                           href="/read/{{ book.id }}/0{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
+                           href="/read/{{ book.id }}/{{ positions[book.id].chapter_index if book.id in positions else 0 }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
                         <p class="card-author">{{ book.authors | join(", ") }}</p>
                         <div class="book-summary card-summary">{{ book.summary_html | safe }}</div>
                     </div>

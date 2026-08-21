@@ -76,12 +76,6 @@
                         <p class="book-meta">by {{ item.book.authors | join(", ") }}</p>
                         <p class="book-meta book-tags">Tags: {{ item.book.tags | join(", ") }}</p>
                         <div class="book-summary">{{ item.book.summary_html | safe }}</div>
-                        <p>
-                            <a class="book-continue-link"
-                               href="/read/{{ item.book.id }}/{{ item.chapter_index }}">
-                                Continue reading (Chapter {{ item.chapter_index + 1 }}: {{ item.chapter_title }})
-                            </a>
-                        </p>
                         <p class="book-meta history-updated">Last read: {{ item.updated_at }}</p>
                     </div>
                 {% endfor %}

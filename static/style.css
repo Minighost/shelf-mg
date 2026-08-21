@@ -635,12 +635,6 @@ html.view-card .book-list {
     border-left: 2px solid var(--border-color);
 }
 
-.book-continue-link {
-    display: inline-block;
-    margin-top: 0.5rem;
-    font-weight: bold;
-}
-
 .history-updated {
     font-size: 0.85em;
     white-space: nowrap;
