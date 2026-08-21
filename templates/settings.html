@@ -28,199 +28,187 @@
             </div>
             <h1 class="header-title">Settings</h1>
         </div>
-        <form method="post" class="settings-form">
-            <div class="settings-field settings-field-grouped">
-                <label for="theme">Theme</label>
-                <select id="theme" name="theme" onchange="previewTheme(this.value)">
-                    {% for choice in theme_choices %}
-                        <option value="{{ choice }}"
-                                {% if choice == settings.theme %}selected{% endif %}>{{ choice | capitalize }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div id="custom-color-fields"
-                 class="custom-color-fields"
-                 style="display: {{ 'block' if settings.theme == 'custom' else 'none' }}">
-                <div class="settings-field">
-                    <label for="custom_bg_color">Background</label>
-                    <input type="color"
-                           id="custom_bg_color"
-                           name="custom_bg_color"
-                           value="{{ settings.custom_bg_color }}"
-                           oninput="previewCustomColors()">
-                </div>
-                <div class="settings-field">
-                    <label for="custom_surface_color">Surface</label>
-                    <input type="color"
-                           id="custom_surface_color"
-                           name="custom_surface_color"
-                           value="{{ settings.custom_surface_color }}"
-                           oninput="previewCustomColors()">
-                </div>
-                <div class="settings-field">
-                    <label for="custom_text_color">Text</label>
-                    <input type="color"
-                           id="custom_text_color"
-                           name="custom_text_color"
-                           value="{{ settings.custom_text_color }}"
-                           oninput="previewCustomColors()">
-                </div>
-                <div class="settings-field">
-                    <label for="custom_text_muted">Muted text</label>
-                    <input type="color"
-                           id="custom_text_muted"
-                           name="custom_text_muted"
-                           value="{{ settings.custom_text_muted }}"
-                           oninput="previewCustomColors()">
-                </div>
-                <div class="settings-field">
-                    <label for="custom_border_color">Border</label>
-                    <input type="color"
-                           id="custom_border_color"
-                           name="custom_border_color"
-                           value="{{ settings.custom_border_color }}"
-                           oninput="previewCustomColors()">
-                </div>
-                <div class="settings-field">
-                    <label for="custom_accent_color">Accent</label>
-                    <input type="color"
-                           id="custom_accent_color"
-                           name="custom_accent_color"
-                           value="{{ settings.custom_accent_color }}"
-                           oninput="previewCustomColors()">
-                </div>
-                <div class="settings-field">
-                    <label for="custom_accent_hover">Accent (hover)</label>
-                    <input type="color"
-                           id="custom_accent_hover"
-                           name="custom_accent_hover"
-                           value="{{ settings.custom_accent_hover }}"
-                           oninput="previewCustomColors()">
-                </div>
-            </div>
-            <div class="settings-field settings-field-grouped">
-                <label>Library filters</label>
-                <ul id="active-filters-list" class="active-filters-list">
-                    {% for field in active_filter_fields %}
-                        <li class="active-filter-chip" data-key="{{ field.key }}">
-                            <span class="filter-drag-handle" aria-hidden="true">&#10495;</span>
-                            <input type="checkbox"
-                                   name="enabled_filters"
-                                   value="{{ field.key }}"
-                                   checked
-                                   hidden>
-                            <span>{{ field.label }}</span>
-                            <button type="button"
-                                    class="remove-filter-btn"
-                                    onclick="removeActiveFilter(this)"
-                                    aria-label="Remove {{ field.label }}">&times;</button>
-                        </li>
-                    {% endfor %}
-                </ul>
-                <div class="add-filter-control">
-                    <input type="text"
-                           id="filter-search"
-                           placeholder="Add a filter…"
-                           autocomplete="off"
-                           oninput="renderFilterSuggestions(this.value)"
-                           onfocus="renderFilterSuggestions(this.value)">
-                    <ul id="filter-suggestions"
-                        class="filter-suggestions"
-                        style="display: none">
-                    </ul>
-                </div>
-                <script type="application/json" id="all-filter-fields-data">{{ filter_fields | tojson }}</script>
-            </div>
-            <div class="settings-field settings-field-grouped">
-                <label for="content_max_width_pct">[Wide screens only] Max content width (<span id="content-max-width-label">{{ settings.content_max_width_pct }}</span>% of screen width)</label>
-                <input type="range"
-                       id="content_max_width_pct"
-                       name="content_max_width_pct"
-                       min="20"
-                       max="80"
-                       step="1"
-                       value="{{ settings.content_max_width_pct }}"
-                       oninput="previewContentMaxWidth(this.value)">
-            </div>
-            <div class="settings-field settings-field-grouped">
-                <label for="font_family">Library font</label>
-                <select id="font_family"
-                        name="font_family"
-                        onchange="previewFont(this.value)">
-                    {% for key, css_value in font_choices.items() %}
-                        <option value="{{ key }}"
-                                data-css="{{ css_value }}"
-                                {% if key == settings.font_family_key %}selected{% endif %}>{{ key | capitalize }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="settings-field settings-field-grouped">
-                <label for="font_size">Library font size (<span id="font-size-label">{{ settings.font_size }}</span>rem)</label>
-                <input type="range"
-                       id="font_size"
-                       name="font_size"
-                       min="0.7"
-                       max="2.5"
-                       step="0.1"
-                       value="{{ settings.font_size }}"
-                       oninput="previewFontSize(this.value)">
-            </div>
-            <div class="settings-field settings-field-grouped">
-                <label>
-                    <input type="checkbox"
-                           id="override_epub_font"
-                           name="override_epub_font"
-                           {% if settings.override_epub_font %}checked{% endif %}
-                           onchange="toggleReaderFontFields(this.checked)">
-                    Override story's font
-                </label>
-            </div>
-            <div id="reader-font-fields"
-                 style="display: {{ 'block' if settings.override_epub_font else 'none' }}">
+        <form id="settings-form" method="post" class="settings-form">
+            <details class="settings-category" name="settings-category" open>
+                <summary>General</summary>
                 <div class="settings-field settings-field-grouped">
-                    <label for="reader_font_family">Reader font</label>
-                    <select id="reader_font_family"
-                            name="reader_font_family"
-                            onchange="previewReaderFont(this.value)">
+                    <label for="theme">Theme</label>
+                    <select class="settings-theme-picker" id="theme" name="theme" onchange="previewTheme(this.value)">
+                        {% for choice in theme_choices %}
+                            <option value="{{ choice }}"
+                                    {% if choice == settings.theme %}selected{% endif %}>{{ choice | capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="custom-color-fields"
+                     class="custom-color-fields"
+                     style="display: {{ 'block' if settings.theme == 'custom' else 'none' }}">
+                    <div class="settings-field">
+                        <label for="custom_bg_color">Background</label>
+                        <input type="color"
+                               id="custom_bg_color"
+                               name="custom_bg_color"
+                               value="{{ settings.custom_bg_color }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                    <div class="settings-field">
+                        <label for="custom_surface_color">Surface</label>
+                        <input type="color"
+                               id="custom_surface_color"
+                               name="custom_surface_color"
+                               value="{{ settings.custom_surface_color }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                    <div class="settings-field">
+                        <label for="custom_text_color">Text</label>
+                        <input type="color"
+                               id="custom_text_color"
+                               name="custom_text_color"
+                               value="{{ settings.custom_text_color }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                    <div class="settings-field">
+                        <label for="custom_text_muted">Muted text</label>
+                        <input type="color"
+                               id="custom_text_muted"
+                               name="custom_text_muted"
+                               value="{{ settings.custom_text_muted }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                    <div class="settings-field">
+                        <label for="custom_border_color">Border</label>
+                        <input type="color"
+                               id="custom_border_color"
+                               name="custom_border_color"
+                               value="{{ settings.custom_border_color }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                    <div class="settings-field">
+                        <label for="custom_accent_color">Accent</label>
+                        <input type="color"
+                               id="custom_accent_color"
+                               name="custom_accent_color"
+                               value="{{ settings.custom_accent_color }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                    <div class="settings-field">
+                        <label for="custom_accent_hover">Accent (hover)</label>
+                        <input type="color"
+                               id="custom_accent_hover"
+                               name="custom_accent_hover"
+                               value="{{ settings.custom_accent_hover }}"
+                               oninput="previewCustomColors()">
+                    </div>
+                </div>
+                <div class="settings-field settings-field-grouped">
+                    <label>Library filters</label>
+                    <ul id="active-filters-list" class="active-filters-list">
+                        {% for field in active_filter_fields %}
+                            <li class="active-filter-chip" data-key="{{ field.key }}">
+                                <span class="filter-drag-handle" aria-hidden="true">&#10495;</span>
+                                <input type="checkbox"
+                                       name="enabled_filters"
+                                       value="{{ field.key }}"
+                                       checked
+                                       hidden>
+                                <span>{{ field.label }}</span>
+                                <button type="button"
+                                        class="remove-filter-btn"
+                                        onclick="removeActiveFilter(this)"
+                                        aria-label="Remove {{ field.label }}">&times;</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="add-filter-control">
+                        <input type="text"
+                               id="filter-search"
+                               placeholder="Add a filter…"
+                               autocomplete="off"
+                               oninput="renderFilterSuggestions(this.value)"
+                               onfocus="renderFilterSuggestions(this.value)">
+                        <ul id="filter-suggestions"
+                            class="filter-suggestions"
+                            style="display: none">
+                        </ul>
+                    </div>
+                    <script type="application/json" id="all-filter-fields-data">{{ filter_fields | tojson }}</script>
+                </div>
+                <div class="settings-field settings-field-grouped">
+                    <label for="content_max_width_pct">[Wide screens only] Max content width (<span id="content-max-width-label">{{ settings.content_max_width_pct }}</span>% of screen width)</label>
+                    <input type="range"
+                           id="content_max_width_pct"
+                           name="content_max_width_pct"
+                           min="20"
+                           max="80"
+                           step="1"
+                           value="{{ settings.content_max_width_pct }}"
+                           oninput="previewContentMaxWidth(this.value)">
+                </div>
+            </details>
+            <details class="settings-category" name="settings-category">
+                <summary>Fonts</summary>
+                <div class="settings-field settings-field-grouped">
+                    <label for="font_family">Library font</label>
+                    <select id="font_family"
+                            name="font_family"
+                            onchange="previewFont(this.value)">
                         {% for key, css_value in font_choices.items() %}
                             <option value="{{ key }}"
                                     data-css="{{ css_value }}"
-                                    {% if key == settings.reader_font_family_key %}selected{% endif %}>{{ key | capitalize }}</option>
+                                    {% if key == settings.font_family_key %}selected{% endif %}>{{ key | capitalize }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="settings-field settings-field-grouped">
-                    <label for="reader_font_size">Reader font size (<span id="reader-font-size-label">{{ settings.reader_font_size }}</span>rem)</label>
+                    <label for="font_size">Library font size (<span id="font-size-label">{{ settings.font_size }}</span>rem)</label>
                     <input type="range"
-                           id="reader_font_size"
-                           name="reader_font_size"
+                           id="font_size"
+                           name="font_size"
                            min="0.7"
                            max="2.5"
                            step="0.1"
-                           value="{{ settings.reader_font_size }}"
-                           oninput="previewReaderFontSize(this.value)">
+                           value="{{ settings.font_size }}"
+                           oninput="previewFontSize(this.value)">
                 </div>
-            </div>
-            <div class="preview-row settings-field-grouped">
-                <div class="settings-preview" id="settings-preview">
-                    <p class="preview-reader-label">Library preview</p>
-                    <p class="preview-body">The quick brown fox jumps over the lazy dog.</p>
-                    <p class="preview-muted">Muted text example</p>
-                    <a href="#" class="preview-link" onclick="return false;">A sample link</a>
-                    <button type="button" class="preview-btn">Sample button</button>
+                <div class="settings-field settings-field-grouped">
+                    <label>
+                        <input type="checkbox"
+                               id="override_epub_font"
+                               name="override_epub_font"
+                               {% if settings.override_epub_font %}checked{% endif %}
+                               onchange="toggleReaderFontFields(this.checked)">
+                        Override story's font
+                    </label>
                 </div>
-                <div class="settings-preview"
-                     id="reader-font-preview"
-                     style="display: {{ 'block' if settings.override_epub_font else 'none' }};
-                            --reader-font-family: {{ settings.reader_font_family_css }};
-                            --reader-font-size-base: {{ settings.reader_font_size }}rem">
-                    <p class="preview-reader-label">Reading preview</p>
-                    <p class="preview-body"><em>His AC touches down, metal sparking against the floor.</em> "Looks like the guest of honor's here. <strong>Hey, Buddy.</strong>"</p>
+                <div id="reader-font-fields"
+                     style="display: {{ 'block' if settings.override_epub_font else 'none' }}">
+                    <div class="settings-field settings-field-grouped">
+                        <label for="reader_font_family">Reader font</label>
+                        <select id="reader_font_family"
+                                name="reader_font_family"
+                                onchange="previewReaderFont(this.value)">
+                            {% for key, css_value in font_choices.items() %}
+                                <option value="{{ key }}"
+                                        data-css="{{ css_value }}"
+                                        {% if key == settings.reader_font_family_key %}selected{% endif %}>{{ key | capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="settings-field settings-field-grouped">
+                        <label for="reader_font_size">Reader font size (<span id="reader-font-size-label">{{ settings.reader_font_size }}</span>rem)</label>
+                        <input type="range"
+                               id="reader_font_size"
+                               name="reader_font_size"
+                               min="0.7"
+                               max="2.5"
+                               step="0.1"
+                               value="{{ settings.reader_font_size }}"
+                               oninput="previewReaderFontSize(this.value)">
+                    </div>
                 </div>
-            </div>
-            <button type="submit" class="settings-save">Save</button>
+            </details>
         </form>
-        <details class="advanced-settings">
+        <details class="settings-category advanced-settings" name="settings-category">
             <summary>Advanced</summary>
             <p class="advanced-warning">Warning: actions in this section are irreversible.</p>
             <form method="post"
@@ -234,6 +222,26 @@
                 <button type="submit" class="danger-btn">Clear reading progress and "Recently read" list</button>
             </form>
         </details>
+        <div class="preview-row settings-field-grouped">
+            <div class="settings-preview" id="settings-preview">
+                <p class="preview-reader-label">Library preview</p>
+                <p class="preview-body">The quick brown fox jumps over the lazy dog.</p>
+                <p class="preview-muted">Muted text example</p>
+                <a href="#" class="preview-link" onclick="return false;">A sample link</a>
+                <button type="button" class="preview-btn">Sample button</button>
+            </div>
+            <div class="settings-preview"
+                 id="reader-font-preview"
+                 style="display: {{ 'block' if settings.override_epub_font else 'none' }};
+                        --reader-font-family: {{ settings.reader_font_family_css }};
+                        --reader-font-size-base: {{ settings.reader_font_size }}rem">
+                <p class="preview-reader-label">Reading preview</p>
+                <p class="preview-body"><em>His AC touches down, metal sparking against the floor.</em> "Looks like the guest of honor's here. <strong>Hey, Buddy.</strong>"</p>
+            </div>
+        </div>
+        <div class="settings-save-row">
+            <button type="submit" form="settings-form" class="settings-save">Save</button>
+        </div>
         <script src="{{ url_for('static', filename='settings-preview.js') }}"></script>
         <div class="footer footer-insert">
             Made with <3 by Minighost

@@ -1055,7 +1055,7 @@ html.view-card .card-view {
 }
 
 .settings-field {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
 }
 
 .settings-field.settings-field-grouped {
@@ -1064,19 +1064,22 @@ html.view-card .card-view {
 
 .settings-field label {
     display: block;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.5rem;
     color: var(--text-muted);
     font-size: 0.9em;
+    line-height: 1;
 }
 
 .settings-field select,
 .settings-field input[type="range"] {
     width: 100%;
-    padding: 0.4rem;
+    padding: 0.5rem;
     background: var(--surface-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
+    line-height: 1;
+    font-size: 1em;
 }
 
 .active-filters-list {
@@ -1085,7 +1088,11 @@ html.view-card .card-view {
     gap: 0.5rem;
     list-style: none;
     padding: 0;
-    margin: 0 0 0.6rem 0;
+    margin: 0;
+}
+
+.active-filters-list:has(.active-filter-chip) {
+    margin-bottom: 0.5rem;
 }
 
 .active-filter-chip {
@@ -1142,12 +1149,14 @@ html.view-card .card-view {
 
 .add-filter-control {
     position: relative;
-    max-width: 20rem;
+    max-width: calc(var(--content-max-width) / 2);
+    line-height: 1;
+    font-size: 1em;
 }
 
 .add-filter-control input[type="text"] {
     width: 100%;
-    padding: 0.4rem;
+    padding: 0.5rem;
     background: var(--surface-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
@@ -1188,33 +1197,53 @@ html.view-card .card-view {
     color: white;
 }
 
+.settings-save-row {
+    max-width: var(--content-max-width);
+    margin: 0 auto 0 auto;
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
 .settings-save {
     background: var(--accent-color);
     color: white;
     border: none;
-    padding: 0.6rem 1.2rem;
+    min-width: 5rem;
+    padding: 0.5rem 0.5rem;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1em;
-    margin-top: 0.8rem;
 }
 
 .settings-save:hover {
     background: var(--accent-hover);
 }
 
-.advanced-settings {
+.settings-category {
     max-width: var(--content-max-width);
-    margin: 2rem auto 0 auto;
+    margin: 0 auto 1rem auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+    /*
     border-top: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 0;
+    */
 }
 
-.advanced-settings summary {
+.settings-category summary {
     cursor: pointer;
-    color: var(--text-muted);
-    font-size: 0.9em;
+    color: var(--text-color);
+    font-size: 1em;
+}
+
+.settings-category[open] summary {
+    margin-bottom: 1rem;
+}
+
+.settings-field-grouped:last-child {
+    margin-bottom: 0.5rem;
 }
 
 .advanced-warning {
@@ -1299,8 +1328,10 @@ html.view-card .card-view {
 
 .preview-row {
     display: flex;
+    margin: 0 auto;
     gap: 1rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
+    max-width: var(--content-max-width);
 }
 
 .preview-row .settings-preview {
