@@ -358,6 +358,10 @@ button::-moz-focus-inner {
     margin-bottom: 0.8rem;
 }
 
+.filter-sort-section:last-child {
+    margin-bottom: 0;
+}
+
 .filter-sort-section-label {
     font-size: 0.85em;
     color: var(--text-muted);
@@ -462,7 +466,6 @@ button::-moz-focus-inner {
     display: inline-block;
     font-size: 1.1em;
     color: var(--text-muted);
-    transition: transform 0.15s ease;
     transform: translateY(0.1em);
 }
 
