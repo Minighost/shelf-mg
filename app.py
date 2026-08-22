@@ -289,6 +289,21 @@ def _build_history_entries(rows):
     return entries
 
 
+def _epub_error_description(exc: Exception) -> str:
+    """Map the exception types epub_parser/zipfile can raise while reading
+    a chapter into a distinct, user-facing explanation of what's wrong
+    with the EPUB file."""
+    if isinstance(exc, zipfile.BadZipFile):
+        return "This book's EPUB file is corrupted or isn't a valid EPUB/zip archive."
+    if isinstance(exc, ET.ParseError):
+        return "This book's EPUB file contains malformed XML and can't be parsed."
+    if isinstance(exc, KeyError):
+        return "This book's EPUB file is missing a required internal file (e.g. its content or navigation file)."
+    if isinstance(exc, OSError):
+        return "This book's EPUB file couldn't be read from disk (it may have been moved or deleted)."
+    return "This book's EPUB file couldn't be read."
+
+
 @app.route("/")
 def library_list():
     query = flask.request.args.get("q", "").strip()
@@ -482,7 +497,11 @@ def read_chapter(book_id, chapter_index):
     if calibre_book is None:
         flask.abort(404, description="That book doesn't exist in your library.")
 
-    epub_book = epub_parser.parse_book(calibre_book.epub_path)
+    try:
+        epub_book = epub_parser.parse_book(calibre_book.epub_path)
+    except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
+        flask.abort(404, description=_epub_error_description(e))
+
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
         flask.abort(404, description="That chapter doesn't exist.")
 
@@ -590,16 +609,19 @@ def read_chapter_frame(book_id, chapter_index):
     if epub_path is None:
         flask.abort(404, description="That book doesn't exist in your library.")
 
-    epub_book = epub_parser.parse_book(epub_path)
-    if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
-        flask.abort(404, description="That chapter doesn't exist.")
+    try:
+        epub_book = epub_parser.parse_book(epub_path)
+        if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
+            flask.abort(404, description="That chapter doesn't exist.")
 
-    content = epub_parser.get_chapter_content(epub_path, epub_book, chapter_index)
-    chapter_dir = epub_parser.get_chapter_dir(
-        epub_book, epub_book.chapters[chapter_index]
-    )
-    content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
-    css = epub_parser.get_stylesheets(epub_path, epub_book)
+        content = epub_parser.get_chapter_content(epub_path, epub_book, chapter_index)
+        chapter_dir = epub_parser.get_chapter_dir(
+            epub_book, epub_book.chapters[chapter_index]
+        )
+        content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
+        css = epub_parser.get_stylesheets(epub_path, epub_book)
+    except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
+        flask.abort(404, description=_epub_error_description(e))
 
     return flask.render_template(
         "chapter_frame.html",
