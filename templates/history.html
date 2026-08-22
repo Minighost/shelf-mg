@@ -18,6 +18,7 @@
         <title>shelf-mg</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
+        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
         <script>
             // If this page is restored from bfcache (e.g. via the back
             // button), its history data may be stale — force a fresh
@@ -35,12 +36,20 @@
                     <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
-                    <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-                    <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+                    <button type="button"
+                            class="header-nav-drawer-toggle"
+                            onclick="toggleHeaderNavDrawer()"
+                            aria-expanded="false"
+                            aria-controls="header-nav-drawer">&lt; Menu</button>
                 </div>
             </div>
             <h1 class="header-title">Reading history</h1>
         </div>
+        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
+        <nav id="header-nav-drawer" class="header-nav-drawer">
+            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
+            <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+        </nav>
         {% if total_pages > 1 %}
             <nav class="pagination">
                 <div class="pagination-controls">

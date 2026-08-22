@@ -27,6 +27,7 @@
                   href="{{ url_for('library_list', page=page + 1, **page_args) }}">
         {% endif %}
         <script src="{{ url_for('static', filename='theme.js') }}"></script>
+        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
         <script src="{{ url_for('static', filename='filter-search.js') }}"></script>
         <script>
             // If this page is restored from bfcache (e.g. via the back
@@ -42,17 +43,25 @@
         <div class="library-header">
             <div class="header-top">
                 <div class="header-right">
-                    <form method="post"
-                          id="refresh-library-form"
-                          action="{{ url_for('refresh_library') }}">
-                    </form>
-                    <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
-                    <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-                    <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+                    <button type="button"
+                            class="header-nav-drawer-toggle"
+                            onclick="toggleHeaderNavDrawer()"
+                            aria-expanded="false"
+                            aria-controls="header-nav-drawer">&lt; Menu</button>
                 </div>
             </div>
             <h1 class="header-title">Library</h1>
         </div>
+        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
+        <nav id="header-nav-drawer" class="header-nav-drawer">
+            <form method="post"
+                  id="refresh-library-form"
+                  action="{{ url_for('refresh_library') }}">
+            </form>
+            <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
+            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
+            <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+        </nav>
         <dialog id="refresh-dialog" class="confirm-dialog">
             <button type="button"
                     id="refresh-dialog-x"

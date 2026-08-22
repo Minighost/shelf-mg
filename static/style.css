@@ -2,6 +2,7 @@
 
 :root {
     --content-max-width: 1024px;
+    --body-padding: 1rem;
     --reader-font-family: Georgia, 'Times New Roman', serif;
     --reader-font-size: clamp(calc(var(--reader-font-size-base, 1.1rem) * 0.5),
             calc(var(--reader-font-size-base, 1.1rem) * 0.3 + 2vw),
@@ -51,7 +52,7 @@ textarea {
 
 body {
     margin: 0;
-    padding: 1rem;
+    padding: var(--body-padding);
     background: var(--bg-color);
     color: var(--text-color);
     font-family: var(--reader-font-family);
@@ -92,6 +93,7 @@ a:hover {
     border-radius: 4px;
     font-size: 0.9em;
     display: inline-block;
+    text-align: center;
     line-height: 1;
     flex-shrink: 0;
     white-space: nowrap;
@@ -164,6 +166,60 @@ button::-moz-focus-inner {
     justify-content: flex-end;
     gap: 0.5rem;
     align-items: center;
+    margin-left: auto;
+}
+
+.header-nav-drawer-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    box-sizing: border-box;
+    line-height: 1;
+    flex-shrink: 0;
+    white-space: nowrap;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.header-nav-drawer {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: max(0px, calc((100vw - var(--content-max-width)) / 2));
+    height: 100dvh;
+    width: min(50vw, 20rem);
+    background: var(--surface-color);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.header-nav-drawer.open {
+    display: flex;
+}
+
+.header-nav-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 999;
+}
+
+.header-nav-drawer-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .header-title {
@@ -1527,16 +1583,13 @@ html.view-card .card-view-wrapper {
 }
 
 @media (min-width: 900px) {
-    body {
-        padding: 2rem;
-    }
-
     .header-title {
         font-size: 2.2em;
     }
 
     :root {
         --content-max-width: clamp(700px, var(--content-max-width-vw, 40vw), 1800px);
+        --body-padding: 2rem;
         --reader-font-size: var(--reader-font-size-base, 1.1rem);
     }
 

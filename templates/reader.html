@@ -17,6 +17,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ book.title }} — {{ chapter.title }}</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
     </head>
     <body data-book-id="{{ book.id }}"
           data-chapter-index="{{ chapter.index }}"
@@ -49,7 +50,11 @@
                        data-target-chapter="{{ chapter.index }}">&larr; Back to library</a>
                 </div>
                 <div class="header-right">
-                    <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+                    <button type="button"
+                            class="header-nav-drawer-toggle"
+                            onclick="toggleHeaderNavDrawer()"
+                            aria-expanded="false"
+                            aria-controls="header-nav-drawer">&lt; Menu</button>
                 </div>
             </div>
             <h1 class="header-title reader-title">{{ book.title }}</h1>
@@ -61,6 +66,10 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
+        <nav id="header-nav-drawer" class="header-nav-drawer">
+            <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+        </nav>
         <dialog id="conflict-dialog" class="confirm-dialog">
             <button type="button"
                     id="conflict-dialog-close"
