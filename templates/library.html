@@ -262,9 +262,9 @@
                 {% endfor %}
             </div>
         </div>
-        <div class="book-list">
+        <div class="list-view-wrapper">
             {% for book in books %}
-                <div class="book-entry">
+                <div class="list-view-entry">
                     <h2>
                         <a href="/read/{{ book.id }}/{{ positions[book.id].chapter_index if book.id in positions else 0 }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
                         <a class="inspect-button"
@@ -272,81 +272,81 @@
                            title="Inspect">i</a>
                     </h2>
                     {% if 'author' in enabled_list_keys %}
-                        <p class="book-meta">by {{ book.authors | join(", ") }}</p>
+                        <p class="book-meta list-view-author">by {{ book.authors | join(", ") }}</p>
                     {% endif %}
                     {% if 'tags' in enabled_list_keys and book.tags %}
-                        <p class="book-meta book-tags">Tags: {{ book.tags | join(", ") }}</p>
+                        <p class="book-meta list-view-tags">Tags: {{ book.tags | join(", ") }}</p>
                     {% endif %}
                     {% if 'series' in enabled_list_keys and book.series %}
-                        <p class="book-meta book-list-field">Series: {{ book.series }}{% if book.series_index %} #{{ book.series_index }}{% endif %}</p>
+                        <p class="book-meta list-view-meta-generic">Series: {{ book.series }}{% if book.series_index %} #{{ book.series_index }}{% endif %}</p>
                     {% endif %}
                     {% if 'publisher' in enabled_list_keys and book.publisher %}
-                        <p class="book-meta book-list-field">Publisher: {{ book.publisher }}</p>
+                        <p class="book-meta list-view-meta-generic">Publisher: {{ book.publisher }}</p>
                     {% endif %}
                     {% if 'rating' in enabled_list_keys and book.rating %}
-                        <p class="book-meta book-list-field">Rating: {{ book.rating }}/5</p>
+                        <p class="book-meta list-view-meta-generic">Rating: {{ book.rating }}/5</p>
                     {% endif %}
                     {% if 'date_added' in enabled_list_keys and book.date_added %}
-                        <p class="book-meta book-list-field">Added: {{ book.date_added }}</p>
+                        <p class="book-meta list-view-meta-generic">Added: {{ book.date_added }}</p>
                     {% endif %}
                     {% if 'pubdate' in enabled_list_keys and book.pubdate %}
-                        <p class="book-meta book-list-field">Published: {{ book.pubdate }}</p>
+                        <p class="book-meta list-view-meta-generic">Published: {{ book.pubdate }}</p>
                     {% endif %}
                     {% if 'size' in enabled_list_keys and book.size_bytes %}
-                        <p class="book-meta book-list-field">Size: {{ book.size_bytes | filesizeformat }}</p>
+                        <p class="book-meta list-view-meta-generic">Size: {{ book.size_bytes | filesizeformat }}</p>
                     {% endif %}
                     {% for custom_key, values in book.custom.items() %}
                         {% if ('custom:' ~ custom_key) in enabled_list_keys and values %}
-                            <p class="book-meta book-list-field">{{ list_field_labels.get('custom:' ~ custom_key, custom_key) }}: {{ values | join(", ") }}</p>
+                            <p class="book-meta list-view-meta-generic">{{ list_field_labels.get('custom:' ~ custom_key, custom_key) }}: {{ values | join(", ") }}</p>
                         {% endif %}
                     {% endfor %}
                     {% if 'summary' in enabled_list_keys %}
-                        <div class="book-summary">{{ book.summary_html | safe }}</div>
+                        <div class="list-view-summary">{{ book.summary_html | safe }}</div>
                     {% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="book-grid">
+        <div class="grid-view-wrapper">
             {% for book in books %}
-                <div class="grid-card">
-                    <div class="grid-cover-wrap">
-                        <img class="grid-cover"
+                <div class="grid-view-entry">
+                    <div class="grid-view-cover-wrapper">
+                        <img class="grid-view-cover"
                              src="{{ url_for('inspect_cover', book_id=book.id) }}"
                              alt="Cover for {{ book.title }}"
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
-                        <div class="grid-cover-placeholder">No cover</div>
-                        <a class="inspect-button grid-cover-inspect"
+                        <div class="grid-view-cover-placeholder">No cover</div>
+                        <a class="inspect-button grid-view-inspect-btn-override"
                            href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
                            title="Inspect">i</a>
                     </div>
-                    <div class="grid-card-info">
-                        <a class="grid-card-title"
+                    <div class="grid-view-meta-wrapper">
+                        <a class="grid-view-title"
                            href="/read/{{ book.id }}/{{ positions[book.id].chapter_index if book.id in positions else 0 }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
-                        <p class="grid-card-author">{{ book.authors | join(", ") }}</p>
+                        <p class="grid-view-author">{{ book.authors | join(", ") }}</p>
                     </div>
                 </div>
             {% endfor %}
         </div>
-        <div class="card-view">
+        <div class="card-view-wrapper">
             {% for book in books %}
-                <div class="card-item">
-                    <div class="card-cover-wrap">
-                        <img class="card-cover"
+                <div class="card-view-entry">
+                    <div class="card-view-cover-wrapper">
+                        <img class="card-view-cover"
                              src="{{ url_for('inspect_cover', book_id=book.id) }}"
                              alt="Cover for {{ book.title }}"
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.add('visible');">
-                        <div class="card-cover-placeholder">No cover</div>
-                        <a class="inspect-button card-cover-inspect"
+                        <div class="card-view-cover-placeholder">No cover</div>
+                        <a class="inspect-button card-view-inspect-btn-override"
                            href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
                            title="Inspect">i</a>
                     </div>
-                    <div class="card-body">
-                        <a class="card-title"
+                    <div class="card-view-meta-wrapper">
+                        <a class="card-view-title"
                            href="/read/{{ book.id }}/{{ positions[book.id].chapter_index if book.id in positions else 0 }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">{{ book.title }}</a>
-                        <p class="card-author">{{ book.authors | join(", ") }}</p>
-                        <div class="book-summary card-summary">{{ book.summary_html | safe }}</div>
+                        <p class="card-view-author">{{ book.authors | join(", ") }}</p>
+                        <div class="card-view-summary">{{ book.summary_html | safe }}</div>
                     </div>
                 </div>
             {% endfor %}

@@ -34,45 +34,48 @@
             <h1 class="header-title">{{ book.title }}</h1>
         </div>
 
-        <div class="inspect-top">
+        <div class="inspect-top-wrapper">
             {% if has_cover %}
                 <img class="inspect-cover" src="{{ url_for('inspect_cover', book_id=book.id) }}" alt="Cover for {{ book.title }}">
             {% else %}
                 <div class="inspect-cover-placeholder">No image</div>
             {% endif %}
-            <div class="inspect-basic-meta">
-                <p class="book-meta">by {{ book.authors | join(", ") }}</p>
+            <div class="inspect-meta-wrapper">
+                <p class="book-meta inspect-meta-generic">Author: {{ book.authors | join(", ") }}</p>
                 {% if book.series %}
-                    <p class="book-meta">Series: {{ book.series }} #{{ book.series_index }}</p>
+                    <p class="book-meta inspect-meta-generic">Series: {{ book.series }} #{{ book.series_index }}</p>
                 {% endif %}
                 {% if book.publisher %}
-                    <p class="book-meta">Publisher: {{ book.publisher }}</p>
+                    <p class="book-meta inspect-meta-generic">Publisher: {{ book.publisher }}</p>
                 {% endif %}
                 {% if book.tags %}
-                    <p class="book-meta">Tags: {{ book.tags | join(", ") }}</p>
+                    <p class="book-meta inspect-meta-generic">Tags: {{ book.tags | join(", ") }}</p>
                 {% endif %}
-                {% for label, values in book.custom.items() %}
-                    {% if values %}
-                        <p class="book-meta">{{ label }}: {{ values | join(", ") }}</p>
-                    {% endif %}
-                {% endfor %}
             </div>
         </div>
+        <section class="inspect-section">
+            <h2>Custom Columns</h2>
+            {% for label, values in book.custom.items() %}
+                {% if values %}
+                    <p class="book-meta inspect-meta-generic">{{ label }}: {{ values | join(", ") }}</p>
+                {% endif %}
+            {% endfor %}
+        </section>
 
         {% if book.summary_html %}
             <section class="inspect-section">
-                <h2>Summary</h2>
-                <div class="book-summary">{{ book.summary_html | safe }}</div>
+                <h2>Story Summary</h2>
+                <div class="list-view-summary">{{ book.summary_html | safe }}</div>
             </section>
         {% endif %}
 
         <section class="inspect-section">
             <h2>Calibre details</h2>
-            <p class="book-meta">Rating: {{ (details.rating ~ " / 5") if details.rating is not none else "Unrated" }}</p>
-            <p class="book-meta">Date added: {{ details.date_added or "Unknown" }}</p>
-            <p class="book-meta">Publication date: {{ details.pubdate or "Unknown" }}</p>
+            <p class="book-meta inspect-meta-generic">Rating: {{ (details.rating ~ " / 5") if details.rating is not none else "Unrated" }}</p>
+            <p class="book-meta inspect-meta-generic">Date added: {{ details.date_added or "Unknown" }}</p>
+            <p class="book-meta inspect-meta-generic">Publication date: {{ details.pubdate or "Unknown" }}</p>
             {% if details.identifiers %}
-                <p class="book-meta">
+                <p class="book-meta inspect-meta-generic">
                     Identifiers:
                     {% for type, val in details.identifiers.items() %}{{ type }}: {{ val }}{% if not loop.last %}, {% endif %}{% endfor %}
                 </p>
@@ -84,9 +87,9 @@
         <section class="inspect-section">
             <h2>Table of contents</h2>
             {% if parse_error %}
-                <p class="book-meta">Could not read chapter list: {{ parse_error }}</p>
+                <p class="book-meta inspect-meta-generic">Could not read chapter list: {{ parse_error }}</p>
             {% else %}
-                <ol class="inspect-toc">
+                <ol class="inspect-chapter-list">
                     {% for chapter in chapters %}
                         <li><a href="/read/{{ book.id }}/{{ chapter.index }}{{ back_suffix }}">{{ chapter.title }}</a></li>
                     {% endfor %}
@@ -97,28 +100,31 @@
         <section class="inspect-section">
             <h2>Technical details</h2>
             {% if stats %}
-                <p class="book-meta">File size: {{ file_size }}</p>
-                <p class="book-meta">EPUB version: {{ stats.epub_version }}</p>
-                <p class="book-meta">Spine items: {{ stats.spine_item_count }}</p>
-                <p class="book-meta">Images: {{ stats.image_count }}</p>
-                <p class="book-meta">CSS files: {{ stats.css_count }}</p>
-                <p class="book-meta">Manifest items: {{ stats.manifest_item_count }}</p>
+                <p class="book-meta inspect-meta-generic">File size: {{ file_size }}</p>
+                <p class="book-meta inspect-meta-generic">EPUB version: {{ stats.epub_version }}</p>
+                <p class="book-meta inspect-meta-generic">Spine items: {{ stats.spine_item_count }}</p>
+                <p class="book-meta inspect-meta-generic">Images: {{ stats.image_count }}</p>
+                <p class="book-meta inspect-meta-generic">CSS files: {{ stats.css_count }}</p>
+                <p class="book-meta inspect-meta-generic">Manifest items: {{ stats.manifest_item_count }}</p>
             {% else %}
-                <p class="book-meta">Could not read file details: {{ parse_error }}</p>
+                <p class="book-meta inspect-meta-generic">Could not read file details: {{ parse_error }}</p>
             {% endif %}
         </section>
 
         <section class="inspect-section">
             <h2>Reading progress</h2>
             {% if progress %}
-                <p class="book-meta">
+                <p class="book-meta inspect-meta-generic">
                     Chapter {{ progress.chapter_index + 1 }}{% if progress.chapter_title %} — {{ progress.chapter_title }}{% endif %}
                 </p>
-                <p class="book-meta">{{ progress.percent }}% complete</p>
-                <p class="book-meta">Last read: {{ progress.updated_at }}</p>
+                <p class="book-meta inspect-meta-generic">{{ progress.percent }}% complete</p>
+                <p class="book-meta inspect-meta-generic">Last read: {{ progress.updated_at }}</p>
             {% else %}
-                <p class="book-meta">Not started yet.</p>
+                <p class="book-meta inspect-meta-generic">Not started yet.</p>
             {% endif %}
         </section>
+        <div class="footer footer-insert">
+            Made with <3 by Minighost
+        </div>
     </body>
 </html>

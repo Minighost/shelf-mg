@@ -580,66 +580,83 @@ button::-moz-focus-inner {
     font-size: 0.9em;
 }
 
-/* --- library: list view --- */
-
-.book-list {
-    max-width: var(--content-max-width);
-    margin: -0.3em auto 0 auto;
-}
-
-html.view-grid .book-list,
-html.view-card .book-list {
-    display: none;
-}
-
-.book-entry {
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 0 1.3rem 0;
-}
-
-.book-entry:first-child {
-    padding-top: 0;
-}
-
-.book-entry h2 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.2em;
-}
+/* --- global meta styling --- */
 
 .book-meta {
     color: var(--text-muted);
     font-size: 0.9em;
-    margin: 0 0 0.2rem 0;
 }
 
-.book-tags,
-.book-list-field {
+/* --- library: list view --- */
+
+.list-view-wrapper {
+    max-width: var(--content-max-width);
+    margin: 0 auto 0 auto;
+}
+
+html.view-grid .list-view-wrapper,
+html.view-card .list-view-wrapper {
+    display: none;
+}
+
+.list-view-entry {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+}
+
+.list-view-entry:first-child {
+    padding-top: 0;
+}
+
+.list-view-entry h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25em;
+    line-height: 1.15;
+    font-weight: bold;
+}
+
+.list-view-author {
+    margin: 0 0 0.5rem 0;
+}
+
+.list-view-tags,
+.list-view-meta-generic {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    margin-bottom: 0.5rem;
 }
 
-.book-summary {
+.list-view-tags {
+    margin: 0 0 0.5rem 0;
+}
+
+.list-view-meta-generic {
+    margin: 0 0;
+}
+
+.list-view-summary {
     font-size: 0.9em;
 }
 
-.book-summary> :last-child {
-    margin-bottom: 0;
-}
-
-.book-entry>p:last-child {
-    margin-bottom: 0;
-}
-
-.book-summary blockquote {
+.list-view-summary blockquote {
     margin: 0;
-    padding-left: 0.8rem;
+    padding-left: 0.75rem;
     border-left: 2px solid var(--border-color);
 }
 
+/* handles the raw summary html from epub */
+.list-view-summary> :last-child {
+    margin-bottom: 0;
+}
+
+/* handles list entry itself */
+.list-view-entry>p:last-child {
+    margin-bottom: 0;
+}
+
+/* specifically for history.html */
 .history-updated {
     font-size: 0.85em;
     white-space: nowrap;
@@ -648,11 +665,11 @@ html.view-card .book-list {
 
 /* --- library: grid view --- */
 
-.book-grid {
+.grid-view-wrapper {
     display: none;
 }
 
-html.view-grid .book-grid {
+html.view-grid .grid-view-wrapper {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
@@ -663,19 +680,19 @@ html.view-grid .book-grid {
     border-bottom: 1px solid var(--border-color);
 }
 
-.grid-cover-wrap {
+.grid-view-cover-wrapper {
     position: relative;
     margin-bottom: 0.5rem;
 }
 
-.grid-cover-inspect {
+.grid-view-inspect-btn-override {
     position: absolute;
     top: 0.4rem;
     right: 0.4rem;
     background: var(--surface-color);
 }
 
-.grid-cover {
+.grid-view-cover {
     width: 100%;
     height: auto;
     aspect-ratio: 2 / 3;
@@ -685,7 +702,7 @@ html.view-grid .book-grid {
     display: block;
 }
 
-.grid-cover-placeholder {
+.grid-view-cover-placeholder {
     display: none;
     width: 100%;
     aspect-ratio: 2 / 3;
@@ -698,37 +715,44 @@ html.view-grid .book-grid {
     text-align: center;
 }
 
-.grid-cover-placeholder.visible {
+.grid-view-cover-placeholder.visible {
     display: flex;
 }
 
-.grid-card-title {
-    display: block;
-    overflow-wrap: break-word;
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--text-color);
-    text-decoration: none;
-    margin-bottom: 0.2rem;
+.grid-view-meta-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
-.grid-card-title:hover {
+.grid-view-title {
+    overflow-wrap: break-word;
+    font-size: 1em;
+    line-height: 1.15;
+    font-weight: bold;
+    color: var(--accent-color);
+    text-decoration: none;
+    margin: 0;
+}
+
+.grid-view-title:hover {
     text-decoration: underline;
 }
 
-.grid-card-author {
-    color: var(--text-muted);
-    font-size: 0.85em;
+.grid-view-author {
+    color: var(--text-color);
+    font-size: 0.9em;
+    line-height: 1.15;
     margin: 0;
 }
 
 /* --- library: card view --- */
 
-.card-view {
+.card-view-wrapper {
     display: none;
 }
 
-html.view-card .card-view {
+html.view-card .card-view-wrapper {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
     gap: 1rem;
@@ -738,25 +762,25 @@ html.view-card .card-view {
     border-bottom: 1px solid var(--border-color);
 }
 
-.card-item {
+.card-view-entry {
     display: flex;
     align-items: stretch;
-    gap: 0.8rem;
+    gap: 0.5rem;
     height: 9rem;
-    padding: 0.6rem;
+    padding: 0.5rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     overflow: hidden;
 }
 
-.card-cover-wrap {
+.card-view-cover-wrapper {
     position: relative;
     flex: 0 0 auto;
     width: 6rem;
     height: 100%;
 }
 
-.card-cover {
+.card-view-cover {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -765,7 +789,7 @@ html.view-card .card-view {
     display: block;
 }
 
-.card-cover-placeholder {
+.card-view-cover-placeholder {
     display: none;
     width: 100%;
     height: 100%;
@@ -778,18 +802,18 @@ html.view-card .card-view {
     text-align: center;
 }
 
-.card-cover-placeholder.visible {
+.card-view-cover-placeholder.visible {
     display: flex;
 }
 
-.card-cover-inspect {
+.card-view-inspect-btn-override {
     position: absolute;
     top: 0.3rem;
     right: 0.3rem;
     background: var(--surface-color);
 }
 
-.card-body {
+.card-view-meta-wrapper {
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
@@ -798,37 +822,41 @@ html.view-card .card-view {
     overflow: hidden;
 }
 
-.card-title {
+.card-view-title {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex-shrink: 0;
-    font-weight: 600;
-    color: var(--text-color);
+    font-weight: bold;
+    color: var(--accent-color);
     text-decoration: none;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.5rem;
+    font-size: 1em;
+    line-height: 1.15;
 }
 
-.card-title:hover {
+.card-view-title:hover {
     text-decoration: underline;
 }
 
-.card-author {
+.card-view-author {
     flex-shrink: 0;
     color: var(--text-muted);
-    font-size: 0.85em;
-    margin: 0 0 0.2rem 0;
+    font-size: 0.9em;
+    line-height: 1.15;
+    margin: 0 0 0.5rem 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.card-summary {
+.card-view-summary {
     flex: 1 1 auto;
     min-height: 0;
-    font-size: 0.85em;
+    font-size: 0.9em;
+    line-height: 1.15;
     display: -webkit-box;
     -webkit-line-clamp: 4;
     line-clamp: 4;
@@ -836,7 +864,7 @@ html.view-card .card-view {
     overflow: hidden;
 }
 
-.card-summary> :first-child {
+.card-view-summary> :first-child {
     margin-top: 0;
 }
 
@@ -1409,22 +1437,24 @@ html.view-card .card-view {
 
 .error-code {
     font-size: 4em;
-    margin: 0 0 0.5rem 0;
+    line-height: 1.15;
+    margin: 0 0 1rem 0;
     color: var(--text-muted);
 }
 
 .error-message {
-    margin-bottom: 1.5rem;
+    line-height: 1.15;
+    margin: 0 auto 1rem 0;
 }
 
 /* --- inspect page --- */
 
-.inspect-top {
+.inspect-top-wrapper {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: flex-start;
     max-width: var(--content-max-width);
-    margin: 0 auto 1.5rem auto;
+    margin: 0 auto 1rem auto;
 }
 
 .inspect-cover {
@@ -1448,32 +1478,41 @@ html.view-card .card-view {
     font-size: 0.85em;
 }
 
-.inspect-basic-meta {
+.inspect-meta-wrapper {
     flex: 1;
+}
+
+.inspect-meta-generic {
+    color: var(--text-color);
+    line-height: 1.15;
+    margin: 0 0 0.5rem 0;
 }
 
 .inspect-section {
     max-width: var(--content-max-width);
-    margin: 0 auto 1.5rem auto;
+    margin: 0 auto 1rem auto;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .inspect-section h2 {
     font-size: 1.1em;
-    margin-bottom: 0.5rem;
+    margin: 0 auto 1rem auto;
 }
 
-.inspect-toc {
+.inspect-chapter-list {
     padding-left: 1.5rem;
+    margin: 0;
 }
 
 /* --- device specific --- */
 
 @media (min-width: 600px) {
-    html.view-grid .book-grid {
+    html.view-grid .grid-view-wrapper {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    html.view-card .card-view {
+    html.view-card .card-view-wrapper {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -1512,11 +1551,11 @@ html.view-card .card-view {
         max-width: min(500px, calc(100% - 2rem));
     }
 
-    html.view-grid .book-grid {
+    html.view-grid .grid-view-wrapper {
         grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
-    html.view-card .card-view {
+    html.view-card .card-view-wrapper {
         grid-template-columns: repeat(2, 1fr);
     }
 
