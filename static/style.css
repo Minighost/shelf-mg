@@ -149,6 +149,15 @@ button::-moz-focus-inner {
     margin: 0 0;
 }
 
+.header-top .header-left-last-synced {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 0.5em;
+    color: var(--text-muted);
+}
+
 .header-top .header-right {
     display: flex;
     flex-wrap: wrap;

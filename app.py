@@ -39,8 +39,13 @@ def inject_settings():
     route doesn't need to remember to pass it explicitly — theme/font
     need to render correctly on every page, not just the ones a developer
     remembered to wire up.
+
+    Additionally, makes the "last_synced" label available for all templates.
     """
-    return {"settings": settings.get_settings(DB_PATH)}
+    return {
+        "settings": settings.get_settings(DB_PATH),
+        "last_synced": _last_synced_label(),
+    }
 
 
 def _get_calibre_book(book_id):
@@ -87,18 +92,41 @@ def _builtin_filter_fields():
         {"key": "tags", "label": "Tags", "type": "multi", "datatype": "text"},
         {"key": "author", "label": "Author", "type": "single", "datatype": "text"},
         {"key": "series", "label": "Series", "type": "single", "datatype": "text"},
-        {"key": "publisher", "label": "Publisher", "type": "single", "datatype": "text"},
+        {
+            "key": "publisher",
+            "label": "Publisher",
+            "type": "single",
+            "datatype": "text",
+        },
     ]
 
     available = calibre_reader.available_builtin_fields(LIBRARY_PATH)
     if "date_added" in available:
-        fields.append({"key": "date_added", "label": "Date added", "type": "range", "datatype": "datetime"})
+        fields.append(
+            {
+                "key": "date_added",
+                "label": "Date added",
+                "type": "range",
+                "datatype": "datetime",
+            }
+        )
     if "pubdate" in available:
-        fields.append({"key": "pubdate", "label": "Published", "type": "range", "datatype": "datetime"})
+        fields.append(
+            {
+                "key": "pubdate",
+                "label": "Published",
+                "type": "range",
+                "datatype": "datetime",
+            }
+        )
     if "size" in available:
-        fields.append({"key": "size", "label": "Size (MB)", "type": "range", "datatype": "float"})
+        fields.append(
+            {"key": "size", "label": "Size (MB)", "type": "range", "datatype": "float"}
+        )
     if "rating" in available:
-        fields.append({"key": "rating", "label": "Rating", "type": "range", "datatype": "float"})
+        fields.append(
+            {"key": "rating", "label": "Rating", "type": "range", "datatype": "float"}
+        )
 
     return fields
 
@@ -111,7 +139,9 @@ BUILTIN_FILTER_GETTERS = {
     "publisher": lambda book: [book.publisher] if book.publisher else [],
     "date_added": lambda book: [book.date_added] if book.date_added else [],
     "pubdate": lambda book: [book.pubdate] if book.pubdate else [],
-    "size": lambda book: [str(book.size_bytes / 1024 / 1024)] if book.size_bytes else [],
+    "size": lambda book: (
+        [str(book.size_bytes / 1024 / 1024)] if book.size_bytes else []
+    ),
     "rating": lambda book: [str(book.rating)] if book.rating is not None else [],
 }
 
@@ -168,7 +198,9 @@ def _list_view_fields():
     view has always shown it, so it needs its own toggle.
     """
     fields = [f for f in _all_filter_fields() if f["key"] != "title"]
-    fields.append({"key": "summary", "label": "Summary", "type": "text", "datatype": None})
+    fields.append(
+        {"key": "summary", "label": "Summary", "type": "text", "datatype": None}
+    )
     return fields
 
 
@@ -302,6 +334,26 @@ def _epub_error_description(exc: Exception) -> str:
     if isinstance(exc, OSError):
         return "This book's EPUB file couldn't be read from disk (it may have been moved or deleted)."
     return "This book's EPUB file couldn't be read."
+
+
+def _last_synced_label() -> str:
+    """Human-readable 'time since metadata.db was last modified', as a
+    staleness indicator for the rsync-synced library."""
+    db_path = os.path.join(LIBRARY_PATH, "metadata.db")
+    mtime = datetime.fromtimestamp(os.path.getmtime(db_path), tz=timezone.utc)
+    delta = datetime.now(timezone.utc) - mtime
+
+    seconds = delta.total_seconds()
+    if seconds < 60:
+        return "just now"
+    minutes = int(seconds // 60)
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+    hours = int(minutes // 60)
+    if hours < 24:
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+    days = int(hours // 24)
+    return f"{days} day{'s' if days != 1 else ''} ago"
 
 
 @app.route("/")
