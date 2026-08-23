@@ -17,6 +17,8 @@ import settings
 dotenv.load_dotenv()
 
 app = flask.Flask(__name__)
+# use gunicorn in prod:
+# gunicorn -w 1 -b 0.0.0.0:5000 app:app
 
 LIBRARY_PATH = os.environ.get("SHELF_MG_LIBRARY_PATH")
 if not LIBRARY_PATH:
