@@ -1,0 +1,11 @@
+.venv/
+**/__pycache__/
+**/*.pyc
+shelf-mg.db
+.claude/
+test_*
+.pytest_cache/
+CLAUDE.md
+pyproject.toml
+.env
+shelf-mg-data/

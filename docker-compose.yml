@@ -1,0 +1,12 @@
+services:
+    shelf-mg:
+        build: .
+        ports:
+            - "5000:5000"
+        environment:
+            - SHELF_MG_LIBRARY_PATH=/library
+            - SHELF_MG_DB_PATH=/data/shelf-mg.db
+        volumes:
+            - /path/on/host/to/calibrelibrary:/library:ro
+            - ./shelf-mg-data:/data
+        restart: unless-stopped
