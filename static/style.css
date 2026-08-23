@@ -666,8 +666,11 @@ html.view-card .list-view-wrapper {
 }
 
 .list-view-entry {
+    display: flex;
+    flex-direction: column;
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 0;
+    gap: 0;
 }
 
 .list-view-entry:first-child {
@@ -694,6 +697,10 @@ html.view-card .list-view-wrapper {
     overflow: hidden;
 }
 
+.list-view-entry .list-view-meta-generic:last-of-type {
+    margin-bottom: 0.5rem;
+}
+
 .list-view-tags {
     margin: 0 0 0.5rem 0;
 }
@@ -704,12 +711,18 @@ html.view-card .list-view-wrapper {
 
 .list-view-summary {
     font-size: 0.9em;
+    line-height: 1.5;
 }
 
 .list-view-summary blockquote {
     margin: 0;
     padding-left: 0.75rem;
     border-left: 2px solid var(--border-color);
+}
+
+/* handles the raw summary html from epub */
+.list-view-summary> :first-child {
+    margin-top: 0;
 }
 
 /* handles the raw summary html from epub */
@@ -1165,7 +1178,7 @@ html.view-card .card-view-wrapper {
     line-height: 1;
 }
 
-.list-field-sortable-list {
+.list-field-active-list {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -1174,7 +1187,7 @@ html.view-card .card-view-wrapper {
     margin: 0;
 }
 
-.list-field-sortable-item {
+.list-field-active-chip {
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -1200,7 +1213,7 @@ html.view-card .card-view-wrapper {
     cursor: grabbing;
 }
 
-.list-field-sortable-item.dragging {
+.list-field-active-chip.dragging {
     position: fixed;
     z-index: 1000;
     pointer-events: none;
@@ -1212,16 +1225,72 @@ html.view-card .card-view-wrapper {
     border: 1px dashed var(--border-color);
 }
 
-.settings-field .list-field-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0;
-    width: auto;
+.remove-list-field-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1em;
+    line-height: 1;
+    padding: 0.1rem 0.3rem;
+    border-radius: 50%;
+    margin-left: auto;
 }
 
-.list-field-checkbox-label input[type="checkbox"] {
-    width: auto;
+.remove-list-field-btn:hover {
+    color: var(--text-color);
+    background: var(--border-color);
+}
+
+.add-list-field-control {
+    position: relative;
+    max-width: calc(var(--content-max-width) / 2);
+    line-height: 1;
+    font-size: 1em;
+    margin-bottom: 0.5rem;
+}
+
+.add-list-field-control input[type="text"] {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.add-list-field-control input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.list-field-suggestions {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 0.2rem);
+    left: 0;
+    right: 0;
+    max-height: 12rem;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0.3rem 0;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.list-field-suggestion {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.9em;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.list-field-suggestion:hover {
+    background: var(--accent-color);
+    color: white;
 }
 
 .settings-field select,

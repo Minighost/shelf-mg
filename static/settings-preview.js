@@ -230,17 +230,103 @@ function initFilterDragDrop() {
 
 document.addEventListener("DOMContentLoaded", initFilterDragDrop);
 
+function listFieldActiveKeys() {
+    return new Set(
+        Array.from(document.querySelectorAll("#list-field-active-list .list-field-active-chip"))
+            .map((chip) => chip.dataset.key)
+    );
+}
+
+function addActiveListField(field) {
+    const list = document.getElementById("list-field-active-list");
+
+    const li = document.createElement("li");
+    li.className = "list-field-active-chip";
+    li.dataset.key = field.key;
+
+    const handle = document.createElement("span");
+    handle.className = "list-field-drag-handle";
+    handle.setAttribute("aria-hidden", "true");
+    handle.textContent = "⠿";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = "enabled_list_fields";
+    checkbox.value = field.key;
+    checkbox.checked = true;
+    checkbox.hidden = true;
+
+    const label = document.createElement("span");
+    label.textContent = field.label;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "remove-list-field-btn";
+    removeBtn.setAttribute("aria-label", `Remove ${field.label}`);
+    removeBtn.textContent = "×";
+    removeBtn.onclick = () => removeActiveListField(removeBtn);
+
+    li.append(handle, checkbox, label, removeBtn);
+    list.appendChild(li);
+
+    const search = document.getElementById("list-field-search");
+    search.value = "";
+    renderListFieldSuggestions("");
+}
+
+function removeActiveListField(button) {
+    button.closest(".list-field-active-chip").remove();
+    renderListFieldSuggestions(document.getElementById("list-field-search").value);
+}
+
+function renderListFieldSuggestions(query) {
+    const dataEl = document.getElementById("all-list-fields-data");
+    const suggestionsList = document.getElementById("list-field-suggestions");
+    if (!dataEl || !suggestionsList) return;
+
+    const allFields = JSON.parse(dataEl.textContent);
+    const active = listFieldActiveKeys();
+    const normalizedQuery = query.trim().toLowerCase();
+
+    const matches = allFields.filter(
+        (field) => !active.has(field.key) && field.label.toLowerCase().includes(normalizedQuery)
+    );
+
+    suggestionsList.innerHTML = "";
+    for (const field of matches) {
+        const li = document.createElement("li");
+        li.className = "list-field-suggestion";
+        li.textContent = field.label;
+        li.onclick = () => addActiveListField(field);
+        suggestionsList.appendChild(li);
+    }
+
+    suggestionsList.style.display = matches.length > 0 ? "block" : "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("list-field-search");
+    if (!searchInput) return;
+
+    document.addEventListener("click", (event) => {
+        const control = document.querySelector(".add-list-field-control");
+        if (control && !control.contains(event.target)) {
+            document.getElementById("list-field-suggestions").style.display = "none";
+        }
+    });
+});
+
 // Same Pointer Events drag-to-reorder approach as initFilterDragDrop, but
 // for a vertical single-column list (list-view metadata fields) instead of
 // horizontally wrapping chips, so position comparisons use Y instead of X.
 function initListFieldDragDrop() {
-    const list = document.getElementById("list-field-sortable-list");
+    const list = document.getElementById("list-field-active-list");
     if (!list) return;
 
     list.addEventListener("pointerdown", (event) => {
         const handle = event.target.closest(".list-field-drag-handle");
         if (!handle) return;
-        const item = handle.closest(".list-field-sortable-item");
+        const item = handle.closest(".list-field-active-chip");
         if (!item) return;
 
         event.preventDefault();
@@ -250,7 +336,7 @@ function initListFieldDragDrop() {
         const offsetY = event.clientY - rect.top;
 
         const placeholder = document.createElement("li");
-        placeholder.className = "list-field-sortable-item list-field-drop-placeholder";
+        placeholder.className = "list-field-active-chip list-field-drop-placeholder";
         placeholder.style.width = `${rect.width}px`;
         placeholder.style.height = `${rect.height}px`;
         item.after(placeholder);
@@ -268,7 +354,7 @@ function initListFieldDragDrop() {
 
             const target = document
                 .elementsFromPoint(moveEvent.clientX, moveEvent.clientY)
-                .find((el) => el.classList.contains("list-field-sortable-item") && el !== item && el !== placeholder);
+                .find((el) => el.classList.contains("list-field-active-chip") && el !== item && el !== placeholder);
 
             if (target) {
                 const targetRect = target.getBoundingClientRect();
