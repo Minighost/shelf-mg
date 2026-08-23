@@ -5,6 +5,7 @@ test_*
 CLAUDE.md
 pyproject.toml
 shelf-mg.db
+/shelf-mg-data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
