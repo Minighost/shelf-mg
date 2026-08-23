@@ -18,6 +18,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>shelf-mg</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
         {% if page > 1 %}
             <link rel="prefetch"
                   href="{{ url_for('library_list', page=page - 1, **page_args) }}">
