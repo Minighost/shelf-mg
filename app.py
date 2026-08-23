@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 import werkzeug.http
 import flask
+import flask_compress
 
 import calibre_reader
 import epub_parser
@@ -17,6 +18,7 @@ import settings
 dotenv.load_dotenv()
 
 app = flask.Flask(__name__)
+flask_compress.Compress(app)
 # use gunicorn in prod:
 # gunicorn -w 1 -b 0.0.0.0:5000 app:app
 
