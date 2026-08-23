@@ -156,7 +156,8 @@ button::-moz-focus-inner {
     flex-wrap: wrap;
     justify-content: flex-end;
     align-items: center;
-    font-size: 0.5em;
+    font-size: 1em;
+    line-height: 1.15;
     color: var(--text-muted);
 }
 

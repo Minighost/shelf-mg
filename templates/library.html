@@ -42,6 +42,7 @@
         {% set back_qs = request.query_string.decode() %}
         <div class="library-header">
             <div class="header-top">
+                <div class="header-left-last-synced">Last updated: {{ last_synced }}</div>
                 <div class="header-right">
                     <button type="button"
                             class="header-nav-drawer-toggle"
