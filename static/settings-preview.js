@@ -229,3 +229,70 @@ function initFilterDragDrop() {
 }
 
 document.addEventListener("DOMContentLoaded", initFilterDragDrop);
+
+// Same Pointer Events drag-to-reorder approach as initFilterDragDrop, but
+// for a vertical single-column list (list-view metadata fields) instead of
+// horizontally wrapping chips, so position comparisons use Y instead of X.
+function initListFieldDragDrop() {
+    const list = document.getElementById("list-field-sortable-list");
+    if (!list) return;
+
+    list.addEventListener("pointerdown", (event) => {
+        const handle = event.target.closest(".list-field-drag-handle");
+        if (!handle) return;
+        const item = handle.closest(".list-field-sortable-item");
+        if (!item) return;
+
+        event.preventDefault();
+
+        const rect = item.getBoundingClientRect();
+        const offsetX = event.clientX - rect.left;
+        const offsetY = event.clientY - rect.top;
+
+        const placeholder = document.createElement("li");
+        placeholder.className = "list-field-sortable-item list-field-drop-placeholder";
+        placeholder.style.width = `${rect.width}px`;
+        placeholder.style.height = `${rect.height}px`;
+        item.after(placeholder);
+
+        item.classList.add("dragging");
+        item.style.width = `${rect.width}px`;
+        item.style.left = `${rect.left}px`;
+        item.style.top = `${rect.top}px`;
+
+        item.setPointerCapture(event.pointerId);
+
+        const onMove = (moveEvent) => {
+            item.style.left = `${moveEvent.clientX - offsetX}px`;
+            item.style.top = `${moveEvent.clientY - offsetY}px`;
+
+            const target = document
+                .elementsFromPoint(moveEvent.clientX, moveEvent.clientY)
+                .find((el) => el.classList.contains("list-field-sortable-item") && el !== item && el !== placeholder);
+
+            if (target) {
+                const targetRect = target.getBoundingClientRect();
+                const before = moveEvent.clientY < targetRect.top + targetRect.height / 2;
+                target.parentNode.insertBefore(placeholder, before ? target : target.nextSibling);
+            }
+        };
+
+        const onEnd = () => {
+            item.releasePointerCapture(event.pointerId);
+            item.classList.remove("dragging");
+            item.style.width = "";
+            item.style.left = "";
+            item.style.top = "";
+            placeholder.replaceWith(item);
+            item.removeEventListener("pointermove", onMove);
+            item.removeEventListener("pointerup", onEnd);
+            item.removeEventListener("pointercancel", onEnd);
+        };
+
+        item.addEventListener("pointermove", onMove);
+        item.addEventListener("pointerup", onEnd);
+        item.addEventListener("pointercancel", onEnd);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initListFieldDragDrop);

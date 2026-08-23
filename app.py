@@ -380,8 +380,7 @@ def library_list():
 
     filter_fields = _enabled_filter_fields()
     sort_fields = _all_filter_fields()
-    enabled_list_keys = {f["key"] for f in _enabled_list_fields()}
-    list_field_labels = {f["key"]: f["label"] for f in _list_view_fields()}
+    enabled_list_fields = _enabled_list_fields()
     selected = {}
     for field in filter_fields:
         if field["type"] == "range":
@@ -516,8 +515,7 @@ def library_list():
         view_links=view_links,
         total_matches=len(all_books),
         total_library=total_library,
-        enabled_list_keys=enabled_list_keys,
-        list_field_labels=list_field_labels,
+        enabled_list_fields=enabled_list_fields,
     )
 
 
@@ -772,7 +770,7 @@ def settings_page():
         filter_fields=_all_filter_fields(),
         active_filter_fields=_enabled_filter_fields(),
         list_fields=_list_view_fields(),
-        active_list_field_keys={f["key"] for f in _enabled_list_fields()},
+        active_list_fields=_enabled_list_fields(),
     )
 
 

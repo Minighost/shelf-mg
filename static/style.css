@@ -1165,23 +1165,62 @@ html.view-card .card-view-wrapper {
     line-height: 1;
 }
 
-.checkbox-list {
+.list-field-sortable-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
+    flex-direction: column;
+    gap: 0.4rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.settings-field .checkbox-list-item {
+.list-field-sortable-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.95em;
+    color: var(--text-color);
+}
+
+.list-field-drag-handle {
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    color: var(--text-muted);
+    touch-action: none;
+    line-height: 1;
+    padding: 0 0.1rem;
+}
+
+.list-field-drag-handle:active {
+    cursor: grabbing;
+}
+
+.list-field-sortable-item.dragging {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.list-field-drop-placeholder {
+    background: transparent;
+    border: 1px dashed var(--border-color);
+}
+
+.settings-field .list-field-checkbox-label {
     display: flex;
     align-items: center;
     gap: 0.4rem;
     margin-bottom: 0;
-    color: var(--text-color);
-    font-size: 0.95em;
     width: auto;
 }
 
-.checkbox-list-item input[type="checkbox"] {
+.list-field-checkbox-label input[type="checkbox"] {
     width: auto;
 }
 

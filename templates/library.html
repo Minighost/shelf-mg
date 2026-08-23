@@ -280,38 +280,29 @@
                            href="{{ url_for('inspect_book', book_id=book.id) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}"
                            title="Inspect">i</a>
                     </h2>
-                    {% if 'author' in enabled_list_keys %}
-                        <p class="book-meta list-view-author">by {{ book.authors | join(", ") }}</p>
-                    {% endif %}
-                    {% if 'tags' in enabled_list_keys and book.tags %}
-                        <p class="book-meta list-view-tags">Tags: {{ book.tags | join(", ") }}</p>
-                    {% endif %}
-                    {% if 'series' in enabled_list_keys and book.series %}
-                        <p class="book-meta list-view-meta-generic">Series: {{ book.series }}{% if book.series_index %} #{{ book.series_index }}{% endif %}</p>
-                    {% endif %}
-                    {% if 'publisher' in enabled_list_keys and book.publisher %}
-                        <p class="book-meta list-view-meta-generic">Publisher: {{ book.publisher }}</p>
-                    {% endif %}
-                    {% if 'rating' in enabled_list_keys and book.rating %}
-                        <p class="book-meta list-view-meta-generic">Rating: {{ book.rating }}/5</p>
-                    {% endif %}
-                    {% if 'date_added' in enabled_list_keys and book.date_added %}
-                        <p class="book-meta list-view-meta-generic">Added: {{ book.date_added }}</p>
-                    {% endif %}
-                    {% if 'pubdate' in enabled_list_keys and book.pubdate %}
-                        <p class="book-meta list-view-meta-generic">Published: {{ book.pubdate }}</p>
-                    {% endif %}
-                    {% if 'size' in enabled_list_keys and book.size_bytes %}
-                        <p class="book-meta list-view-meta-generic">Size: {{ book.size_bytes | filesizeformat }}</p>
-                    {% endif %}
-                    {% for custom_key, values in book.custom.items() %}
-                        {% if ('custom:' ~ custom_key) in enabled_list_keys and values %}
-                            <p class="book-meta list-view-meta-generic">{{ list_field_labels.get('custom:' ~ custom_key, custom_key) }}: {{ values | join(", ") }}</p>
+                    {% for field in enabled_list_fields %}
+                        {% if field.key == 'author' %}
+                            <p class="book-meta list-view-author">by {{ book.authors | join(", ") }}</p>
+                        {% elif field.key == 'tags' and book.tags %}
+                            <p class="book-meta list-view-tags">Tags: {{ book.tags | join(", ") }}</p>
+                        {% elif field.key == 'series' and book.series %}
+                            <p class="book-meta list-view-meta-generic">Series: {{ book.series }}{% if book.series_index %} #{{ book.series_index }}{% endif %}</p>
+                        {% elif field.key == 'publisher' and book.publisher %}
+                            <p class="book-meta list-view-meta-generic">Publisher: {{ book.publisher }}</p>
+                        {% elif field.key == 'rating' and book.rating %}
+                            <p class="book-meta list-view-meta-generic">Rating: {{ book.rating }}/5</p>
+                        {% elif field.key == 'date_added' and book.date_added %}
+                            <p class="book-meta list-view-meta-generic">Added: {{ book.date_added }}</p>
+                        {% elif field.key == 'pubdate' and book.pubdate %}
+                            <p class="book-meta list-view-meta-generic">Published: {{ book.pubdate }}</p>
+                        {% elif field.key == 'size' and book.size_bytes %}
+                            <p class="book-meta list-view-meta-generic">Size: {{ book.size_bytes | filesizeformat }}</p>
+                        {% elif field.key.startswith('custom:') and book.custom.get(field.key[7:]) %}
+                            <p class="book-meta list-view-meta-generic">{{ field.label }}: {{ book.custom.get(field.key[7:]) | join(", ") }}</p>
+                        {% elif field.key == 'summary' %}
+                            <div class="list-view-summary">{{ book.summary_html | safe }}</div>
                         {% endif %}
                     {% endfor %}
-                    {% if 'summary' in enabled_list_keys %}
-                        <div class="list-view-summary">{{ book.summary_html | safe }}</div>
-                    {% endif %}
                 </div>
             {% endfor %}
         </div>
