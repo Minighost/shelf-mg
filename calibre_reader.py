@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from collections import defaultdict
 from dataclasses import dataclass
 from io import BytesIO
 
@@ -125,6 +126,36 @@ def _custom_column_values(
     if row is None or row["value"] is None:
         return []
     return ["Yes" if row["value"] else "No"]
+
+
+def _bulk_custom_column_values(
+    conn: sqlite3.Connection, column: dict
+) -> dict[int, list[str]]:
+    """
+    Same normalized/non-normalized branching as _custom_column_values, but
+    across every book in one query instead of one query per (book, column)
+    pair — used by list_books()'s bulk path.
+    """
+    table = f"custom_column_{column['col_id']}"
+    values_by_book: dict[int, list[str]] = defaultdict(list)
+
+    if column["normalized"]:
+        link_table = f"books_custom_column_{column['col_id']}_link"
+        for r in conn.execute(
+            f"""
+            SELECT l.book AS book_id, v.value AS value FROM {table} v
+            JOIN {link_table} l ON l.value = v.id
+            ORDER BY l.book, l.value
+            """
+        ):
+            values_by_book[r["book_id"]].append(str(r["value"]))
+        return values_by_book
+
+    # Non-normalized (bool): one row of (book, value) per book directly.
+    for r in conn.execute(f"SELECT book, value FROM {table}"):
+        if r["value"] is not None:
+            values_by_book[r["book"]] = ["Yes" if r["value"] else "No"]
+    return values_by_book
 
 
 _BUILTIN_FIELD_REQUIREMENTS = {
@@ -305,6 +336,129 @@ def _build_book(
     )
 
 
+def _build_books_bulk(
+    conn: sqlite3.Connection,
+    library_path: str,
+    custom_columns: list[dict],
+    book_rows: list[sqlite3.Row],
+    available_fields: set[str],
+) -> list[Book]:
+    """
+    Bulk-query equivalent of calling _build_book() once per row in
+    book_rows — same per-book semantics (including skipping books with no
+    EPUB format), but one query per relation across the whole library
+    instead of one query per relation per book. Used only by list_books();
+    get_book() keeps using _build_book() directly since it's already a
+    single-row O(1) lookup.
+    """
+    authors_by_book: dict[int, list[str]] = defaultdict(list)
+    for r in conn.execute(
+        """
+        SELECT bal.book AS book_id, a.name AS name FROM authors a
+        JOIN books_authors_link bal ON bal.author = a.id
+        ORDER BY bal.book, bal.id
+        """
+    ):
+        authors_by_book[r["book_id"]].append(r["name"])
+
+    tags_by_book: dict[int, list[str]] = defaultdict(list)
+    for r in conn.execute(
+        """
+        SELECT btl.book AS book_id, t.name AS name FROM tags t
+        JOIN books_tags_link btl ON btl.tag = t.id
+        ORDER BY btl.book, t.name
+        """
+    ):
+        tags_by_book[r["book_id"]].append(r["name"])
+
+    comment_by_book = {
+        r["book"]: r["text"] for r in conn.execute("SELECT book, text FROM comments")
+    }
+
+    series_by_book = {
+        r["book_id"]: r["name"]
+        for r in conn.execute(
+            """
+            SELECT bsl.book AS book_id, s.name AS name FROM series s
+            JOIN books_series_link bsl ON bsl.series = s.id
+            """
+        )
+    }
+
+    publisher_by_book = {
+        r["book_id"]: r["name"]
+        for r in conn.execute(
+            """
+            SELECT bpl.book AS book_id, p.name AS name FROM publishers p
+            JOIN books_publishers_link bpl ON bpl.publisher = p.id
+            """
+        )
+    }
+
+    epub_by_book = {
+        r["book"]: (r["name"], r["uncompressed_size"])
+        for r in conn.execute(
+            "SELECT book, name, uncompressed_size FROM data WHERE format = 'EPUB'"
+        )
+    }
+
+    rating_by_book: dict[int, float] = {}
+    if "rating" in available_fields:
+        rating_by_book = {
+            r["book_id"]: r["rating"] / 2
+            for r in conn.execute(
+                """
+                SELECT brl.book AS book_id, r.rating AS rating FROM ratings r
+                JOIN books_ratings_link brl ON brl.rating = r.id
+                """
+            )
+        }
+
+    custom_values_by_column = {
+        column["label"]: _bulk_custom_column_values(conn, column)
+        for column in custom_columns
+    }
+
+    books = []
+    for row in book_rows:
+        book_id = row["id"]
+
+        epub_data = epub_by_book.get(book_id)
+        if epub_data is None:
+            continue  # book has no EPUB format — nothing for us to read
+        epub_name, size_bytes = epub_data
+
+        series = series_by_book.get(book_id)
+
+        books.append(
+            Book(
+                id=book_id,
+                title=row["title"],
+                authors=authors_by_book.get(book_id, []),
+                tags=tags_by_book.get(book_id, []),
+                summary_html=comment_by_book.get(book_id, ""),
+                series=series,
+                series_index=row["series_index"] if series else None,
+                publisher=publisher_by_book.get(book_id),
+                custom={
+                    column["label"]: custom_values_by_column[column["label"]].get(
+                        book_id, []
+                    )
+                    for column in custom_columns
+                },
+                epub_path=os.path.join(library_path, row["path"], epub_name + ".epub"),
+                date_added=(
+                    row["date_added"] if "date_added" in available_fields else None
+                ),
+                pubdate=row["pubdate"] if "pubdate" in available_fields else None,
+                size_bytes=size_bytes,
+                rating=rating_by_book.get(book_id),
+            )
+        )
+
+    return books
+
+
 # Module-level cache: library_path -> (mtime_at_cache_time, books_list).
 # Invalidated by comparing metadata.db's current mtime against what's
 # stored — if the file hasn't changed since we last scanned it, the
@@ -334,20 +488,18 @@ def list_books(library_path: str) -> list[Book]:
     conn.row_factory = sqlite3.Row
 
     custom_columns = get_custom_columns(library_path)
+    available_fields = available_builtin_fields(library_path)
 
-    books = []
-    for row in conn.execute("SELECT id, title, path, series_index FROM books"):
-        book = _build_book(
-            conn,
-            library_path,
-            custom_columns,
-            row["id"],
-            row["title"],
-            row["path"],
-            row["series_index"],
-        )
-        if book is not None:
-            books.append(book)
+    select_cols = ["id", "title", "path", "series_index"]
+    if "date_added" in available_fields:
+        select_cols.append("timestamp AS date_added")
+    if "pubdate" in available_fields:
+        select_cols.append("pubdate")
+    book_rows = conn.execute(f"SELECT {', '.join(select_cols)} FROM books").fetchall()
+
+    books = _build_books_bulk(
+        conn, library_path, custom_columns, book_rows, available_fields
+    )
 
     conn.close()
 
