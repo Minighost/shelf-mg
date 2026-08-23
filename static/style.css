@@ -401,6 +401,9 @@ button::-moz-focus-inner {
 }
 
 .filter-apply-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: var(--accent-color);
     border: 1px solid var(--accent-color);
     color: var(--text-color);

@@ -2,8 +2,8 @@ import sqlite3
 from dataclasses import dataclass
 
 DEFAULT_THEME = "dark"
-DEFAULT_FONT_FAMILY = "serif"
-DEFAULT_FONT_SIZE = 1.1  # rem
+DEFAULT_FONT_FAMILY = "sans"
+DEFAULT_FONT_SIZE = 1.0  # rem
 DEFAULT_CONTENT_MAX_WIDTH_PCT = 40  # % of viewport width, desktop only
 DEFAULT_LIBRARY_VIEW = "list"
 LIBRARY_VIEW_CHOICES = ["list", "grid", "card"]
