@@ -44,6 +44,7 @@ settings.init_db(DB_PATH)
 search.init_db(DB_PATH)
 
 BOOKS_PER_PAGE = 20
+SEARCH_RESULTS_PER_PAGE = 20
 
 logger.info(
     "startup: library=%s db=%s books=%d",
@@ -889,6 +890,46 @@ def reindex_search():
 @app.route("/settings/reindex-search/status")
 def reindex_status():
     return flask.jsonify(search.get_status())
+
+
+@app.route("/search")
+def search_results():
+    query = flask.request.args.get("q", "").strip()
+    page = max(flask.request.args.get("page", 1, type=int), 1)
+
+    results = []
+    total_matches = 0
+    total_pages = 1
+
+    if query:
+        total_matches = search.count_chapters(DB_PATH, query)
+        total_pages = max(1, -(-total_matches // SEARCH_RESULTS_PER_PAGE))
+        page = min(page, total_pages)
+
+        offset = (page - 1) * SEARCH_RESULTS_PER_PAGE
+        rows = search.query_chapters(DB_PATH, query, SEARCH_RESULTS_PER_PAGE, offset)
+        for row in rows:
+            book = calibre_reader.get_book(LIBRARY_PATH, row["book_id"])
+            if book is None:
+                continue
+            results.append(
+                {
+                    "book_id": book.id,
+                    "book_title": book.title,
+                    "chapter_index": row["chapter_index"],
+                    "chapter_title": row["chapter_title"],
+                    "snippet": search.render_snippet(row["snippet"]),
+                }
+            )
+
+    return flask.render_template(
+        "search_results.html",
+        query=query,
+        results=results,
+        page=page,
+        total_pages=total_pages,
+        total_matches=total_matches,
+    )
 
 
 @app.errorhandler(404)

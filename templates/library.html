@@ -65,6 +65,8 @@
             <button type="button" class="header-btn" onclick="confirmReindexSearch()">Reindex search</button>
             <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
             <a class="settings-link"
+               href="{{ url_for('search_results') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Full-text search</a>
+            <a class="settings-link"
                href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
         </nav>
         <dialog id="refresh-dialog" class="confirm-dialog">

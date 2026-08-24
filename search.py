@@ -38,6 +38,63 @@ def _html_to_text(raw_html: str) -> str:
     return html.unescape(_TAG_RE.sub(" ", raw_html))
 
 
+# Non-HTML placeholder bytes used as snippet() start/end markers. Chapter text can
+# contain literal <, >, & (e.g. from an EPUB's &lt;3 unescaped by _html_to_text above),
+# so the raw snippet must be HTML-escaped before rendering — these markers survive that
+# escape and get swapped for real <mark>/</mark> tags afterward, in render_snippet().
+_SNIPPET_START = "\x01"
+_SNIPPET_END = "\x02"
+
+
+def _phrase_query(query_text: str) -> str:
+    """Wrap user input as a literal FTS5 phrase (escaping embedded quotes by doubling)
+    so punctuation or FTS operators (AND/OR/NOT/*) in a pasted quote aren't
+    misinterpreted as query syntax."""
+    return '"' + query_text.replace('"', '""') + '"'
+
+
+def render_snippet(raw_snippet: str) -> str:
+    """Escape a raw snippet() result and swap the placeholder markers for real <mark> tags."""
+    escaped = html.escape(raw_snippet)
+    return escaped.replace(_SNIPPET_START, "<mark>").replace(_SNIPPET_END, "</mark>")
+
+
+def count_chapters(db_path: str, query_text: str) -> int:
+    """Total number of chapters matching the phrase — no LIMIT/OFFSET. Call this
+    before query_chapters() so the page number can be clamped to a valid range
+    before deciding what offset to query with."""
+    phrase = _phrase_query(query_text)
+    conn = sqlite3.connect(db_path)
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM chapters_fts WHERE chapters_fts MATCH ?", (phrase,)
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def query_chapters(db_path: str, query_text: str, limit: int, offset: int) -> list[dict]:
+    """Search chapters_fts for a literal phrase, returning one page of matching rows."""
+    phrase = _phrase_query(query_text)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT book_id, chapter_index, chapter_title,
+                   snippet(chapters_fts, 3, '{_SNIPPET_START}', '{_SNIPPET_END}', '…', 24) AS snippet
+            FROM chapters_fts
+            WHERE chapters_fts MATCH ?
+            ORDER BY rank
+            LIMIT ? OFFSET ?
+            """,
+            (phrase, limit, offset),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
 def start_reindex(library_path: str, db_path: str) -> bool:
     """Atomically check-and-start a background full reindex. Returns False if one is already running."""
     with _index_lock:
