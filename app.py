@@ -19,6 +19,7 @@ import flask_compress
 import calibre_reader
 import epub_parser
 import positions
+import search
 import settings
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ if not LIBRARY_PATH:
 DB_PATH = os.environ.get("SHELF_MG_DB_PATH", "shelf-mg.db")
 positions.init_db(DB_PATH)
 settings.init_db(DB_PATH)
+search.init_db(DB_PATH)
 
 BOOKS_PER_PAGE = 20
 
@@ -874,6 +876,19 @@ def refresh_library():
     if qs:
         return flask.redirect(f"{flask.url_for('library_list')}?{qs}")
     return flask.redirect(flask.url_for("library_list"))
+
+
+@app.route("/settings/reindex-search", methods=["POST"])
+def reindex_search():
+    started = search.start_reindex(LIBRARY_PATH, DB_PATH)
+    if not started:
+        return flask.jsonify({"status": "already_running"}), 409
+    return flask.jsonify({"status": "started"})
+
+
+@app.route("/settings/reindex-search/status")
+def reindex_status():
+    return flask.jsonify(search.get_status())
 
 
 @app.errorhandler(404)

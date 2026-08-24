@@ -62,6 +62,7 @@
                 <input type="hidden" name="qs" value="{{ request.query_string.decode() }}">
             </form>
             <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
+            <button type="button" class="header-btn" onclick="confirmReindexSearch()">Reindex search</button>
             <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
             <a class="settings-link"
                href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
@@ -89,6 +90,77 @@
         <script>
             function confirmRefreshLibrary() {
                 document.getElementById("refresh-dialog").showModal();
+            }
+        </script>
+        <dialog id="reindex-dialog" class="confirm-dialog">
+            <button type="button"
+                    id="reindex-dialog-x"
+                    class="confirm-dialog-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('reindex-dialog').close()">&times;</button>
+            <p id="reindex-dialog-text">
+                Rebuild the full-text search index?
+                <br>
+                This scans every book and may take a few minutes.
+            </p>
+            <div class="confirm-dialog-actions" id="reindex-dialog-actions">
+                <button type="button"
+                        class="confirm-dialog-cancel"
+                        onclick="document.getElementById('reindex-dialog').close()">Cancel</button>
+                <button type="button"
+                        class="confirm-dialog-confirm"
+                        onclick="startReindexSearch()">Reindex</button>
+            </div>
+        </dialog>
+        <script>
+            let reindexPollHandle = null;
+
+            const REINDEX_CONFIRM_TEXT = `Rebuild the full-text search index?
+                <br>
+                This scans every book and may take a few minutes.`;
+            const REINDEX_CONFIRM_ACTIONS = `<button type="button" class="confirm-dialog-cancel" onclick="document.getElementById('reindex-dialog').close()">Cancel</button>
+                <button type="button" class="confirm-dialog-confirm" onclick="startReindexSearch()">Reindex</button>`;
+
+            function confirmReindexSearch() {
+                if (!reindexPollHandle) {
+                    document.getElementById("reindex-dialog-text").innerHTML = REINDEX_CONFIRM_TEXT;
+                    document.getElementById("reindex-dialog-actions").innerHTML = REINDEX_CONFIRM_ACTIONS;
+                }
+                document.getElementById("reindex-dialog").showModal();
+            }
+
+            function startReindexSearch() {
+                fetch("{{ url_for('reindex_search') }}", {method: "POST"}).then(() => {
+                    pollReindexStatus();
+                });
+            }
+
+            function pollReindexStatus() {
+                document.getElementById("reindex-dialog-actions").innerHTML = "";
+                if (reindexPollHandle) {
+                    clearInterval(reindexPollHandle);
+                }
+                reindexPollHandle = setInterval(updateReindexStatus, 1500);
+                updateReindexStatus();
+            }
+
+            function updateReindexStatus() {
+                fetch("{{ url_for('reindex_status') }}")
+                    .then((res) => res.json())
+                    .then((status) => {
+                        const text = document.getElementById("reindex-dialog-text");
+                        if (status.running) {
+                            text.textContent = `Indexing ${status.current} / ${status.total} books…`;
+                        } else {
+                            clearInterval(reindexPollHandle);
+                            reindexPollHandle = null;
+                            text.textContent = status.error
+                                ? `Reindex failed: ${status.error}`
+                                : `Done — indexed ${status.total} books.`;
+                            document.getElementById("reindex-dialog-actions").innerHTML =
+                                '<button type="button" class="confirm-dialog-cancel" onclick="document.getElementById(\'reindex-dialog\').close()">Close</button>';
+                        }
+                    });
             }
         </script>
         {% if continue_reading %}
