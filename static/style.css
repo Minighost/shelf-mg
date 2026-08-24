@@ -233,6 +233,11 @@ button::-moz-focus-inner {
     line-height: 1em;
 }
 
+.header-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
 .reader-title {
     margin-bottom: 0;
 }
