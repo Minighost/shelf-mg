@@ -1,7 +1,10 @@
+import logging
 import os
 import zipfile
 from xml.etree import ElementTree as ET
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 # --- XML namespaces ---
 # EPUB's internal XML files (content.opf, nav.xhtml, toc.ncx) mix
@@ -77,6 +80,8 @@ def parse_book(epub_path: str) -> Book:
     cached = _parse_book_cache.get(epub_path)
     if cached is not None and cached[0] == current_mtime:
         return cached[1]
+
+    logger.debug("cache miss for %s, parsing", epub_path)
 
     with zipfile.ZipFile(epub_path) as zf:
         opf_path = _find_opf_path(zf)

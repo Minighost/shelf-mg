@@ -1,4 +1,9 @@
+import setup_logging
+
+setup_logging.configure_logging()
+
 import dotenv
+import logging
 import mimetypes
 import os
 import re
@@ -14,6 +19,8 @@ import calibre_reader
 import epub_parser
 import positions
 import settings
+
+logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()
 
@@ -34,6 +41,13 @@ positions.init_db(DB_PATH)
 settings.init_db(DB_PATH)
 
 BOOKS_PER_PAGE = 20
+
+logger.info(
+    "startup: library=%s db=%s books=%d",
+    LIBRARY_PATH,
+    DB_PATH,
+    len(calibre_reader.list_books(LIBRARY_PATH)),
+)
 
 
 @app.context_processor
@@ -554,6 +568,7 @@ def read_chapter(book_id, chapter_index):
     try:
         epub_book = epub_parser.parse_book(calibre_book.epub_path)
     except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
+        logger.warning("failed to parse epub %s: %s", calibre_book.epub_path, e)
         flask.abort(404, description=_epub_error_description(e))
 
     if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
@@ -598,6 +613,7 @@ def inspect_book(book_id):
         stats = epub_parser.get_epub_stats(calibre_book.epub_path, epub_book)
         parse_error = None
     except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
+        logger.warning("failed to parse epub %s: %s", calibre_book.epub_path, e)
         epub_book, stats, parse_error = None, None, str(e)
 
     has_cover = calibre_reader.find_cover_image(calibre_book.epub_path) is not None
@@ -675,6 +691,7 @@ def read_chapter_frame(book_id, chapter_index):
         content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
         css = epub_parser.get_stylesheets(epub_path, epub_book)
     except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
+        logger.warning("failed to parse epub %s: %s", epub_path, e)
         flask.abort(404, description=_epub_error_description(e))
 
     return flask.render_template(
@@ -824,6 +841,7 @@ def position_api(book_id):
         return flask.jsonify({"error": "chapter_index is required"}), 400
 
     saved = positions.save_position(DB_PATH, book_id, int(chapter_index))
+    logger.debug("saved position for book %s: chapter %s", book_id, chapter_index)
     return flask.jsonify(
         {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
     )
@@ -831,6 +849,7 @@ def position_api(book_id):
 
 @app.route("/settings/refresh-library", methods=["POST"])
 def refresh_library():
+    logger.info("manual cache refresh triggered")
     calibre_reader.clear_cache()
     epub_parser.clear_cache()
     return flask.redirect(flask.url_for("library_list"))
@@ -844,6 +863,7 @@ def not_found(error):
 
 @app.errorhandler(500)
 def server_error(error):
+    logger.exception("unhandled server error")
     return flask.render_template("500.html"), 500
 
 

@@ -1,3 +1,4 @@
+import logging
 import os
 import sqlite3
 from collections import defaultdict
@@ -5,6 +6,8 @@ from dataclasses import dataclass
 from io import BytesIO
 
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 # Custom-column datatypes with a bounded, listable set of values — filterable
 # as a checklist/dropdown.
@@ -76,6 +79,8 @@ def get_custom_columns(library_path: str) -> list[dict]:
     if cached is not None and cached[0] == current_mtime:
         return cached[1]
 
+    logger.debug("cache miss for %s, rebuilding", library_path)
+
     conn = _connect_readonly(db_path)
     conn.row_factory = sqlite3.Row
 
@@ -141,13 +146,11 @@ def _bulk_custom_column_values(
 
     if column["normalized"]:
         link_table = f"books_custom_column_{column['col_id']}_link"
-        for r in conn.execute(
-            f"""
+        for r in conn.execute(f"""
             SELECT l.book AS book_id, v.value AS value FROM {table} v
             JOIN {link_table} l ON l.value = v.id
             ORDER BY l.book, l.value
-            """
-        ):
+            """):
             values_by_book[r["book_id"]].append(str(r["value"]))
         return values_by_book
 
@@ -352,48 +355,34 @@ def _build_books_bulk(
     single-row O(1) lookup.
     """
     authors_by_book: dict[int, list[str]] = defaultdict(list)
-    for r in conn.execute(
-        """
+    for r in conn.execute("""
         SELECT bal.book AS book_id, a.name AS name FROM authors a
         JOIN books_authors_link bal ON bal.author = a.id
         ORDER BY bal.book, bal.id
-        """
-    ):
+        """):
         authors_by_book[r["book_id"]].append(r["name"])
 
     tags_by_book: dict[int, list[str]] = defaultdict(list)
-    for r in conn.execute(
-        """
+    for r in conn.execute("""
         SELECT btl.book AS book_id, t.name AS name FROM tags t
         JOIN books_tags_link btl ON btl.tag = t.id
         ORDER BY btl.book, t.name
-        """
-    ):
+        """):
         tags_by_book[r["book_id"]].append(r["name"])
 
     comment_by_book = {
         r["book"]: r["text"] for r in conn.execute("SELECT book, text FROM comments")
     }
 
-    series_by_book = {
-        r["book_id"]: r["name"]
-        for r in conn.execute(
-            """
+    series_by_book = {r["book_id"]: r["name"] for r in conn.execute("""
             SELECT bsl.book AS book_id, s.name AS name FROM series s
             JOIN books_series_link bsl ON bsl.series = s.id
-            """
-        )
-    }
+            """)}
 
-    publisher_by_book = {
-        r["book_id"]: r["name"]
-        for r in conn.execute(
-            """
+    publisher_by_book = {r["book_id"]: r["name"] for r in conn.execute("""
             SELECT bpl.book AS book_id, p.name AS name FROM publishers p
             JOIN books_publishers_link bpl ON bpl.publisher = p.id
-            """
-        )
-    }
+            """)}
 
     epub_by_book = {
         r["book"]: (r["name"], r["uncompressed_size"])
@@ -404,15 +393,10 @@ def _build_books_bulk(
 
     rating_by_book: dict[int, float] = {}
     if "rating" in available_fields:
-        rating_by_book = {
-            r["book_id"]: r["rating"] / 2
-            for r in conn.execute(
-                """
+        rating_by_book = {r["book_id"]: r["rating"] / 2 for r in conn.execute("""
                 SELECT brl.book AS book_id, r.rating AS rating FROM ratings r
                 JOIN books_ratings_link brl ON brl.rating = r.id
-                """
-            )
-        }
+                """)}
 
     custom_values_by_column = {
         column["label"]: _bulk_custom_column_values(conn, column)
@@ -483,6 +467,8 @@ def list_books(library_path: str) -> list[Book]:
     cached = _list_books_cache.get(library_path)
     if cached is not None and cached[0] == current_mtime:
         return cached[1]
+
+    logger.debug("cache miss for %s, rebuilding book list", library_path)
 
     conn = _connect_readonly(db_path)
     conn.row_factory = sqlite3.Row
@@ -647,6 +633,8 @@ def get_cover_thumbnail(cover_path: str) -> bytes:
     cached = _cover_thumbnail_cache.get(cover_path)
     if cached is not None and cached[0] == current_mtime:
         return cached[1]
+
+    logger.debug("cache miss for %s, resizing", cover_path)
 
     with Image.open(cover_path) as img:
         # Hint the JPEG decoder to decode at a reduced resolution directly,
