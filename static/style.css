@@ -607,6 +607,7 @@ button::-moz-focus-inner {
     padding: 0.05rem 0.3rem;
     border-radius: 4px;
     flex-shrink: 0;
+    transform: translateY(0.2em);
 }
 
 .filter-clear-btn:hover {
