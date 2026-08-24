@@ -49,7 +49,8 @@
         <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
         <nav id="header-nav-drawer" class="header-nav-drawer">
             <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-            <a class="settings-link" href="{{ url_for('settings_page') }}">Settings</a>
+            <a class="settings-link"
+               href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
         </nav>
         {% if total_pages > 1 %}
             <nav class="pagination">

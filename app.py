@@ -7,6 +7,7 @@ import logging
 import mimetypes
 import os
 import re
+import urllib.parse
 import zipfile
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -786,6 +787,9 @@ def settings_page():
         except ValueError as e:
             return str(e), 400
 
+        back = flask.request.form.get("back", "")
+        if back:
+            return flask.redirect(f"{flask.url_for('library_list')}?{back}")
         return flask.redirect(flask.url_for("library_list"))
 
     return flask.render_template(
@@ -819,12 +823,22 @@ def update_theme():
 @app.route("/settings/reset-progress", methods=["POST"])
 def reset_progress():
     positions.reset_all_positions(DB_PATH)
+    back = flask.request.form.get("back", "")
+    if back:
+        return flask.redirect(
+            f"{flask.url_for('settings_page')}?back={urllib.parse.quote(back, safe='')}"
+        )
     return flask.redirect(flask.url_for("settings_page"))
 
 
 @app.route("/settings/clear-recent", methods=["POST"])
 def clear_recent():
     positions.clear_all_positions(DB_PATH)
+    back = flask.request.form.get("back", "")
+    if back:
+        return flask.redirect(
+            f"{flask.url_for('settings_page')}?back={urllib.parse.quote(back, safe='')}"
+        )
     return flask.redirect(flask.url_for("settings_page"))
 
 
@@ -856,6 +870,9 @@ def refresh_library():
     logger.info("manual cache refresh triggered")
     calibre_reader.clear_cache()
     epub_parser.clear_cache()
+    qs = flask.request.form.get("qs", "")
+    if qs:
+        return flask.redirect(f"{flask.url_for('library_list')}?{qs}")
     return flask.redirect(flask.url_for("library_list"))
 
 

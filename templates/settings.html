@@ -20,16 +20,18 @@
         <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     </head>
     <body>
+        {% set back_qs = request.args.get('back', '') %}
         <div class="reader-header">
             <div class="header-top">
                 <div class="header-left">
-                    <a href="{{ url_for('library_list') }}">&larr; Back to library</a>
+                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
                 </div>
                 <div class="header-right"></div>
             </div>
             <h1 class="header-title">Settings</h1>
         </div>
         <form id="settings-form" method="post" class="settings-form">
+            <input type="hidden" name="back" value="{{ back_qs }}">
             <details class="settings-category" name="settings-category" open>
                 <summary>General</summary>
                 <div class="settings-field settings-field-grouped">
@@ -253,11 +255,13 @@
             <form method="post"
                   action="{{ url_for('reset_progress') }}"
                   onsubmit="return confirm('Reset every story\'s progress back to chapter 1? This cannot be undone.');">
+                <input type="hidden" name="back" value="{{ back_qs }}">
                 <button type="submit" class="danger-btn">Reset all reading progress to chapter 1</button>
             </form>
             <form method="post"
                   action="{{ url_for('clear_recent') }}"
                   onsubmit="return confirm('Clear all reading progress and the \'Recently read\' list? This cannot be undone.');">
+                <input type="hidden" name="back" value="{{ back_qs }}">
                 <button type="submit" class="danger-btn">Clear reading progress and "Recently read" list</button>
             </form>
         </details>
