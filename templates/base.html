@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en"
+      class="{% block html_class %}{% endblock %}"
+      data-theme="{{ settings.theme }}"
+      style="--reader-font-family: {{ settings.font_family_css }};
+             --reader-font-size-base: {{ settings.font_size }}rem;
+             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
+             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
+             --surface-color: {{ settings.custom_surface_color }};
+             --text-color: {{ settings.custom_text_color }};
+             --text-muted: {{ settings.custom_text_muted }};
+             --border-color: {{ settings.custom_border_color }};
+             --accent-color: {{ settings.custom_accent_color }};
+             --accent-hover: {{ settings.custom_accent_hover }};
+             {% endif %}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}shelf-mg{% endblock %}</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+        <script src="{{ url_for('static', filename='theme.js') }}"></script>
+        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
+        {% block extra_head %}{% endblock %}
+    </head>
+    <body {% block body_attrs %}{% endblock %}>
+        <div class="{% block header_class %}library-header{% endblock %}">
+            <div class="header-top">
+                {% block header_left %}
+                    <div class="header-left">
+                        <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
+                    </div>
+                {% endblock %}
+                <div class="header-right">
+                    <button type="button"
+                            class="header-nav-drawer-toggle"
+                            onclick="toggleHeaderNavDrawer()"
+                            aria-expanded="false"
+                            aria-controls="header-nav-drawer">Menu</button>
+                </div>
+            </div>
+            {% block header_title %}{% endblock %}
+        </div>
+        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
+        <nav id="header-nav-drawer" class="header-nav-drawer">
+            <form method="post"
+                  id="refresh-library-form"
+                  action="{{ url_for('refresh_library') }}">
+                <input type="hidden" name="qs" value="{{ back_qs }}">
+            </form>
+            <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
+            <button type="button" class="header-btn" onclick="confirmReindexSearch()">Reindex search</button>
+            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
+            <a class="settings-link" href="{{ url_for('library_list') }}">Library</a>
+            <a class="settings-link"
+               href="{{ url_for('search_results') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Full-text search</a>
+            <a class="settings-link"
+               href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
+            <a class="settings-link"
+               href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
+        </nav>
+        <dialog id="refresh-dialog" class="confirm-dialog">
+            <button type="button"
+                    id="refresh-dialog-x"
+                    class="confirm-dialog-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('refresh-dialog').close()">&times;</button>
+            <p>
+                Refresh all data from Calibre?
+                <br>
+                This may take a second.
+            </p>
+            <div class="confirm-dialog-actions">
+                <button type="button"
+                        class="confirm-dialog-cancel"
+                        onclick="document.getElementById('refresh-dialog').close()">Cancel</button>
+                <button type="button"
+                        class="confirm-dialog-confirm"
+                        onclick="document.getElementById('refresh-library-form').submit()">Refresh</button>
+            </div>
+        </dialog>
+        <script>
+            function confirmRefreshLibrary() {
+                document.getElementById("refresh-dialog").showModal();
+            }
+        </script>
+        <dialog id="reindex-dialog" class="confirm-dialog">
+            <button type="button"
+                    id="reindex-dialog-x"
+                    class="confirm-dialog-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('reindex-dialog').close()">&times;</button>
+            <p id="reindex-dialog-text">
+                Rebuild the full-text search index?
+                <br>
+                This scans every book and may take a few minutes.
+            </p>
+            <div class="confirm-dialog-actions" id="reindex-dialog-actions">
+                <button type="button"
+                        class="confirm-dialog-cancel"
+                        onclick="document.getElementById('reindex-dialog').close()">Cancel</button>
+                <button type="button"
+                        class="confirm-dialog-confirm"
+                        onclick="startReindexSearch()">Reindex</button>
+            </div>
+        </dialog>
+        <script>
+            let reindexPollHandle = null;
+
+            const REINDEX_CONFIRM_TEXT = `Rebuild the full-text search index?
+                <br>
+                This scans every book and may take a few minutes.`;
+            const REINDEX_CONFIRM_ACTIONS = `<button type="button" class="confirm-dialog-cancel" onclick="document.getElementById('reindex-dialog').close()">Cancel</button>
+                <button type="button" class="confirm-dialog-confirm" onclick="startReindexSearch()">Reindex</button>`;
+
+            function confirmReindexSearch() {
+                if (!reindexPollHandle) {
+                    document.getElementById("reindex-dialog-text").innerHTML = REINDEX_CONFIRM_TEXT;
+                    document.getElementById("reindex-dialog-actions").innerHTML = REINDEX_CONFIRM_ACTIONS;
+                }
+                document.getElementById("reindex-dialog").showModal();
+            }
+
+            function startReindexSearch() {
+                fetch("{{ url_for('reindex_search') }}", {method: "POST"}).then(() => {
+                    pollReindexStatus();
+                });
+            }
+
+            function pollReindexStatus() {
+                document.getElementById("reindex-dialog-actions").innerHTML = "";
+                if (reindexPollHandle) {
+                    clearInterval(reindexPollHandle);
+                }
+                reindexPollHandle = setInterval(updateReindexStatus, 1500);
+                updateReindexStatus();
+            }
+
+            function updateReindexStatus() {
+                fetch("{{ url_for('reindex_status') }}")
+                    .then((res) => res.json())
+                    .then((status) => {
+                        const text = document.getElementById("reindex-dialog-text");
+                        if (status.running) {
+                            text.textContent = `Indexing ${status.current} / ${status.total} books…`;
+                        } else {
+                            clearInterval(reindexPollHandle);
+                            reindexPollHandle = null;
+                            text.textContent = status.error
+                                ? `Reindex failed: ${status.error}`
+                                : `Done — indexed ${status.total} books.`;
+                            document.getElementById("reindex-dialog-actions").innerHTML =
+                                '<button type="button" class="confirm-dialog-cancel" onclick="document.getElementById(\'reindex-dialog\').close()">Close</button>';
+                        }
+                    });
+            }
+        </script>
+        {% block content %}{% endblock %}
+    </body>
+</html>

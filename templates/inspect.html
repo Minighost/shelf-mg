@@ -1,140 +1,99 @@
-<!DOCTYPE html>
-<html lang="en"
-      data-theme="{{ settings.theme }}"
-      style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size-base: {{ settings.font_size }}rem;
-             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
-             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
-             --surface-color: {{ settings.custom_surface_color }};
-             --text-color: {{ settings.custom_text_color }};
-             --text-muted: {{ settings.custom_text_muted }};
-             --border-color: {{ settings.custom_border_color }};
-             --accent-color: {{ settings.custom_accent_color }};
-             --accent-hover: {{ settings.custom_accent_hover }};
-             {% endif %}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ book.title }} — Inspect</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-        <script src="{{ url_for('static', filename='theme.js') }}"></script>
-        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
-    </head>
-    <body>
-        {% set back_qs = request.args.get('back', '') %}
-        {% set back_suffix = ('?back=' + (back_qs | urlencode)) if back_qs else '' %}
-        <div class="library-header">
-            <div class="header-top">
-                <div class="header-left">
-                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
-                </div>
-                <div class="header-right">
-                    <button type="button"
-                            class="header-nav-drawer-toggle"
-                            onclick="toggleHeaderNavDrawer()"
-                            aria-expanded="false"
-                            aria-controls="header-nav-drawer">&lt; Menu</button>
-                </div>
-            </div>
-            <h1 class="header-title">{{ book.title }}</h1>
-        </div>
-        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
-        <nav id="header-nav-drawer" class="header-nav-drawer">
-            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-        </nav>
-
-        <div class="inspect-top-wrapper">
-            {% if has_cover %}
-                <img class="inspect-cover" src="{{ url_for('inspect_cover', book_id=book.id) }}" alt="Cover for {{ book.title }}">
-            {% else %}
-                <div class="inspect-cover-placeholder">No image</div>
-            {% endif %}
-            <div class="inspect-meta-wrapper">
-                <p class="book-meta inspect-meta-generic">Author: {{ book.authors | join(", ") }}</p>
-                {% if book.series %}
-                    <p class="book-meta inspect-meta-generic">Series: {{ book.series }} #{{ book.series_index }}</p>
-                {% endif %}
-                {% if book.publisher %}
-                    <p class="book-meta inspect-meta-generic">Publisher: {{ book.publisher }}</p>
-                {% endif %}
-                {% if book.tags %}
-                    <p class="book-meta inspect-meta-generic">Tags: {{ book.tags | join(", ") }}</p>
-                {% endif %}
-            </div>
-        </div>
-        <section class="inspect-section">
-            <h2>Custom Columns</h2>
-            {% for label, values in book.custom.items() %}
-                {% if values %}
-                    <p class="book-meta inspect-meta-generic">{{ label }}: {{ values | join(", ") }}</p>
-                {% endif %}
-            {% endfor %}
-        </section>
-
-        {% if book.summary_html %}
-            <section class="inspect-section">
-                <h2>Story Summary</h2>
-                <div class="list-view-summary">{{ book.summary_html | safe }}</div>
-            </section>
+{% extends "base.html" %}
+{% set back_qs = request.args.get('back', '') %}
+{% set back_suffix = ('?back=' + (back_qs | urlencode)) if back_qs else '' %}
+{% block title %}{{ book.title }} — Inspect{% endblock %}
+{% block header_title %}<h1 class="header-title">{{ book.title }}</h1>{% endblock %}
+{% block content %}
+    <div class="inspect-top-wrapper">
+        {% if has_cover %}
+            <img class="inspect-cover" src="{{ url_for('inspect_cover', book_id=book.id) }}" alt="Cover for {{ book.title }}">
+        {% else %}
+            <div class="inspect-cover-placeholder">No image</div>
         {% endif %}
-
-        <section class="inspect-section">
-            <h2>Calibre details</h2>
-            <p class="book-meta inspect-meta-generic">Rating: {{ (details.rating ~ " / 5") if details.rating is not none else "Unrated" }}</p>
-            <p class="book-meta inspect-meta-generic">Date added: {{ details.date_added or "Unknown" }}</p>
-            <p class="book-meta inspect-meta-generic">Publication date: {{ details.pubdate or "Unknown" }}</p>
-            {% if details.identifiers %}
-                <p class="book-meta inspect-meta-generic">
-                    Identifiers:
-                    {% for type, val in details.identifiers.items() %}{{ type }}: {{ val }}{% if not loop.last %}, {% endif %}{% endfor %}
-                </p>
-            {% else %}
-                <p class="book-meta">No identifiers on file.</p>
+        <div class="inspect-meta-wrapper">
+            <p class="book-meta inspect-meta-generic">Author: {{ book.authors | join(", ") }}</p>
+            {% if book.series %}
+                <p class="book-meta inspect-meta-generic">Series: {{ book.series }} #{{ book.series_index }}</p>
             {% endif %}
-        </section>
-
-        <section class="inspect-section">
-            <h2>Table of contents</h2>
-            {% if parse_error %}
-                <p class="book-meta inspect-meta-generic">Could not read chapter list: {{ parse_error }}</p>
-            {% else %}
-                <ol class="inspect-chapter-list">
-                    {% for chapter in chapters %}
-                        <li><a href="/read/{{ book.id }}/{{ chapter.index }}{{ back_suffix }}">{{ chapter.title }}</a></li>
-                    {% endfor %}
-                </ol>
+            {% if book.publisher %}
+                <p class="book-meta inspect-meta-generic">Publisher: {{ book.publisher }}</p>
             {% endif %}
-        </section>
-
-        <section class="inspect-section">
-            <h2>Technical details</h2>
-            {% if stats %}
-                <p class="book-meta inspect-meta-generic">File size: {{ file_size }}</p>
-                <p class="book-meta inspect-meta-generic">EPUB version: {{ stats.epub_version }}</p>
-                <p class="book-meta inspect-meta-generic">Spine items: {{ stats.spine_item_count }}</p>
-                <p class="book-meta inspect-meta-generic">Images: {{ stats.image_count }}</p>
-                <p class="book-meta inspect-meta-generic">CSS files: {{ stats.css_count }}</p>
-                <p class="book-meta inspect-meta-generic">Manifest items: {{ stats.manifest_item_count }}</p>
-            {% else %}
-                <p class="book-meta inspect-meta-generic">Could not read file details: {{ parse_error }}</p>
+            {% if book.tags %}
+                <p class="book-meta inspect-meta-generic">Tags: {{ book.tags | join(", ") }}</p>
             {% endif %}
-        </section>
-
-        <section class="inspect-section">
-            <h2>Reading progress</h2>
-            {% if progress %}
-                <p class="book-meta inspect-meta-generic">
-                    Chapter {{ progress.chapter_index + 1 }}{% if progress.chapter_title %} — {{ progress.chapter_title }}{% endif %}
-                </p>
-                <p class="book-meta inspect-meta-generic">{{ progress.percent }}% complete</p>
-                <p class="book-meta inspect-meta-generic">Last read: {{ progress.updated_at }}</p>
-            {% else %}
-                <p class="book-meta inspect-meta-generic">Not started yet.</p>
-            {% endif %}
-        </section>
-        <div class="footer footer-insert">
-            Made with <3 by Minighost
         </div>
-    </body>
-</html>
+    </div>
+    <section class="inspect-section">
+        <h2>Custom Columns</h2>
+        {% for label, values in book.custom.items() %}
+            {% if values %}
+                <p class="book-meta inspect-meta-generic">{{ label }}: {{ values | join(", ") }}</p>
+            {% endif %}
+        {% endfor %}
+    </section>
+
+    {% if book.summary_html %}
+        <section class="inspect-section">
+            <h2>Story Summary</h2>
+            <div class="list-view-summary">{{ book.summary_html | safe }}</div>
+        </section>
+    {% endif %}
+
+    <section class="inspect-section">
+        <h2>Calibre details</h2>
+        <p class="book-meta inspect-meta-generic">Rating: {{ (details.rating ~ " / 5") if details.rating is not none else "Unrated" }}</p>
+        <p class="book-meta inspect-meta-generic">Date added: {{ details.date_added or "Unknown" }}</p>
+        <p class="book-meta inspect-meta-generic">Publication date: {{ details.pubdate or "Unknown" }}</p>
+        {% if details.identifiers %}
+            <p class="book-meta inspect-meta-generic">
+                Identifiers:
+                {% for type, val in details.identifiers.items() %}{{ type }}: {{ val }}{% if not loop.last %}, {% endif %}{% endfor %}
+            </p>
+        {% else %}
+            <p class="book-meta">No identifiers on file.</p>
+        {% endif %}
+    </section>
+
+    <section class="inspect-section">
+        <h2>Table of contents</h2>
+        {% if parse_error %}
+            <p class="book-meta inspect-meta-generic">Could not read chapter list: {{ parse_error }}</p>
+        {% else %}
+            <ol class="inspect-chapter-list">
+                {% for chapter in chapters %}
+                    <li><a href="/read/{{ book.id }}/{{ chapter.index }}{{ back_suffix }}">{{ chapter.title }}</a></li>
+                {% endfor %}
+            </ol>
+        {% endif %}
+    </section>
+
+    <section class="inspect-section">
+        <h2>Technical details</h2>
+        {% if stats %}
+            <p class="book-meta inspect-meta-generic">File size: {{ file_size }}</p>
+            <p class="book-meta inspect-meta-generic">EPUB version: {{ stats.epub_version }}</p>
+            <p class="book-meta inspect-meta-generic">Spine items: {{ stats.spine_item_count }}</p>
+            <p class="book-meta inspect-meta-generic">Images: {{ stats.image_count }}</p>
+            <p class="book-meta inspect-meta-generic">CSS files: {{ stats.css_count }}</p>
+            <p class="book-meta inspect-meta-generic">Manifest items: {{ stats.manifest_item_count }}</p>
+        {% else %}
+            <p class="book-meta inspect-meta-generic">Could not read file details: {{ parse_error }}</p>
+        {% endif %}
+    </section>
+
+    <section class="inspect-section">
+        <h2>Reading progress</h2>
+        {% if progress %}
+            <p class="book-meta inspect-meta-generic">
+                Chapter {{ progress.chapter_index + 1 }}{% if progress.chapter_title %} — {{ progress.chapter_title }}{% endif %}
+            </p>
+            <p class="book-meta inspect-meta-generic">{{ progress.percent }}% complete</p>
+            <p class="book-meta inspect-meta-generic">Last read: {{ progress.updated_at }}</p>
+        {% else %}
+            <p class="book-meta inspect-meta-generic">Not started yet.</p>
+        {% endif %}
+    </section>
+    <div class="footer footer-insert">
+        Made with <3 by Minighost
+    </div>
+{% endblock %}

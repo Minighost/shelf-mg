@@ -1,126 +1,85 @@
-<!DOCTYPE html>
-<html lang="en"
-      data-theme="{{ settings.theme }}"
-      style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size-base: {{ settings.font_size }}rem;
-             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
-             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
-             --surface-color: {{ settings.custom_surface_color }};
-             --text-color: {{ settings.custom_text_color }};
-             --text-muted: {{ settings.custom_text_muted }};
-             --border-color: {{ settings.custom_border_color }};
-             --accent-color: {{ settings.custom_accent_color }};
-             --accent-hover: {{ settings.custom_accent_hover }};
-             {% endif %}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>shelf-mg</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-        <script src="{{ url_for('static', filename='theme.js') }}"></script>
-        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
-        <script>
-            // If this page is restored from bfcache (e.g. via the back
-            // button), its history data may be stale — force a fresh
-            // request so it reflects the latest saves.
-            window.addEventListener("pageshow", (event) => {
-                if (event.persisted) window.location.reload();
-            });
-        </script>
-    </head>
-    <body>
-        {% set back_qs = request.args.get('back', '') %}
-        <div class="library-header">
-            <div class="header-top">
-                <div class="header-left">
-                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
+{% extends "base.html" %}
+{% set back_qs = request.args.get('back', '') %}
+{% block extra_head %}
+    <script>
+        // If this page is restored from bfcache (e.g. via the back
+        // button), its history data may be stale — force a fresh
+        // request so it reflects the latest saves.
+        window.addEventListener("pageshow", (event) => {
+            if (event.persisted) window.location.reload();
+        });
+    </script>
+{% endblock %}
+{% block header_title %}<h1 class="header-title">Reading history</h1>{% endblock %}
+{% block content %}
+    {% if total_pages > 1 %}
+        <nav class="pagination">
+            <div class="pagination-controls">
+                <div class="pagination-side pagination-side-left">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
+                        <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
+                    {% else %}
+                        <span class="pagination-disabled">&laquo; First</span>
+                        <span class="pagination-disabled">&larr; Previous</span>
+                    {% endif %}
                 </div>
-                <div class="header-right">
-                    <button type="button"
-                            class="header-nav-drawer-toggle"
-                            onclick="toggleHeaderNavDrawer()"
-                            aria-expanded="false"
-                            aria-controls="header-nav-drawer">&lt; Menu</button>
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                <div class="pagination-side pagination-side-right">
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
+                        <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
+                    {% else %}
+                        <span class="pagination-disabled">Next &rarr;</span>
+                        <span class="pagination-disabled">Last &raquo;</span>
+                    {% endif %}
                 </div>
             </div>
-            <h1 class="header-title">Reading history</h1>
-        </div>
-        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
-        <nav id="header-nav-drawer" class="header-nav-drawer">
-            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-            <a class="settings-link"
-               href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
         </nav>
-        {% if total_pages > 1 %}
-            <nav class="pagination">
-                <div class="pagination-controls">
-                    <div class="pagination-side pagination-side-left">
-                        {% if page > 1 %}
-                            <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
-                            <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
-                        {% else %}
-                            <span class="pagination-disabled">&laquo; First</span>
-                            <span class="pagination-disabled">&larr; Previous</span>
-                        {% endif %}
-                    </div>
-                    <span>Page {{ page }} of {{ total_pages }}</span>
-                    <div class="pagination-side pagination-side-right">
-                        {% if page < total_pages %}
-                            <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
-                            <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
-                        {% else %}
-                            <span class="pagination-disabled">Next &rarr;</span>
-                            <span class="pagination-disabled">Last &raquo;</span>
-                        {% endif %}
-                    </div>
+    {% endif %}
+    {% if entries %}
+        <div class="list-view-wrapper">
+            {% for item in entries %}
+                <div class="list-view-entry">
+                    <h2>
+                        <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}">{{ item.book.title }}</a>
+                    </h2>
+                    <p class="book-meta list-view-author">by {{ item.book.authors | join(", ") }}</p>
+                    <p class="book-meta list-view-tags">Tags: {{ item.book.tags | join(", ") }}</p>
+                    <div class="list-view-summary">{{ item.book.summary_html | safe }}</div>
+                    <p class="book-meta history-updated">Last read: {{ item.updated_at }}</p>
                 </div>
-            </nav>
-        {% endif %}
-        {% if entries %}
-            <div class="list-view-wrapper">
-                {% for item in entries %}
-                    <div class="list-view-entry">
-                        <h2>
-                            <a href="/read/{{ item.book.id }}/{{ item.chapter_index }}">{{ item.book.title }}</a>
-                        </h2>
-                        <p class="book-meta list-view-author">by {{ item.book.authors | join(", ") }}</p>
-                        <p class="book-meta list-view-tags">Tags: {{ item.book.tags | join(", ") }}</p>
-                        <div class="list-view-summary">{{ item.book.summary_html | safe }}</div>
-                        <p class="book-meta history-updated">Last read: {{ item.updated_at }}</p>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="book-meta">No reading history yet.</p>
-        {% endif %}
-        {% if total_pages > 1 %}
-            <nav class="pagination">
-                <div class="pagination-controls">
-                    <div class="pagination-side pagination-side-left">
-                        {% if page > 1 %}
-                            <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
-                            <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
-                        {% else %}
-                            <span class="pagination-disabled">&laquo; First</span>
-                            <span class="pagination-disabled">&larr; Previous</span>
-                        {% endif %}
-                    </div>
-                    <span>Page {{ page }} of {{ total_pages }}</span>
-                    <div class="pagination-side pagination-side-right">
-                        {% if page < total_pages %}
-                            <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
-                            <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
-                        {% else %}
-                            <span class="pagination-disabled">Next &rarr;</span>
-                            <span class="pagination-disabled">Last &raquo;</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </nav>
-        {% endif %}
-        <div class="footer footer-insert">
-            Made with <3 by Minighost
+            {% endfor %}
         </div>
-    </body>
-</html>
+    {% else %}
+        <p class="book-meta">No reading history yet.</p>
+    {% endif %}
+    {% if total_pages > 1 %}
+        <nav class="pagination">
+            <div class="pagination-controls">
+                <div class="pagination-side pagination-side-left">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('history_page', page=1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&laquo; First</a>
+                        <a href="{{ url_for('history_page', page=page - 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">&larr; Previous</a>
+                    {% else %}
+                        <span class="pagination-disabled">&laquo; First</span>
+                        <span class="pagination-disabled">&larr; Previous</span>
+                    {% endif %}
+                </div>
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                <div class="pagination-side pagination-side-right">
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('history_page', page=page + 1) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Next &rarr;</a>
+                        <a href="{{ url_for('history_page', page=total_pages) }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Last &raquo;</a>
+                    {% else %}
+                        <span class="pagination-disabled">Next &rarr;</span>
+                        <span class="pagination-disabled">Last &raquo;</span>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    {% endif %}
+    <div class="footer footer-insert">
+        Made with <3 by Minighost
+    </div>
+{% endblock %}

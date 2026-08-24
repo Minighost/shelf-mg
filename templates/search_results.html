@@ -1,233 +1,86 @@
-<!DOCTYPE html>
-<html lang="en"
-      data-theme="{{ settings.theme }}"
-      style="--reader-font-family: {{ settings.font_family_css }};
-             --reader-font-size-base: {{ settings.font_size }}rem;
-             --content-max-width-vw: {{ settings.content_max_width_pct }}vw;
-             {% if settings.theme == 'custom' %} --bg-color: {{ settings.custom_bg_color }};
-             --surface-color: {{ settings.custom_surface_color }};
-             --text-color: {{ settings.custom_text_color }};
-             --text-muted: {{ settings.custom_text_muted }};
-             --border-color: {{ settings.custom_border_color }};
-             --accent-color: {{ settings.custom_accent_color }};
-             --accent-hover: {{ settings.custom_accent_hover }};
-             {% endif %}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>shelf-mg</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-        <script src="{{ url_for('static', filename='theme.js') }}"></script>
-        <script src="{{ url_for('static', filename='header-nav-drawer.js') }}"></script>
-    </head>
-    <body>
-        {% set back_qs = request.args.get('back', '') %}
-        <div class="library-header">
-            <div class="header-top">
-                <div class="header-left">
-                    <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
-                </div>
-                <div class="header-right">
-                    <button type="button"
-                            class="header-nav-drawer-toggle"
-                            onclick="toggleHeaderNavDrawer()"
-                            aria-expanded="false"
-                            aria-controls="header-nav-drawer">Menu</button>
-                </div>
-            </div>
-            <h1 class="header-title"><a href="{{ url_for('search_results') }}">Full-text search</a></h1>
-        </div>
-        <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
-        <nav id="header-nav-drawer" class="header-nav-drawer">
-            <form method="post"
-                  id="refresh-library-form"
-                  action="{{ url_for('refresh_library') }}">
-                <input type="hidden" name="qs" value="{{ back_qs }}">
-            </form>
-            <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
-            <button type="button" class="header-btn" onclick="confirmReindexSearch()">Reindex search</button>
-            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-            <a class="settings-link" href="{{ url_for('library_list') }}">Library</a>
-            <a class="settings-link"
-               href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
-        </nav>
-        <dialog id="refresh-dialog" class="confirm-dialog">
-            <button type="button"
-                    id="refresh-dialog-x"
-                    class="confirm-dialog-close"
-                    aria-label="Close"
-                    onclick="document.getElementById('refresh-dialog').close()">&times;</button>
-            <p>
-                Refresh all data from Calibre?
-                <br>
-                This may take a second.
-            </p>
-            <div class="confirm-dialog-actions">
-                <button type="button"
-                        class="confirm-dialog-cancel"
-                        onclick="document.getElementById('refresh-dialog').close()">Cancel</button>
-                <button type="button"
-                        class="confirm-dialog-confirm"
-                        onclick="document.getElementById('refresh-library-form').submit()">Refresh</button>
-            </div>
-        </dialog>
-        <script>
-            function confirmRefreshLibrary() {
-                document.getElementById("refresh-dialog").showModal();
-            }
-        </script>
-        <dialog id="reindex-dialog" class="confirm-dialog">
-            <button type="button"
-                    id="reindex-dialog-x"
-                    class="confirm-dialog-close"
-                    aria-label="Close"
-                    onclick="document.getElementById('reindex-dialog').close()">&times;</button>
-            <p id="reindex-dialog-text">
-                Rebuild the full-text search index?
-                <br>
-                This scans every book and may take a few minutes.
-            </p>
-            <div class="confirm-dialog-actions" id="reindex-dialog-actions">
-                <button type="button"
-                        class="confirm-dialog-cancel"
-                        onclick="document.getElementById('reindex-dialog').close()">Cancel</button>
-                <button type="button"
-                        class="confirm-dialog-confirm"
-                        onclick="startReindexSearch()">Reindex</button>
-            </div>
-        </dialog>
-        <script>
-            let reindexPollHandle = null;
-
-            const REINDEX_CONFIRM_TEXT = `Rebuild the full-text search index?
-                <br>
-                This scans every book and may take a few minutes.`;
-            const REINDEX_CONFIRM_ACTIONS = `<button type="button" class="confirm-dialog-cancel" onclick="document.getElementById('reindex-dialog').close()">Cancel</button>
-                <button type="button" class="confirm-dialog-confirm" onclick="startReindexSearch()">Reindex</button>`;
-
-            function confirmReindexSearch() {
-                if (!reindexPollHandle) {
-                    document.getElementById("reindex-dialog-text").innerHTML = REINDEX_CONFIRM_TEXT;
-                    document.getElementById("reindex-dialog-actions").innerHTML = REINDEX_CONFIRM_ACTIONS;
-                }
-                document.getElementById("reindex-dialog").showModal();
-            }
-
-            function startReindexSearch() {
-                fetch("{{ url_for('reindex_search') }}", {method: "POST"}).then(() => {
-                    pollReindexStatus();
-                });
-            }
-
-            function pollReindexStatus() {
-                document.getElementById("reindex-dialog-actions").innerHTML = "";
-                if (reindexPollHandle) {
-                    clearInterval(reindexPollHandle);
-                }
-                reindexPollHandle = setInterval(updateReindexStatus, 1500);
-                updateReindexStatus();
-            }
-
-            function updateReindexStatus() {
-                fetch("{{ url_for('reindex_status') }}")
-                    .then((res) => res.json())
-                    .then((status) => {
-                        const text = document.getElementById("reindex-dialog-text");
-                        if (status.running) {
-                            text.textContent = `Indexing ${status.current} / ${status.total} books…`;
-                        } else {
-                            clearInterval(reindexPollHandle);
-                            reindexPollHandle = null;
-                            text.textContent = status.error
-                                ? `Reindex failed: ${status.error}`
-                                : `Done — indexed ${status.total} books.`;
-                            document.getElementById("reindex-dialog-actions").innerHTML =
-                                '<button type="button" class="confirm-dialog-cancel" onclick="document.getElementById(\'reindex-dialog\').close()">Close</button>';
-                        }
-                    });
-            }
-        </script>
-        <form method="get" class="fulltext-search-form">
-            <input type="text"
-                   name="q"
-                   value="{{ query }}"
-                   class="fulltext-search-text-entry"
-                   placeholder="Search chapter text for a quote">
-            <button type="submit" class="fulltext-search-submit-btn">Search</button>
-        </form>
-        {% if query %}
+{% extends "base.html" %}
+{% set back_qs = request.args.get('back', '') %}
+{% block header_title %}<h1 class="header-title"><a href="{{ url_for('search_results') }}">Full-text search</a></h1>{% endblock %}
+{% block content %}
+    <form method="get" class="fulltext-search-form">
+        <input type="text"
+               name="q"
+               value="{{ query }}"
+               class="fulltext-search-text-entry"
+               placeholder="Search chapter text for a quote">
+        <button type="submit" class="fulltext-search-submit-btn">Search</button>
+    </form>
+    {% if query %}
+        <p class="results-summary">
+            {{ total_matches }} match{{ "es" if total_matches != 1 else "" }} for "{{ query }}"
+        </p>
+        {% if total_matches == 0 %}
             <p class="results-summary">
-                {{ total_matches }} match{{ "es" if total_matches != 1 else "" }} for "{{ query }}"
+                No matches. If you haven't indexed yet (or the library has changed since), use
+                "Reindex search" in the menu.
             </p>
-            {% if total_matches == 0 %}
-                <p class="results-summary">
-                    No matches. If you haven't indexed yet (or the library has changed since), use
-                    "Reindex search" in the menu.
-                </p>
-            {% endif %}
-        {% else %}
-            <p class="results-summary">Enter a quote or phrase to search chapter text.</p>
         {% endif %}
-        {% if total_pages > 1 %}
-            <nav class="pagination pagination-top">
-                <div class="pagination-controls">
-                    <div class="pagination-side pagination-side-left">
-                        {% if page > 1 %}
-                            <a href="{{ url_for('search_results', q=query, page=1) }}">&laquo; First</a>
-                            <a href="{{ url_for('search_results', q=query, page=page - 1) }}">&larr; Previous</a>
-                        {% else %}
-                            <span class="pagination-disabled">&laquo; First</span>
-                            <span class="pagination-disabled">&larr; Previous</span>
-                        {% endif %}
-                    </div>
-                    <span>Page {{ page }} of {{ total_pages }}</span>
-                    <div class="pagination-side pagination-side-right">
-                        {% if page < total_pages %}
-                            <a href="{{ url_for('search_results', q=query, page=page + 1) }}">Next &rarr;</a>
-                            <a href="{{ url_for('search_results', q=query, page=total_pages) }}">Last &raquo;</a>
-                        {% else %}
-                            <span class="pagination-disabled">Next &rarr;</span>
-                            <span class="pagination-disabled">Last &raquo;</span>
-                        {% endif %}
-                    </div>
+    {% else %}
+        <p class="results-summary">Enter a quote or phrase to search chapter text.</p>
+    {% endif %}
+    {% if total_pages > 1 %}
+        <nav class="pagination pagination-top">
+            <div class="pagination-controls">
+                <div class="pagination-side pagination-side-left">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('search_results', q=query, page=1) }}">&laquo; First</a>
+                        <a href="{{ url_for('search_results', q=query, page=page - 1) }}">&larr; Previous</a>
+                    {% else %}
+                        <span class="pagination-disabled">&laquo; First</span>
+                        <span class="pagination-disabled">&larr; Previous</span>
+                    {% endif %}
                 </div>
-            </nav>
-        {% endif %}
-        <div class="fulltext-search-results-list">
-            {% for result in results %}
-                <a class="fulltext-search-result-entry"
-                   href="/read/{{ result.book_id }}/{{ result.chapter_index }}">
-                    <span class="fulltext-search-result-title">{{ result.book_title }}</span>
-                    <span class="fulltext-search-result-chapter-label">Chapter {{ result.chapter_index + 1 }}: {{ result.chapter_title }}</span>
-                    <span class="fulltext-search-result-snippet">{{ result.snippet | safe }}</span>
-                </a>
-            {% endfor %}
-        </div>
-        {% if total_pages > 1 %}
-            <nav class="pagination pagination-bottom">
-                <div class="pagination-controls">
-                    <div class="pagination-side pagination-side-left">
-                        {% if page > 1 %}
-                            <a href="{{ url_for('search_results', q=query, page=1) }}">&laquo; First</a>
-                            <a href="{{ url_for('search_results', q=query, page=page - 1) }}">&larr; Previous</a>
-                        {% else %}
-                            <span class="pagination-disabled">&laquo; First</span>
-                            <span class="pagination-disabled">&larr; Previous</span>
-                        {% endif %}
-                    </div>
-                    <span>Page {{ page }} of {{ total_pages }}</span>
-                    <div class="pagination-side pagination-side-right">
-                        {% if page < total_pages %}
-                            <a href="{{ url_for('search_results', q=query, page=page + 1) }}">Next &rarr;</a>
-                            <a href="{{ url_for('search_results', q=query, page=total_pages) }}">Last &raquo;</a>
-                        {% else %}
-                            <span class="pagination-disabled">Next &rarr;</span>
-                            <span class="pagination-disabled">Last &raquo;</span>
-                        {% endif %}
-                    </div>
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                <div class="pagination-side pagination-side-right">
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('search_results', q=query, page=page + 1) }}">Next &rarr;</a>
+                        <a href="{{ url_for('search_results', q=query, page=total_pages) }}">Last &raquo;</a>
+                    {% else %}
+                        <span class="pagination-disabled">Next &rarr;</span>
+                        <span class="pagination-disabled">Last &raquo;</span>
+                    {% endif %}
                 </div>
-            </nav>
-        {% endif %}
-    </body>
-</html>
+            </div>
+        </nav>
+    {% endif %}
+    <div class="fulltext-search-results-list">
+        {% for result in results %}
+            <a class="fulltext-search-result-entry"
+               href="/read/{{ result.book_id }}/{{ result.chapter_index }}">
+                <span class="fulltext-search-result-title">{{ result.book_title }}</span>
+                <span class="fulltext-search-result-chapter-label">Chapter {{ result.chapter_index + 1 }}: {{ result.chapter_title }}</span>
+                <span class="fulltext-search-result-snippet">{{ result.snippet | safe }}</span>
+            </a>
+        {% endfor %}
+    </div>
+    {% if total_pages > 1 %}
+        <nav class="pagination pagination-bottom">
+            <div class="pagination-controls">
+                <div class="pagination-side pagination-side-left">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('search_results', q=query, page=1) }}">&laquo; First</a>
+                        <a href="{{ url_for('search_results', q=query, page=page - 1) }}">&larr; Previous</a>
+                    {% else %}
+                        <span class="pagination-disabled">&laquo; First</span>
+                        <span class="pagination-disabled">&larr; Previous</span>
+                    {% endif %}
+                </div>
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                <div class="pagination-side pagination-side-right">
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('search_results', q=query, page=page + 1) }}">Next &rarr;</a>
+                        <a href="{{ url_for('search_results', q=query, page=total_pages) }}">Last &raquo;</a>
+                    {% else %}
+                        <span class="pagination-disabled">Next &rarr;</span>
+                        <span class="pagination-disabled">Last &raquo;</span>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    {% endif %}
+{% endblock %}
