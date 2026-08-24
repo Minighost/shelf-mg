@@ -24,6 +24,7 @@ CUSTOM_COLOR_FIELDS = [
     "custom_border_color",
     "custom_accent_color",
     "custom_accent_hover",
+    "custom_accent_text",
 ]
 
 # Used as starting values the first time a user opens the custom color
@@ -37,6 +38,7 @@ DEFAULT_CUSTOM_COLORS = {
     "custom_border_color": "#2c3036",
     "custom_accent_color": "#c4524f",
     "custom_accent_hover": "#d3665f",
+    "custom_accent_text": "#ffffff",
 }
 
 DEFAULT_OVERRIDE_EPUB_FONT = False
@@ -74,6 +76,7 @@ class Settings:
     custom_border_color: str
     custom_accent_color: str
     custom_accent_hover: str
+    custom_accent_text: str
     enabled_filters: str
     enabled_list_fields: str
 

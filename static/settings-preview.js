@@ -6,6 +6,7 @@ const PREVIEW_VARS = {
     custom_border_color: "--border-color",
     custom_accent_color: "--accent-color",
     custom_accent_hover: "--accent-hover",
+    custom_accent_text: "--accent-text",
 };
 
 function previewTheme(theme) {
