@@ -1095,16 +1095,26 @@ html.view-card .card-view-wrapper {
 
 /* --- full-text search page --- */
 
+.fulltext-results-summary {
+    max-width: var(--content-max-width);
+    margin: 0 auto 0.5rem auto;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    line-height: 1;
+}
+
 .fulltext-search-form {
     display: flex;
     max-width: var(--content-max-width);
     margin: 0 auto 1rem auto;
     gap: 0.5rem;
+    height: 2.5em;
 }
 
 .fulltext-search-text-entry {
     flex: 1;
-    padding: 0 0 0 1em;
+    padding: 0 0.5rem;
     background: var(--surface-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
@@ -1136,7 +1146,7 @@ html.view-card .card-view-wrapper {
 .fulltext-search-result-entry {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
     padding: 1rem 0;
     border-bottom: 1px solid var(--border-color);
     color: inherit;
@@ -1149,22 +1159,25 @@ html.view-card .card-view-wrapper {
 
 .fulltext-search-result-entry:hover .fulltext-search-result-title,
 .fulltext-search-result-entry:focus-visible .fulltext-search-result-title {
-    color: var(--accent-color);
+    color: var(--accent-hover);
 }
 
 .fulltext-search-result-title {
     font-size: 1.15em;
     font-weight: bold;
+    line-height: 1.15;
 }
 
 .fulltext-search-result-chapter-label {
     color: var(--text-muted);
     font-size: 0.9em;
+    line-height: 1.15;
 }
 
 .fulltext-search-result-snippet {
     font-size: 0.9em;
     line-height: 1.5;
+    line-height: 1.15;
 }
 
 .fulltext-search-result-snippet mark {

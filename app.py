@@ -923,7 +923,7 @@ def search_results():
             )
 
     return flask.render_template(
-        "search_results.html",
+        "search.html",
         query=query,
         results=results,
         page=page,

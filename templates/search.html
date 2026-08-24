@@ -11,17 +11,20 @@
         <button type="submit" class="fulltext-search-submit-btn">Search</button>
     </form>
     {% if query %}
-        <p class="results-summary">
+        <p class="fulltext-results-summary">
             {{ total_matches }} match{{ "es" if total_matches != 1 else "" }} for "{{ query }}"
         </p>
         {% if total_matches == 0 %}
-            <p class="results-summary">
+            <p class="fulltext-results-summary">
                 No matches. If you haven't indexed yet (or the library has changed since), use
                 "Reindex search" in the menu.
             </p>
         {% endif %}
     {% else %}
         <p class="results-summary">Enter a quote or phrase to search chapter text.</p>
+        <p class="results-summary">
+            First time here? Use "Reindex search" in the menu to build the search index before searching.
+        </p>
     {% endif %}
     {% if total_pages > 1 %}
         <nav class="pagination pagination-top">
@@ -53,7 +56,7 @@
             <a class="fulltext-search-result-entry"
                href="/read/{{ result.book_id }}/{{ result.chapter_index }}">
                 <span class="fulltext-search-result-title">{{ result.book_title }}</span>
-                <span class="fulltext-search-result-chapter-label">Chapter {{ result.chapter_index + 1 }}: {{ result.chapter_title }}</span>
+                <span class="fulltext-search-result-chapter-label">Chapter {{ result.chapter_index + 1 }} - {{ result.chapter_title }}</span>
                 <span class="fulltext-search-result-snippet">{{ result.snippet | safe }}</span>
             </a>
         {% endfor %}
@@ -83,4 +86,7 @@
             </div>
         </nav>
     {% endif %}
+    <div class="footer footer-insert">
+        Made with <3 by Minighost
+    </div>
 {% endblock %}
