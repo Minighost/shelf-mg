@@ -71,7 +71,7 @@ a:hover {
 
 /* --- buttons --- */
 
-.header-btn {
+.header-nav-drawer-btn {
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-color);
@@ -83,6 +83,24 @@ a:hover {
     line-height: 1;
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+.header-nav-drawer-link {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: inline-block;
+    text-align: center;
+    line-height: 1;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.header-nav-drawer-link:hover {
+    text-decoration: none;
 }
 
 .settings-link {
@@ -125,7 +143,7 @@ a:hover {
     text-decoration: none;
 }
 
-.header-btn,
+.header-nav-drawer-btn,
 .settings-save {
     appearance: none;
     -webkit-appearance: none;
@@ -223,6 +241,12 @@ button::-moz-focus-inner {
     pointer-events: auto;
 }
 
+.header-nav-divider {
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    margin: 0.5rem 0;
+}
+
 .header-title {
     display: flex;
     justify-content: center;
@@ -304,8 +328,21 @@ button::-moz-focus-inner {
 }
 
 .continue-reading-history-link {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: inline-block;
+    text-align: center;
+    line-height: 1;
     flex: 0 0 auto;
     white-space: nowrap;
+}
+
+.continue-reading-history-link:hover {
+    text-decoration: none;
 }
 
 /* --- library: search & filters --- */

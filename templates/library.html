@@ -30,9 +30,9 @@
             <span class="continue-reading-label">Continue reading:</span>
             <a class="continue-reading-entry"
                href="/read/{{ continue_reading.book.id }}/{{ continue_reading.chapter_index }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">
-                <span class="continue-reading-title">{{ continue_reading.book.title }} (Chapter {{ continue_reading.chapter_index + 1 }} – {{ continue_reading.chapter_title }})</span>
+                <span class="continue-reading-title">{{ continue_reading.book.title }} (Chapter {{ continue_reading.chapter_index + 1 }} - {{ continue_reading.chapter_title }})</span>
             </a>
-            <a class="settings-link continue-reading-history-link"
+            <a class="continue-reading-history-link"
                href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
         </div>
     {% endif %}

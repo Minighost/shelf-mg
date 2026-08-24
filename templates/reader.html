@@ -9,7 +9,7 @@
 {% block header_left %}
     <div class="header-left">
         <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}"
-           class="chapter-nav-link"
+           class="header-left-back-link chapter-nav-link"
            data-target-chapter="{{ chapter.index }}">&larr; Back to library</a>
     </div>
 {% endblock %}

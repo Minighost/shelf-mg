@@ -28,7 +28,8 @@
             <div class="header-top">
                 {% block header_left %}
                     <div class="header-left">
-                        <a href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
+                        <a class="header-left-back-link"
+                           href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
                     </div>
                 {% endblock %}
                 <div class="header-right">
@@ -48,16 +49,18 @@
                   action="{{ url_for('refresh_library') }}">
                 <input type="hidden" name="qs" value="{{ back_qs }}">
             </form>
-            <button type="button" class="header-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
-            <button type="button" class="header-btn" onclick="confirmReindexSearch()">Reindex search</button>
-            <button class="header-btn" onclick="toggleTheme()">Toggle theme</button>
-            <a class="settings-link" href="{{ url_for('library_list') }}">Library</a>
-            <a class="settings-link"
-               href="{{ url_for('search_results') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Full-text search</a>
-            <a class="settings-link"
+            <a class="header-nav-drawer-link"
                href="{{ url_for('settings_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Settings</a>
-            <a class="settings-link"
-               href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">History</a>
+            <button class="header-nav-drawer-btn" onclick="toggleTheme()">Toggle theme</button>
+            <hr class="header-nav-divider">
+            <a class="header-nav-drawer-link" href="{{ url_for('library_list') }}">Library</a>
+            <a class="header-nav-drawer-link"
+               href="{{ url_for('history_page') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Reading history</a>
+            <a class="header-nav-drawer-link"
+               href="{{ url_for('search_results') }}{% if back_qs %}?back={{ back_qs | urlencode }}{% endif %}">Full-text search</a>
+            <hr class="header-nav-divider">
+            <button type="button" class="header-nav-drawer-btn" onclick="confirmRefreshLibrary()">Refresh library</button>
+            <button type="button" class="header-nav-drawer-btn" onclick="confirmReindexSearch()">Reindex search</button>
         </nav>
         <dialog id="refresh-dialog" class="confirm-dialog">
             <button type="button"
