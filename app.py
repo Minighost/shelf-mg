@@ -225,7 +225,11 @@ def _list_view_fields():
 def _enabled_list_fields():
     enabled = settings.get_settings(DB_PATH).enabled_list_field_keys()
     fields_by_key = {field["key"]: field for field in _list_view_fields()}
-    return [fields_by_key[key] for key in enabled if key in fields_by_key]
+    fields = [fields_by_key[key] for key in enabled if key in fields_by_key]
+    # Summary carries its own trailing-block styling, so it always renders
+    # last regardless of where it fell in the user's stored/dragged order.
+    fields.sort(key=lambda field: field["key"] == "summary")
+    return fields
 
 
 def _filter_options(books, field):

@@ -244,11 +244,6 @@ function addActiveListField(field) {
     li.className = "list-field-active-chip";
     li.dataset.key = field.key;
 
-    const handle = document.createElement("span");
-    handle.className = "list-field-drag-handle";
-    handle.setAttribute("aria-hidden", "true");
-    handle.textContent = "⠿";
-
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.name = "enabled_list_fields";
@@ -266,8 +261,24 @@ function addActiveListField(field) {
     removeBtn.textContent = "×";
     removeBtn.onclick = () => removeActiveListField(removeBtn);
 
-    li.append(handle, checkbox, label, removeBtn);
-    list.appendChild(li);
+    // Summary always renders last and isn't draggable, so it gets no handle.
+    if (field.key !== "summary") {
+        const handle = document.createElement("span");
+        handle.className = "list-field-drag-handle";
+        handle.setAttribute("aria-hidden", "true");
+        handle.textContent = "⠿";
+        li.append(handle);
+    }
+
+    li.append(checkbox, label, removeBtn);
+
+    // Summary always renders last, so newly added fields insert before it.
+    const summaryChip = list.querySelector('.list-field-active-chip[data-key="summary"]');
+    if (summaryChip) {
+        list.insertBefore(li, summaryChip);
+    } else {
+        list.appendChild(li);
+    }
 
     const search = document.getElementById("list-field-search");
     search.value = "";
@@ -328,6 +339,8 @@ function initListFieldDragDrop() {
         if (!handle) return;
         const item = handle.closest(".list-field-active-chip");
         if (!item) return;
+        // Summary always renders last, so it isn't draggable.
+        if (item.dataset.key === "summary") return;
 
         event.preventDefault();
 
@@ -360,6 +373,12 @@ function initListFieldDragDrop() {
                 const targetRect = target.getBoundingClientRect();
                 const before = moveEvent.clientY < targetRect.top + targetRect.height / 2;
                 target.parentNode.insertBefore(placeholder, before ? target : target.nextSibling);
+            }
+
+            // Summary always renders last, so nothing may be dropped after it.
+            const summaryChip = list.querySelector('.list-field-active-chip[data-key="summary"]');
+            if (summaryChip && summaryChip.compareDocumentPosition(placeholder) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                summaryChip.parentNode.insertBefore(placeholder, summaryChip);
             }
         };
 

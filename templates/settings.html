@@ -227,7 +227,9 @@
                     <ul id="list-field-active-list" class="list-field-active-list">
                         {% for field in active_list_fields %}
                             <li class="list-field-active-chip" data-key="{{ field.key }}">
-                                <span class="list-field-drag-handle" aria-hidden="true">&#10495;</span>
+                                {% if field.key != "summary" %}
+                                    <span class="list-field-drag-handle" aria-hidden="true">&#10495;</span>
+                                {% endif %}
                                 <input type="checkbox"
                                        name="enabled_list_fields"
                                        value="{{ field.key }}"
