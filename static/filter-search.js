@@ -7,17 +7,56 @@ function filterOptions(input) {
 }
 
 function clearFieldInputs(field) {
-    const anyRadio = field.querySelector('input[type="radio"][value=""]');
-    if (anyRadio) {
-        anyRadio.checked = true;
-    }
     field.querySelectorAll('input[type="checkbox"]').forEach((cb) => (cb.checked = false));
     field.querySelectorAll(".filter-range input").forEach((input) => (input.value = ""));
+    const matchMode = field.querySelector(".filter-match-mode");
+    if (matchMode) {
+        matchMode.classList.add("filter-match-mode-hidden");
+        const anyRadio = matchMode.querySelector('input[value="any"]');
+        if (anyRadio) {
+            anyRadio.checked = true;
+        }
+    }
     const clearBtn = field.querySelector(".filter-clear-btn");
     if (clearBtn) {
-        clearBtn.style.display = "none";
+        clearBtn.classList.add("filter-clear-btn-hidden");
     }
 }
+
+function fieldHasActiveInput(field) {
+    if (field.querySelector('input[type="checkbox"]:checked')) return true;
+    return [...field.querySelectorAll(".filter-range input")].some((input) => input.value.trim() !== "");
+}
+
+function updateClearBtnVisibility(field) {
+    const clearBtn = field.querySelector(".filter-clear-btn");
+    if (!clearBtn) return;
+    clearBtn.classList.toggle("filter-clear-btn-hidden", !fieldHasActiveInput(field));
+}
+
+// Reveal each field's any/all match-mode toggle only once 2+ checkboxes are
+// checked within that field — with 0 or 1 selected there's no AND/OR
+// ambiguity to resolve, so the toggle stays hidden. Also reveal the field's
+// Clear button as soon as anything is selected, rather than waiting for the
+// filters to actually be applied.
+document.addEventListener("change", (event) => {
+    if (event.target.type !== "checkbox") return;
+    const field = event.target.closest(".filter-field");
+    if (!field) return;
+    const matchMode = field.querySelector(".filter-match-mode");
+    if (matchMode) {
+        const checkedCount = field.querySelectorAll('.filter-options input[type="checkbox"]:checked').length;
+        matchMode.classList.toggle("filter-match-mode-hidden", checkedCount < 2);
+    }
+    updateClearBtnVisibility(field);
+});
+
+document.addEventListener("input", (event) => {
+    if (!event.target.closest(".filter-range")) return;
+    const field = event.target.closest(".filter-field");
+    if (!field) return;
+    updateClearBtnVisibility(field);
+});
 
 function clearFilterField(event, button) {
     event.preventDefault();

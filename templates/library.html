@@ -100,15 +100,12 @@
                                 <summary>
                                     <span class="filter-field-name">
                                         {{ field.label }}
-                                        {% if field.type == "multi" and selected.get(field.key) %}({{ selected[field.key] | length }}){% endif %}
-                                        {% if field.type == "single" and selected.get(field.key) %}: {{ selected[field.key][0] }}{% endif %}
+                                        {% if field.type != "range" and selected.get(field.key) %}({{ selected[field.key] | length }}){% endif %}
                                         {% if field.type == "range" and selected.get(field.key) %}: {{ range_bound_value(field, selected[field.key][0]) }}&ndash;{{ range_bound_value(field, selected[field.key][1]) }}{% endif %}
                                     </span>
-                                    {% if selected.get(field.key) %}
-                                        <button type="button"
-                                                class="filter-clear-btn"
-                                                onclick="clearFilterField(event, this)">Clear</button>
-                                    {% endif %}
+                                    <button type="button"
+                                            class="filter-clear-btn{% if not selected.get(field.key) %} filter-clear-btn-hidden{% endif %}"
+                                            onclick="clearFilterField(event, this)">Clear</button>
                                 </summary>
                                 {% if field.type == "range" %}
                                     {% set bounds = range_bounds.get(field.key) %}
@@ -125,28 +122,36 @@
                                                value="{{ range_bound_value(field, selected_bounds[1]) }}">
                                     </div>
                                 {% else %}
-                                    {% if field.type == "single" %}
-                                        <label class="filter-choice filter-any">
-                                            <input type="radio"
-                                                   name="{{ field.key }}"
-                                                   value=""
-                                                   {% if not selected.get(field.key) %}checked{% endif %}>
-                                            Any
-                                        </label>
-                                    {% endif %}
                                     <input type="text"
                                            class="filter-search"
                                            placeholder="Search…"
                                            oninput="filterOptions(this)">
+                                    {% if field.cardinality == "multi" %}
+                                        {% set selected_count = selected.get(field.key, []) | length %}
+                                        <div class="filter-match-mode{% if selected_count < 2 %} filter-match-mode-hidden{% endif %}">
+                                            <span class="filter-match-mode-label">Match:</span>
+                                            <label>
+                                                <input type="radio"
+                                                       name="{{ field.key }}_match"
+                                                       value="any"
+                                                       {% if match_modes.get(field.key, "any") == "any" %}checked{% endif %}>
+                                                any
+                                            </label>
+                                            <label>
+                                                <input type="radio"
+                                                       name="{{ field.key }}_match"
+                                                       value="all"
+                                                       {% if match_modes.get(field.key) == "all" %}checked{% endif %}>
+                                                all
+                                            </label>
+                                        </div>
+                                    {% endif %}
                                     <div class="filter-options">
                                         {% set selected_values = selected.get(field.key, []) %}
                                         {% set unselected_options = filter_options[field.key] | reject('in', selected_values) | list %}
                                         {% for value in filter_options[field.key] if value in selected_values %}
                                             <label class="filter-choice">
-                                                <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
-                                                       name="{{ field.key }}"
-                                                       value="{{ value }}"
-                                                       checked>
+                                                <input type="checkbox" name="{{ field.key }}" value="{{ value }}" checked>
                                                 {{ value }}
                                             </label>
                                         {% endfor %}
@@ -155,9 +160,7 @@
                                         {% endif %}
                                         {% for value in unselected_options %}
                                             <label class="filter-choice">
-                                                <input type="{{ 'checkbox' if field.type == 'multi' else 'radio' }}"
-                                                       name="{{ field.key }}"
-                                                       value="{{ value }}">
+                                                <input type="checkbox" name="{{ field.key }}" value="{{ value }}">
                                                 {{ value }}
                                             </label>
                                         {% endfor %}

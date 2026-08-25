@@ -626,10 +626,27 @@ button::-moz-focus-inner {
     font-size: 0.9em;
 }
 
-.filter-any {
+.filter-match-mode {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin-top: 0.5rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.filter-match-mode-hidden {
+    display: none;
+}
+
+.filter-clear-btn-hidden {
+    display: none;
+}
+
+.filter-match-mode label {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
 }
 
 .filter-search {

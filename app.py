@@ -110,14 +110,39 @@ def _builtin_filter_fields():
     see calibre_reader.available_builtin_fields().
     """
     fields = [
-        {"key": "title", "label": "Title", "type": "single", "datatype": "text"},
-        {"key": "tags", "label": "Tags", "type": "multi", "datatype": "text"},
-        {"key": "author", "label": "Author", "type": "single", "datatype": "text"},
-        {"key": "series", "label": "Series", "type": "single", "datatype": "text"},
+        {
+            "key": "title",
+            "label": "Title",
+            "type": "choice",
+            "cardinality": "single",
+            "datatype": "text",
+        },
+        {
+            "key": "tags",
+            "label": "Tags",
+            "type": "choice",
+            "cardinality": "multi",
+            "datatype": "text",
+        },
+        {
+            "key": "author",
+            "label": "Author",
+            "type": "choice",
+            "cardinality": "multi",
+            "datatype": "text",
+        },
+        {
+            "key": "series",
+            "label": "Series",
+            "type": "choice",
+            "cardinality": "single",
+            "datatype": "text",
+        },
         {
             "key": "publisher",
             "label": "Publisher",
-            "type": "single",
+            "type": "choice",
+            "cardinality": "single",
             "datatype": "text",
         },
     ]
@@ -179,19 +204,21 @@ def _custom_filter_fields():
     fields = []
     for column in calibre_reader.get_custom_columns(LIBRARY_PATH):
         if column["datatype"] in calibre_reader.RANGE_CUSTOM_DATATYPES:
-            field_type = "range"
-        elif column["is_multiple"]:
-            field_type = "multi"
-        else:
-            field_type = "single"
-        fields.append(
-            {
+            field = {
                 "key": CUSTOM_FILTER_KEY_PREFIX + column["label"],
                 "label": column["name"],
-                "type": field_type,
+                "type": "range",
                 "datatype": column["datatype"],
             }
-        )
+        else:
+            field = {
+                "key": CUSTOM_FILTER_KEY_PREFIX + column["label"],
+                "label": column["name"],
+                "type": "choice",
+                "cardinality": "multi" if column["is_multiple"] else "single",
+                "datatype": column["datatype"],
+            }
+        fields.append(field)
     return fields
 
 
@@ -278,7 +305,7 @@ def _range_bounds(books, field):
     return (min(values), max(values))
 
 
-def _book_matches_filters(book, filter_fields, selected):
+def _book_matches_filters(book, filter_fields, selected, match_modes):
     for field in filter_fields:
         if field["type"] == "range":
             bounds = selected.get(field["key"])
@@ -298,11 +325,16 @@ def _book_matches_filters(book, filter_fields, selected):
         if not chosen:
             continue
         book_values = set(_filter_values(book, field))
-        if field["type"] == "multi":
+        mode = (
+            match_modes.get(field["key"], "any")
+            if field.get("cardinality") == "multi"
+            else "any"
+        )
+        if mode == "all":
             if not set(chosen).issubset(book_values):
                 return False
         else:
-            if chosen[0] not in book_values:
+            if not (set(chosen) & book_values):
                 return False
     return True
 
@@ -434,14 +466,17 @@ def library_list():
                     max_v = max_v.replace(tzinfo=timezone.utc)
             if min_v is not None or max_v is not None:
                 selected[field["key"]] = (min_v, max_v)
-        elif field["type"] == "multi":
+        else:
             values = flask.request.args.getlist(field["key"])
             if values:
                 selected[field["key"]] = values
-        else:
-            value = flask.request.args.get(field["key"], "").strip()
-            if value:
-                selected[field["key"]] = [value]
+
+    match_modes = {}
+    for field in filter_fields:
+        if field.get("cardinality") != "multi":
+            continue
+        if flask.request.args.get(field["key"] + "_match") == "all":
+            match_modes[field["key"]] = "all"
 
     sort_by = flask.request.args.get("sort", "title")
     sort_dir = flask.request.args.get("dir", "asc")
@@ -464,7 +499,9 @@ def library_list():
     if query:
         all_books = [b for b in all_books if _book_matches(b, query)]
     all_books = [
-        b for b in all_books if _book_matches_filters(b, filter_fields, selected)
+        b
+        for b in all_books
+        if _book_matches_filters(b, filter_fields, selected, match_modes)
     ]
     all_books = _sort_books(all_books, sort_by, sort_dir, sort_fields)
 
@@ -511,6 +548,8 @@ def library_list():
                 )
         else:
             page_args[field["key"]] = values
+            if match_modes.get(field["key"]) == "all":
+                page_args[field["key"] + "_match"] = "all"
 
     # Same as page_args but with the view fixed to each option, for the
     # view-switch links.
@@ -534,6 +573,7 @@ def library_list():
         filter_options=filter_options,
         range_bounds=range_bounds,
         selected=selected,
+        match_modes=match_modes,
         sort_by=sort_by,
         sort_dir=sort_dir,
         page_args=page_args,
