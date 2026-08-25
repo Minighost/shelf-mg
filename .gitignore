@@ -7,6 +7,7 @@ pyproject.toml
 shelf-mg.db
 /shelf-mg-data/
 uv.lock
+*.bak
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
