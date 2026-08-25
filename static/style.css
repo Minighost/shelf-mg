@@ -538,9 +538,7 @@ button::-moz-focus-inner {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding-block: 0.3em;
     padding-inline: 0.6em;
-    height: 2.2em;
     width: 100%;
     min-width: 0;
     flex: 0 0 auto;
@@ -548,7 +546,7 @@ button::-moz-focus-inner {
 }
 
 .filter-field[open] {
-    height: auto;
+    padding-block-end: 0.3em;
 }
 
 .filter-field label {
@@ -560,14 +558,14 @@ button::-moz-focus-inner {
     cursor: pointer;
     color: var(--text-color);
     font-size: 0.9em;
+    line-height: 1;
+    height: 2.2em;
+    box-sizing: border-box;
+    padding-block: 0.3em;
     display: flex;
     align-items: center;
     gap: 0.3rem;
     list-style: none;
-    height: calc(2.2em - 0.6em - 2px);
-    /* content-box height when closed: 2.2em total, minus 0.3em top+bottom
-       padding, minus 1px top+bottom border. Explicit instead of 100% so it
-       still works when .filter-field switches to height: auto (open state). */
 }
 
 .filter-field summary::-webkit-details-marker {
@@ -578,12 +576,12 @@ button::-moz-focus-inner {
     content: "\25B8";
     display: inline-block;
     font-size: 1.1em;
+    line-height: 1;
     color: var(--text-muted);
-    transform: translateY(0.1em);
 }
 
 .filter-field[open]>summary::before {
-    transform: translateY(0.1em) rotate(90deg);
+    transform: rotate(90deg);
 }
 
 .filter-field-name {
@@ -592,9 +590,7 @@ button::-moz-focus-inner {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1.2;
-    padding-bottom: 0;
-    transform: translateY(0.1em);
+    line-height: 1;
 }
 
 .filter-clear-btn {
@@ -602,12 +598,12 @@ button::-moz-focus-inner {
     border: none;
     color: var(--text-muted);
     font-size: 0.85em;
+    line-height: 1;
     white-space: nowrap;
     cursor: pointer;
     padding: 0.05rem 0.3rem;
     border-radius: 4px;
     flex-shrink: 0;
-    transform: translateY(0.2em);
 }
 
 .filter-clear-btn:hover {
