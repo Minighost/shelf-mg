@@ -174,31 +174,29 @@
         </details>
     </form>
     <p class="results-summary">Showing {{ total_matches }} out of {{ total_library }} total files</p>
-    {% if total_pages > 1 %}
-        <nav class="pagination pagination-top">
-            <div class="pagination-controls">
-                <div class="pagination-side pagination-side-left">
-                    {% if page > 1 %}
-                        <a href="{{ url_for('library_list', page=1, **page_args) }}">&laquo; First</a>
-                        <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
-                    {% else %}
-                        <span class="pagination-disabled">&laquo; First</span>
-                        <span class="pagination-disabled">&larr; Previous</span>
-                    {% endif %}
-                </div>
-                <span>Page {{ page }} of {{ total_pages }}</span>
-                <div class="pagination-side pagination-side-right">
-                    {% if page < total_pages %}
-                        <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
-                        <a href="{{ url_for('library_list', page=total_pages, **page_args) }}">Last &raquo;</a>
-                    {% else %}
-                        <span class="pagination-disabled">Next &rarr;</span>
-                        <span class="pagination-disabled">Last &raquo;</span>
-                    {% endif %}
-                </div>
+    <nav class="pagination pagination-top">
+        <div class="pagination-controls">
+            <div class="pagination-side pagination-side-left">
+                {% if page > 1 %}
+                    <a href="{{ url_for('library_list', page=1, **page_args) }}">&laquo; First</a>
+                    <a href="{{ url_for('library_list', page=page - 1, **page_args) }}">&larr; Previous</a>
+                {% else %}
+                    <span class="pagination-disabled">&laquo; First</span>
+                    <span class="pagination-disabled">&larr; Previous</span>
+                {% endif %}
             </div>
-        </nav>
-    {% endif %}
+            <span>Page {{ page }} of {{ total_pages }}</span>
+            <div class="pagination-side pagination-side-right">
+                {% if page < total_pages %}
+                    <a href="{{ url_for('library_list', page=page + 1, **page_args) }}">Next &rarr;</a>
+                    <a href="{{ url_for('library_list', page=total_pages, **page_args) }}">Last &raquo;</a>
+                {% else %}
+                    <span class="pagination-disabled">Next &rarr;</span>
+                    <span class="pagination-disabled">Last &raquo;</span>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
     <div class="view-switcher">
         <div class="view-links">
             {% for v, label in (('list', 'List'), ('grid', 'Grid'), ('card', 'Card')) %}
