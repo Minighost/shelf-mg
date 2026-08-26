@@ -43,6 +43,9 @@ DEFAULT_CUSTOM_COLORS = {
 
 DEFAULT_OVERRIDE_EPUB_FONT = False
 
+DEFAULT_SCROLL_IDLE_THRESHOLD_MINUTES = 5.0
+DEFAULT_SCROLL_SAVE_DEBOUNCE_SECONDS = 1.0
+
 # Library filters enabled by default for new/existing users. The full set of
 # *available* filters (built-ins plus discovered Calibre custom columns) is
 # computed live in app.py, since it depends on the connected library's
@@ -79,6 +82,8 @@ class Settings:
     custom_accent_text: str
     enabled_filters: str
     enabled_list_fields: str
+    scroll_idle_threshold_minutes: float
+    scroll_save_debounce_seconds: float
 
     def enabled_filter_keys(self) -> list[str]:
         return [key for key in self.enabled_filters.split(",") if key]
@@ -106,6 +111,8 @@ def init_db(db_path: str) -> None:
         "enabled_filters",
         "library_view",
         "enabled_list_fields",
+        "scroll_idle_threshold_minutes",
+        "scroll_save_debounce_seconds",
     ]
     for field in new_columns:
         try:
@@ -124,6 +131,7 @@ def get_settings(db_path: str) -> Settings:
         "SELECT theme, font_family_key, font_size, override_epub_font, "
         "reader_font_family_key, reader_font_size, content_max_width_pct, "
         "enabled_filters, library_view, enabled_list_fields, "
+        "scroll_idle_threshold_minutes, scroll_save_debounce_seconds, "
         + ", ".join(CUSTOM_COLOR_FIELDS)
         + " FROM settings WHERE id = 1"
     ).fetchone()
@@ -143,6 +151,8 @@ def get_settings(db_path: str) -> Settings:
             enabled_filters=DEFAULT_ENABLED_FILTERS,
             enabled_list_fields=DEFAULT_ENABLED_LIST_FIELDS,
             library_view=DEFAULT_LIBRARY_VIEW,
+            scroll_idle_threshold_minutes=DEFAULT_SCROLL_IDLE_THRESHOLD_MINUTES,
+            scroll_save_debounce_seconds=DEFAULT_SCROLL_SAVE_DEBOUNCE_SECONDS,
             **DEFAULT_CUSTOM_COLORS,
         )
 
@@ -178,6 +188,12 @@ def get_settings(db_path: str) -> Settings:
             else DEFAULT_ENABLED_LIST_FIELDS
         ),
         library_view=row["library_view"] or DEFAULT_LIBRARY_VIEW,
+        scroll_idle_threshold_minutes=float(
+            row["scroll_idle_threshold_minutes"] or DEFAULT_SCROLL_IDLE_THRESHOLD_MINUTES
+        ),
+        scroll_save_debounce_seconds=float(
+            row["scroll_save_debounce_seconds"] or DEFAULT_SCROLL_SAVE_DEBOUNCE_SECONDS
+        ),
         **custom_colors,
     )
 
@@ -195,6 +211,8 @@ def save_settings(
     enabled_filters: list[str] | None = None,
     enabled_list_fields: list[str] | None = None,
     library_view: str | None = None,
+    scroll_idle_threshold_minutes: float | None = None,
+    scroll_save_debounce_seconds: float | None = None,
 ) -> None:
     if theme not in THEME_CHOICES:
         raise ValueError(f"invalid theme: {theme}")
@@ -229,6 +247,20 @@ def save_settings(
     library_view = library_view or existing.library_view
     if library_view not in LIBRARY_VIEW_CHOICES:
         raise ValueError(f"invalid library_view: {library_view}")
+
+    scroll_idle_threshold_minutes = (
+        scroll_idle_threshold_minutes
+        if scroll_idle_threshold_minutes is not None
+        else existing.scroll_idle_threshold_minutes
+    )
+    scroll_idle_threshold_minutes = max(1, min(60, scroll_idle_threshold_minutes))
+
+    scroll_save_debounce_seconds = (
+        scroll_save_debounce_seconds
+        if scroll_save_debounce_seconds is not None
+        else existing.scroll_save_debounce_seconds
+    )
+    scroll_save_debounce_seconds = max(0.2, min(10, scroll_save_debounce_seconds))
 
     if enabled_filters is None:
         resolved_enabled_filters = existing.enabled_filters
@@ -268,6 +300,8 @@ def save_settings(
         "enabled_filters",
         "library_view",
         "enabled_list_fields",
+        "scroll_idle_threshold_minutes",
+        "scroll_save_debounce_seconds",
     ] + CUSTOM_COLOR_FIELDS
     placeholders = ", ".join("?" for _ in columns)
     updates = ", ".join(f"{col} = excluded.{col}" for col in columns if col != "id")
@@ -284,6 +318,8 @@ def save_settings(
         resolved_enabled_filters,
         library_view,
         resolved_enabled_list_fields,
+        scroll_idle_threshold_minutes,
+        scroll_save_debounce_seconds,
     ] + [resolved_colors[field] for field in CUSTOM_COLOR_FIELDS]
 
     conn = sqlite3.connect(db_path)

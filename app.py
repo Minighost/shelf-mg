@@ -631,6 +631,13 @@ def read_chapter(book_id, chapter_index):
 
     saved = positions.get_position(DB_PATH, book_id)
     known_updated_at = saved.updated_at if saved is not None else None
+    # A saved scroll_percent only means something for the chapter it was saved
+    # against — landing on a different chapter should always start at the top.
+    known_scroll_percent = (
+        saved.scroll_percent
+        if saved is not None and saved.chapter_index == chapter_index
+        else 0.0
+    )
 
     return flask.render_template(
         "reader.html",
@@ -640,6 +647,7 @@ def read_chapter(book_id, chapter_index):
         prev_index=prev_index,
         next_index=next_index,
         known_updated_at=known_updated_at,
+        known_scroll_percent=known_scroll_percent,
     )
 
 
@@ -780,6 +788,12 @@ def settings_page():
         content_max_width_pct_raw = flask.request.form.get("content_max_width_pct", "")
         enabled_filters = flask.request.form.getlist("enabled_filters")
         enabled_list_fields = flask.request.form.getlist("enabled_list_fields")
+        scroll_idle_threshold_minutes_raw = flask.request.form.get(
+            "scroll_idle_threshold_minutes", ""
+        )
+        scroll_save_debounce_seconds_raw = flask.request.form.get(
+            "scroll_save_debounce_seconds", ""
+        )
 
         try:
             font_size = float(font_size_raw)
@@ -788,6 +802,16 @@ def settings_page():
             )
             content_max_width_pct = (
                 float(content_max_width_pct_raw) if content_max_width_pct_raw else None
+            )
+            scroll_idle_threshold_minutes = (
+                float(scroll_idle_threshold_minutes_raw)
+                if scroll_idle_threshold_minutes_raw
+                else None
+            )
+            scroll_save_debounce_seconds = (
+                float(scroll_save_debounce_seconds_raw)
+                if scroll_save_debounce_seconds_raw
+                else None
             )
         except ValueError:
             return "Invalid font size", 400
@@ -826,6 +850,8 @@ def settings_page():
                 custom_colors=custom_colors,
                 enabled_filters=enabled_filters,
                 enabled_list_fields=enabled_list_fields,
+                scroll_idle_threshold_minutes=scroll_idle_threshold_minutes,
+                scroll_save_debounce_seconds=scroll_save_debounce_seconds,
             )
         except ValueError as e:
             return str(e), 400
@@ -892,7 +918,11 @@ def position_api(book_id):
         if saved is None:
             return flask.jsonify(None)
         return flask.jsonify(
-            {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
+            {
+                "chapter_index": saved.chapter_index,
+                "updated_at": saved.updated_at,
+                "scroll_percent": saved.scroll_percent,
+            }
         )
 
     data = flask.request.get_json(silent=True) or {}
@@ -901,10 +931,23 @@ def position_api(book_id):
     if chapter_index is None:
         return flask.jsonify({"error": "chapter_index is required"}), 400
 
-    saved = positions.save_position(DB_PATH, book_id, int(chapter_index))
-    logger.debug("saved position for book %s: chapter %s", book_id, chapter_index)
+    scroll_percent = max(0.0, min(1.0, float(data.get("scroll_percent") or 0.0)))
+
+    saved = positions.save_position(
+        DB_PATH, book_id, int(chapter_index), scroll_percent
+    )
+    logger.debug(
+        "saved position for book %s: chapter %s, scroll %.3f",
+        book_id,
+        chapter_index,
+        scroll_percent,
+    )
     return flask.jsonify(
-        {"chapter_index": saved.chapter_index, "updated_at": saved.updated_at}
+        {
+            "chapter_index": saved.chapter_index,
+            "updated_at": saved.updated_at,
+            "scroll_percent": saved.scroll_percent,
+        }
     )
 
 

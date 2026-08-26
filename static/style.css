@@ -1210,6 +1210,15 @@ html.view-card .card-view-wrapper {
     margin: 0 auto 1rem auto;
 }
 
+/* Keeps the menu (library/settings/theme/history) reachable without
+   scrolling back to the top of a long chapter. */
+.reader-header .header-nav-drawer-toggle {
+    position: fixed;
+    top: 0.75rem;
+    right: max(0.75rem, calc((100vw - var(--content-max-width)) / 2 + 0.75rem));
+    z-index: 998;
+}
+
 .confirm-dialog {
     max-width: min(var(--content-max-width), calc(100% - 2rem));
     width: fit-content;

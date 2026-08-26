@@ -4,6 +4,9 @@
 {% block title %}{{ book.title }} — {{ chapter.title }}{% endblock %}
 {% block body_attrs %}data-book-id="{{ book.id }}"
       data-chapter-index="{{ chapter.index }}"
+      data-known-scroll-percent="{{ known_scroll_percent }}"
+      data-idle-threshold-ms="{{ (settings.scroll_idle_threshold_minutes * 60000) | int }}"
+      data-scroll-debounce-ms="{{ (settings.scroll_save_debounce_seconds * 1000) | int }}"
       {% if known_updated_at is not none %}data-known-updated-at="{{ known_updated_at }}"{% endif %}{% endblock %}
 {% block header_class %}reader-header{% endblock %}
 {% block header_left %}
@@ -64,7 +67,10 @@
         (function () {
         const bookId = document.body.dataset.bookId;
         const chapterIndex = parseInt(document.body.dataset.chapterIndex, 10);
-        const knownUpdatedAt = document.body.dataset.knownUpdatedAt || null;
+        let knownUpdatedAt = document.body.dataset.knownUpdatedAt || null;
+        const knownScrollPercent = parseFloat(document.body.dataset.knownScrollPercent) || 0;
+        const idleThresholdMs = parseInt(document.body.dataset.idleThresholdMs, 10) || 300000;
+        const scrollDebounceMs = parseInt(document.body.dataset.scrollDebounceMs, 10) || 1000;
         const iframe = document.getElementById("chapter-frame");
         const select = document.getElementById("chapter-select");
         const conflictDialog = document.getElementById("conflict-dialog");
@@ -104,10 +110,33 @@
             });
         }
 
+        function currentScrollPercent() {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            return maxScroll > 0 ? window.scrollY / maxScroll : 0;
+        }
+
+        // Guards the restore-on-load scroll below from being mistaken for
+        // real user scrolling, and from re-yanking the page back to the
+        // saved position if the user scrolls manually during the ~300ms
+        // window between the frame's initial height report and its
+        // late-layout correction (chapter_frame.html).
+        let restoring = false;
+        let userScrolledSinceRestore = false;
+
+        function restoreScrollTo(percent) {
+            restoring = true;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            window.scrollTo(0, maxScroll * percent);
+            setTimeout(() => { restoring = false; }, 50);
+        }
+
         window.addEventListener("message", (event) => {
             if (event.origin !== window.location.origin) return;
             if (event.data && event.data.type === "shelf-mg-frame-height") {
                 iframe.style.height = event.data.height + "px";
+                if (knownScrollPercent > 0 && !userScrolledSinceRestore) {
+                    restoreScrollTo(knownScrollPercent);
+                }
             }
         });
 
@@ -120,16 +149,30 @@
             return `Chapter ${index + 1}: "${chapterTitle(index)}"`;
         }
 
-        function savePosition(targetChapterIndex) {
+        function savePosition(targetChapterIndex, scrollPercent = 0) {
             return fetch(`/api/position/${bookId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chapter_index: targetChapterIndex }),
-            });
+                body: JSON.stringify({
+                    chapter_index: targetChapterIndex,
+                    scroll_percent: scrollPercent,
+                }),
+            })
+                .then((res) => (res.ok ? res.json() : null))
+                .then((data) => {
+                    // Every successful save must refresh the local conflict-check
+                    // baseline — otherwise the idle/visibility checker below would
+                    // flag this device's own debounced writes as a conflict.
+                    if (data && data.updated_at) knownUpdatedAt = data.updated_at;
+                    return data;
+                });
         }
 
-        function saveBeacon(targetChapterIndex) {
-            const payload = JSON.stringify({ chapter_index: targetChapterIndex });
+        function saveBeacon(targetChapterIndex, scrollPercent = 0) {
+            const payload = JSON.stringify({
+                chapter_index: targetChapterIndex,
+                scroll_percent: scrollPercent,
+            });
             if (navigator.sendBeacon) {
                 navigator.sendBeacon(
                     `/api/position/${bookId}`,
@@ -188,7 +231,11 @@
             }
 
             navigating = true;
-            await savePosition(targetIndex);
+            // A freshly-loaded chapter has no scroll yet — explicit 0 here is
+            // belt-and-suspenders alongside the server-side gate in read_chapter
+            // that already refuses to apply a stale scroll_percent to a
+            // different chapter.
+            await savePosition(targetIndex, 0);
             window.location.href = url;
         }
 
@@ -209,12 +256,105 @@
             goToChapter(parseInt(target, 10), `/read/${bookId}/${target}${backSuffix}`);
         });
 
+        // Tracks the latest scroll position independent of the debounced
+        // save below, so pagehide can flush it even if the debounce timer
+        // never got a chance to fire. Initialized to the restored value in
+        // case pagehide fires before any scroll event happens at all.
+        let lastKnownScrollPercent = knownScrollPercent;
+
+        let lastActivityAt = Date.now();
+        let idleConflictCheckInFlight = false; // guards against overlapping checks stacking dialogs
+        const SCROLL_CONFLICT_TOLERANCE = 0.025; // fudge factor for device/viewport rendering variance
+
+        async function runIdleConflictCheck() {
+            let current;
+            try {
+                const res = await fetch(`/api/position/${bookId}`);
+                current = res.ok ? await res.json() : null;
+            } catch (e) {
+                return;
+            }
+            if (!current || !knownUpdatedAt || current.updated_at <= knownUpdatedAt) return;
+
+            if (current.chapter_index !== chapterIndex) {
+                // Same underlying updated_at comparison as goToChapter's conflict
+                // check, but this is a separate call site (idle-triggered, not
+                // nav-triggered) with its own copy — deliberately not routed
+                // through goToChapter.
+                const result = await askConfirm(
+                    `Reading progress was updated elsewhere (now at ${chapterLabel(current.chapter_index)}). ` +
+                        `Stay here or jump to the other position?`,
+                    "Jump there",
+                    "Stay here"
+                );
+                if (result === "confirm") {
+                    navigating = true;
+                    window.location.href = `/read/${bookId}/${current.chapter_index}`;
+                } else {
+                    knownUpdatedAt = current.updated_at; // acknowledge, stay — control transfers back on next save
+                }
+                return;
+            }
+
+            const liveDelta = Math.abs(current.scroll_percent - currentScrollPercent());
+            if (liveDelta > SCROLL_CONFLICT_TOLERANCE) {
+                const result = await askConfirm(
+                    `Reading progress was updated on another device (position ${Math.round(current.scroll_percent * 100)}%). ` +
+                        `Stay here or jump to the other position?`,
+                    "Jump there",
+                    "Stay here"
+                );
+                if (result === "confirm") {
+                    restoreScrollTo(current.scroll_percent);
+                    lastKnownScrollPercent = current.scroll_percent;
+                }
+                knownUpdatedAt = current.updated_at; // either way, this device has now seen the latest state
+            }
+        }
+
+        async function checkForIdleConflict() {
+            if (idleConflictCheckInFlight) return; // e.g. a scroll-triggered check is already
+                                                    // awaiting the confirm dialog when visibilitychange fires
+            idleConflictCheckInFlight = true;
+            try {
+                await runIdleConflictCheck();
+            } finally {
+                idleConflictCheckInFlight = false;
+            }
+        }
+
+        function maybeCheckIdleConflict() {
+            const now = Date.now();
+            if (now - lastActivityAt > idleThresholdMs) checkForIdleConflict();
+            lastActivityAt = now;
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") checkForIdleConflict();
+        });
+
+        let scrollDebounceTimer = null;
+        window.addEventListener("scroll", () => {
+            if (restoring) return; // ignore the scroll event caused by our own restore
+            userScrolledSinceRestore = true;
+            lastKnownScrollPercent = currentScrollPercent();
+            maybeCheckIdleConflict(); // async, fire-and-forget — piggybacks on this listener,
+                                       // no separate polling/timer infrastructure needed
+            clearTimeout(scrollDebounceTimer);
+            scrollDebounceTimer = setTimeout(() => {
+                // Direct POST, not goToChapter's GET-then-compare dance — that
+                // flow is for infrequent, meaningful chapter changes, not a
+                // save that should be cheap and frequent.
+                savePosition(chapterIndex, lastKnownScrollPercent);
+            }, scrollDebounceMs);
+        });
+
         // pagehide (not beforeunload) is what reliably fires when the
         // browser navigates away via bfcache-eligible paths like the
         // back/forward buttons — beforeunload is often skipped there.
         window.addEventListener("pagehide", () => {
             if (navigating) return;
-            saveBeacon(chapterIndex);
+            saveBeacon(chapterIndex, lastKnownScrollPercent);
         });
         })();
     </script>
