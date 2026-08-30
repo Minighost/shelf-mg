@@ -1217,6 +1217,8 @@ html.view-card .card-view-wrapper {
     top: 0.75rem;
     right: max(0.75rem, calc((100vw - var(--content-max-width)) / 2 + 0.75rem));
     z-index: 998;
+    background: var(--surface-color);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .confirm-dialog {
