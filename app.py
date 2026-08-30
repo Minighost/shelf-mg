@@ -8,8 +8,9 @@ import mimetypes
 import os
 import re
 import urllib.parse
-import zipfile
 import xml.etree.ElementTree as ET
+import zipfile
+from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
 import werkzeug.http
@@ -88,6 +89,19 @@ def _rewrite_image_srcs(
         return f"{prefix}{quote}{new_src}{quote}"
 
     return pattern.sub(replace, html)
+
+
+def _normalize_chapter_html(raw_html: str) -> str:
+    """
+    Re-serialize chapter HTML through html.parser (not an HTML5-spec parser)
+    to fix self-closing tags on non-void elements (e.g. <em/> used as a
+    scene-break marker in some source EPUBs). HTML5 parsing only honors
+    self-closing syntax for void elements, so <em/> stays open under a
+    browser or html5lib/html5-parser, italicizing the rest of the chapter.
+    html.parser treats self-closing syntax literally, fixing this.
+    """
+    soup = BeautifulSoup(raw_html, "html.parser")
+    return str(soup)
 
 
 def _book_matches(book, query):
@@ -745,6 +759,7 @@ def read_chapter_frame(book_id, chapter_index):
             epub_book, epub_book.chapters[chapter_index]
         )
         content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
+        content = _normalize_chapter_html(content)
         css = epub_parser.get_stylesheets(epub_path, epub_book)
     except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
         logger.warning("failed to parse epub %s: %s", epub_path, e)
