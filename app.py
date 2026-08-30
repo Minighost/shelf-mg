@@ -7,6 +7,7 @@ import logging
 import mimetypes
 import os
 import re
+import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 import zipfile
@@ -31,6 +32,26 @@ app = flask.Flask(__name__)
 flask_compress.Compress(app)
 # use gunicorn in prod:
 # gunicorn -w 1 -b 0.0.0.0:5000 app:app
+
+
+@app.before_request
+def _log_request_start():
+    flask.g._start_time = time.monotonic()
+    logger.debug("request start: %s %s", flask.request.method, flask.request.path)
+
+
+@app.after_request
+def _log_request_end(response):
+    elapsed = time.monotonic() - flask.g.get("_start_time", time.monotonic())
+    logger.debug(
+        "request end: %s %s -> %s (%.3fs)",
+        flask.request.method,
+        flask.request.path,
+        response.status_code,
+        elapsed,
+    )
+    return response
+
 
 LIBRARY_PATH = os.environ.get("SHELF_MG_LIBRARY_PATH")
 if not LIBRARY_PATH:
