@@ -25,23 +25,26 @@
         {% block extra_head %}{% endblock %}
     </head>
     <body {% block body_attrs %}{% endblock %}>
-        <div class="{% block header_class %}library-header{% endblock %}">
-            <div class="header-top">
-                {% block header_left %}
-                    <div class="header-left">
-                        <a class="header-left-back-link"
-                           href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
-                    </div>
-                {% endblock %}
-                <div class="header-right">
-                    <button type="button"
-                            class="header-nav-drawer-toggle"
-                            onclick="toggleHeaderNavDrawer()"
-                            aria-expanded="false"
-                            aria-controls="header-nav-drawer">Menu</button>
+        <div class="header-top">
+            {% block header_left %}
+                <div class="header-left">
+                    <a class="header-left-back-link"
+                       href="{{ url_for('library_list') }}{% if back_qs %}?{{ back_qs }}{% endif %}">&larr; Back to library</a>
                 </div>
+            {% endblock %}
+            <div class="header-right">
+                <button type="button"
+                        class="header-nav-drawer-toggle"
+                        onclick="toggleHeaderNavDrawer()"
+                        aria-expanded="false"
+                        aria-controls="header-nav-drawer">Menu</button>
             </div>
-            {% block header_title %}{% endblock %}
+        </div>
+        <div class="page-container">
+            <div class="{% block header_class %}library-header{% endblock %}">
+                {% block header_title %}{% endblock %}
+            </div>
+            {% block content %}{% endblock %}
         </div>
         <div class="header-nav-drawer-backdrop" onclick="closeHeaderNavDrawer()"></div>
         <nav id="header-nav-drawer" class="header-nav-drawer">
@@ -159,6 +162,5 @@
                     });
             }
         </script>
-        {% block content %}{% endblock %}
     </body>
 </html>
