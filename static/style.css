@@ -178,7 +178,7 @@ button::-moz-focus-inner {
     top: 0;
     z-index: 998; /* below .header-nav-drawer (1000) and its backdrop (999) */
     background: var(--bg-color);
-    padding: 0.25rem 0;
+    padding: 0.25rem 0.25rem 0.25rem 0.5rem;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid var(--border-color);
 }
@@ -1861,6 +1861,10 @@ html.view-card .card-view-wrapper {
 @media (min-width: 900px) {
     .header-title {
         font-size: 2.2em;
+    }
+
+    .header-top {
+        padding: 0.25rem 0;
     }
 
     :root {
