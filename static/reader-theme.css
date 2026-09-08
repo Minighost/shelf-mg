@@ -1,0 +1,43 @@
+/* Theme palettes and reading-text variables shared by the outer chrome and the
+   reading iframe. Split out of style.css so chapter_frame.html can pull in the
+   theme without inheriting the app's element-level rules — those used to leak
+   into book content and override the EPUB's own styling. The frame links this
+   file directly; style.css @imports it, so every page that already links
+   style.css (base.html, 404.html, 500.html) keeps working unchanged.
+
+   Nothing here may declare a rule — variables only, or the leak comes back. */
+
+:root {
+    --reader-font-family: Georgia, 'Times New Roman', serif;
+    --reader-font-size: clamp(calc(var(--reader-font-size-base, 1.1rem) * 0.5),
+            calc(var(--reader-font-size-base, 1.1rem) * 0.3 + 2vw),
+            var(--reader-font-size-base, 1.1rem));
+}
+
+[data-theme="light"] {
+    --bg-color: #f4f7fb;
+    --surface-color: #ffffff;
+    --text-color: #1c222c;
+    --text-muted: #4f5763;
+    --border-color: #c3cad3;
+    --accent-color: #4a7fc9;
+    --accent-hover: #3d6cb0;
+    --accent-text: #ffffff;
+}
+
+[data-theme="dark"] {
+    --bg-color: #14161a;
+    --surface-color: #1c1f24;
+    --text-color: #e2e5e9;
+    --text-muted: #8a919c;
+    --border-color: #2c3036;
+    --accent-color: #c4524f;
+    --accent-hover: #d3665f;
+    --accent-text: #ffffff;
+}
+
+@media (min-width: 900px) {
+    :root {
+        --reader-font-size: var(--reader-font-size-base, 1.1rem);
+    }
+}

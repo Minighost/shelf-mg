@@ -183,28 +183,52 @@ def _parse_nav(zf: zipfile.ZipFile, opf_dir: str, opf_xml) -> list[tuple[str, st
     return []
 
 
-def _extract_body_inner(raw_xhtml: str) -> str:
+def _split_body(raw_xhtml: str) -> tuple[dict[str, str], str]:
     """
-    Pull the content inside <body>...</body>, dropping the outer
-    <html>/<head> wrapper — that's the piece that actually goes into
-    the reader page's isolated container.
+    Split <body ...>...</body> into its attributes and its inner HTML,
+    dropping the outer <html>/<head> wrapper.
+
+    The attributes matter as much as the content: Calibre-converted EPUBs put
+    <body class="calibre">, and .calibre carries the page's real margins/font
+    sizing. Discarding it (as this used to) silently dropped that styling.
     """
     import re
 
-    match = re.search(r"<body[^>]*>(.*)</body>", raw_xhtml, re.DOTALL)
-    return match.group(1) if match else raw_xhtml
+    match = re.search(r"<body([^>]*)>(.*)</body>", raw_xhtml, re.DOTALL)
+    if match is None:
+        return {}, raw_xhtml
+
+    # group(1) is the raw text between "<body" and ">", e.g. ` class="calibre"
+    # xml:lang="en"`. Each findall match is one name="value" pair, captured as
+    # (name, value) and collected into a dict:
+    #   [\w:-]+   attribute name; ':' and '-' allow xml:lang, data-foo
+    #   ["']      opening quote, then [^"']* value up to the closing one
+    # Only quoted values are matched. Bare attributes (<body hidden>) are
+    # dropped rather than mishandled — no EPUB body relies on one, and the
+    # frame template renders these as key="value" pairs anyway.
+    attrs = dict(re.findall(r"""([\w:-]+)\s*=\s*["']([^"']*)["']""", match.group(1)))
+    return attrs, match.group(2)
 
 
 def get_chapter_content(epub_path: str, book: Book, chapter_index: int) -> str:
+    """Body HTML only — for callers that just want the text, e.g. search indexing."""
+    return get_chapter_body(epub_path, book, chapter_index)[1]
+
+
+def get_chapter_body(
+    epub_path: str, book: Book, chapter_index: int
+) -> tuple[dict[str, str], str]:
     """
-    Return the body HTML for one chapter, by index into book.chapters.
-    This is what gets dropped into the isolated iframe/container.
+    Return one chapter's <body> attributes and inner HTML, by index into
+    book.chapters. This is what gets dropped into the isolated iframe —
+    the attributes go onto the frame's own <body> so the EPUB's body-level
+    styling still applies (see _split_body).
     """
     chapter = book.chapters[chapter_index]
     with zipfile.ZipFile(epub_path) as zf:
         full_href = book.opf_dir + chapter.href
         raw = zf.read(full_href).decode("utf-8")
-    return _extract_body_inner(raw)
+    return _split_body(raw)
 
 
 def resolve_relative_path(base_dir: str, relative_path: str) -> str:

@@ -1,34 +1,13 @@
+/* Theme palettes and the reading-text variables live in reader-theme.css — the
+   reading iframe needs them without the element rules below. Must stay the
+   first statement in this file: @import is only valid before other rules. */
+@import url("reader-theme.css");
+
 /* --- theme variables & base resets --- */
 
 :root {
     --content-max-width: 1024px;
     --body-padding: 1rem;
-    --reader-font-family: Georgia, 'Times New Roman', serif;
-    --reader-font-size: clamp(calc(var(--reader-font-size-base, 1.1rem) * 0.5),
-            calc(var(--reader-font-size-base, 1.1rem) * 0.3 + 2vw),
-            var(--reader-font-size-base, 1.1rem));
-}
-
-[data-theme="light"] {
-    --bg-color: #f4f7fb;
-    --surface-color: #ffffff;
-    --text-color: #1c222c;
-    --text-muted: #4f5763;
-    --border-color: #c3cad3;
-    --accent-color: #4a7fc9;
-    --accent-hover: #3d6cb0;
-    --accent-text: #ffffff;
-}
-
-[data-theme="dark"] {
-    --bg-color: #14161a;
-    --surface-color: #1c1f24;
-    --text-color: #e2e5e9;
-    --text-muted: #8a919c;
-    --border-color: #2c3036;
-    --accent-color: #c4524f;
-    --accent-hover: #d3665f;
-    --accent-text: #ffffff;
 }
 
 /* No prefers-color-scheme fallback here — theme is now an explicit,
@@ -176,7 +155,8 @@ button::-moz-focus-inner {
     margin: 0 auto;
     position: sticky;
     top: 0;
-    z-index: 998; /* below .header-nav-drawer (1000) and its backdrop (999) */
+    z-index: 998;
+    /* below .header-nav-drawer (1000) and its backdrop (999) */
     background: var(--bg-color);
     padding: 0.25rem 0.25rem 0.25rem 0.5rem;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
@@ -1870,7 +1850,6 @@ html.view-card .card-view-wrapper {
     :root {
         --content-max-width: clamp(700px, var(--content-max-width-vw, 40vw), 1800px);
         --body-padding: 2rem;
-        --reader-font-size: var(--reader-font-size-base, 1.1rem);
     }
 
     .filter-sort-actions button {

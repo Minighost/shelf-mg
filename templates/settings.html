@@ -10,7 +10,10 @@
             <summary>General</summary>
             <div class="settings-field settings-field-grouped">
                 <label for="theme">Theme</label>
-                <select class="settings-theme-picker" id="theme" name="theme" onchange="previewTheme(this.value)">
+                <select class="settings-theme-picker"
+                        id="theme"
+                        name="theme"
+                        onchange="previewTheme(this.value)">
                     {% for choice in theme_choices %}
                         <option value="{{ choice }}"
                                 {% if choice == settings.theme %}selected{% endif %}>{{ choice | capitalize }}</option>

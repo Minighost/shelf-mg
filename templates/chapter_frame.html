@@ -15,9 +15,30 @@
     <head>
         <meta charset="utf-8">
         <title>{{ chapter_title }}</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <style>body { padding: 0; }</style>
+        {# Variables only — deliberately NOT style.css. Linking the whole app
+           stylesheet here made its body/a/img/* rules the effective defaults
+           for book content, overriding the EPUB's own styling. #}
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='reader-theme.css') }}">
+        {# Base layer: no !important, so anything the book declares wins. No
+           font-family/font-size/line-height here — those are the EPUB's call
+           unless the reader-font override below is switched on. #}
+        <style>
+            html { background: var(--bg-color); color: var(--text-color); }
+            body { margin: 0; padding: 0; }
+            a { color: var(--accent-color); }
+            /* The frame is scrolling="no", so an unconstrained oversized image
+               would overflow with no way to reach it. */
+            img { max-width: 100%; height: auto; }
+        </style>
         <style>{{ css | safe }}</style>
+        {# Calibre's converter assigns one generated class by computed style, so
+           the same .calibreN lands on both <div>s and <br>s. `display: block`
+           meant for the div turns the <br> into an empty zero-height block,
+           collapsing every paragraph gap. !important is required — a bare `br`
+           selector can't outrank the book's class. `display` is the only book
+           declaration we override. #}
+        <style>br { display: inline !important; }</style>
         {% if settings.override_epub_font %}
             <style>
                 body, body * {
@@ -27,7 +48,9 @@
             </style>
         {% endif %}
     </head>
-    <body>
+    {# The EPUB's own <body> attributes, so body-level book CSS still applies.
+       Autoescaped, not | safe — a malformed attribute can't break out. #}
+    <body {% for key, value in body_attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
         {{ content | safe }}
         <script>
             function reportHeight() {

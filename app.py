@@ -754,7 +754,9 @@ def read_chapter_frame(book_id, chapter_index):
         if chapter_index < 0 or chapter_index >= len(epub_book.chapters):
             flask.abort(404, description="That chapter doesn't exist.")
 
-        content = epub_parser.get_chapter_content(epub_path, epub_book, chapter_index)
+        body_attrs, content = epub_parser.get_chapter_body(
+            epub_path, epub_book, chapter_index
+        )
         chapter_dir = epub_parser.get_chapter_dir(
             epub_book, epub_book.chapters[chapter_index]
         )
@@ -769,6 +771,7 @@ def read_chapter_frame(book_id, chapter_index):
         "chapter_frame.html",
         css=css,
         content=content,
+        body_attrs=body_attrs,
         chapter_title=epub_book.chapters[chapter_index].title,
     )
 
