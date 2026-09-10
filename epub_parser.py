@@ -31,8 +31,11 @@ NS = {
 @dataclass
 class Chapter:
     index: int  # 0-based position in the nav-declared chapter list
-    href: str  # path inside the zip
+    starting_href: str  # path inside the zip to the file the nav points at
     title: str  # human-readable title for the selector, exactly as the EPUB declares it
+    all_hrefs: list[str]  # every spine file holding this chapter, in reading
+    # order, starting_href first — Calibre splits long
+    # chapters across several files (see parse_book)
 
 
 @dataclass
@@ -113,16 +116,36 @@ def parse_book(epub_path: str) -> Book:
         # raw spine order.
         nav_hrefs_titles = _parse_nav(zf, opf_dir, opf_xml)
 
+        # The nav document's own href (EPUB3's nav.xhtml) must never be
+        # swept into a chapter's span — it sits right after chapter 0 in
+        # the spine (see _group_spine_by_chapter).
+        nav_item = opf_xml.find(".//opf:manifest/opf:item[@properties='nav']", NS)
+        nav_doc_href = nav_item.attrib["href"] if nav_item is not None else None
+
         if nav_hrefs_titles:
+            nav_hrefs = [href for href, _ in nav_hrefs_titles]
+            hrefs_by_chapter = _group_spine_by_chapter(
+                spine_hrefs_in_order, nav_hrefs, nav_doc_href
+            )
             chapters = [
-                Chapter(index=i, href=href, title=title)
+                Chapter(
+                    index=i,
+                    starting_href=href,
+                    title=title,
+                    all_hrefs=hrefs_by_chapter[i],
+                )
                 for i, (href, title) in enumerate(nav_hrefs_titles)
             ]
         else:
             # Fallback: no nav data at all (rare, malformed EPUB). Use the
             # raw spine so the book is still readable, just with generic titles.
             chapters = [
-                Chapter(index=i, href=href, title=f"Chapter {i + 1}")
+                Chapter(
+                    index=i,
+                    starting_href=href,
+                    title=f"Chapter {i + 1}",
+                    all_hrefs=[href],
+                )
                 for i, href in enumerate(spine_hrefs_in_order)
                 if not href.endswith("nav.xhtml")
             ]
@@ -183,6 +206,47 @@ def _parse_nav(zf: zipfile.ZipFile, opf_dir: str, opf_xml) -> list[tuple[str, st
     return []
 
 
+def _group_spine_by_chapter(
+    spine_hrefs: list[str], chapter_hrefs: list[str], nav_doc_href: str | None
+) -> list[list[str]]:
+    """
+    Calibre splits long chapters across several spine files but points the
+    nav at only the first, so reading just that one file silently truncates
+    the chapter. A chapter's true span is its own spine position up to the
+    *next greater* (not just the next list entry) chapter position —
+    computed per-chapter, so two nav entries pointing to the same file both
+    get that file's real span instead of one of them getting an empty one.
+
+    Falls back to a single-file span whenever a chapter's href can't be
+    located in the spine, or would resolve to an empty/backwards span.
+    """
+
+    positions = []
+    for href in chapter_hrefs:
+        try:
+            positions.append(spine_hrefs.index(href))
+        except ValueError:
+            positions.append(None)
+
+    groups = []
+    for href, pos in zip(chapter_hrefs, positions):
+        if pos is None:
+            groups.append([href])
+            continue
+
+        later_positions = [p for p in positions if p is not None and p > pos]
+        end = min(later_positions) if later_positions else len(spine_hrefs)
+
+        span = [
+            h
+            for h in spine_hrefs[pos:end]
+            if h != nav_doc_href and not h.endswith("nav.xhtml")
+        ]
+        groups.append(span if span else [href])
+
+    return groups
+
+
 def _split_body(raw_xhtml: str) -> tuple[dict[str, str], str]:
     """
     Split <body ...>...</body> into its attributes and its inner HTML,
@@ -223,12 +287,24 @@ def get_chapter_body(
     book.chapters. This is what gets dropped into the isolated iframe —
     the attributes go onto the frame's own <body> so the EPUB's body-level
     styling still applies (see _split_body).
+
+    A chapter can span several spine files (chapter.all_hrefs) when Calibre
+    has split it during conversion — their bodies are concatenated in order.
+    <body> attributes come from the first file only; every file in a group
+    shares identical attributes in practice (see _group_spine_by_chapter).
     """
     chapter = book.chapters[chapter_index]
     with zipfile.ZipFile(epub_path) as zf:
-        full_href = book.opf_dir + chapter.href
-        raw = zf.read(full_href).decode("utf-8")
-    return _split_body(raw)
+        attrs = None
+        inner_parts = []
+        for href in chapter.all_hrefs:
+            full_href = book.opf_dir + href
+            raw = zf.read(full_href).decode("utf-8")
+            part_attrs, inner = _split_body(raw)
+            if attrs is None:
+                attrs = part_attrs
+            inner_parts.append(inner)
+    return attrs, "\n".join(inner_parts)
 
 
 def resolve_relative_path(base_dir: str, relative_path: str) -> str:
@@ -244,7 +320,7 @@ def resolve_relative_path(base_dir: str, relative_path: str) -> str:
 
 def get_chapter_dir(book: Book, chapter: Chapter) -> str:
     """Directory (relative to zip root) containing a given chapter's XHTML file."""
-    full_href = book.opf_dir + chapter.href
+    full_href = book.opf_dir + chapter.starting_href
     if "/" in full_href:
         return full_href.rsplit("/", 1)[0] + "/"
     return ""
