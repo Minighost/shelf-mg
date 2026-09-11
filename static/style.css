@@ -49,6 +49,29 @@ a:hover {
     text-decoration: underline;
 }
 
+/* --- utilities --- */
+
+/* Expands a link's clickable/tappable area beyond its own rendered box,
+   via an invisible ::before overlay. The overlay is absolutely positioned
+   (out of flow), so it never affects the link's own layout or nudges
+   surrounding elements — unlike padding+negative-margin, there's no
+   compensating arithmetic to keep in sync.
+   Add this class alongside a link's existing class(es). Override
+   --click-target-inset-block/--click-target-inset-inline on a more specific
+   selector if a given spot needs a different amount of slop than the
+   defaults below.
+   Based on React Native's `hitslop` concept. */
+.click-target-expansion {
+    position: relative;
+}
+
+.click-target-expansion::before {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--click-target-inset-block, 0.75rem))
+           calc(-1 * var(--click-target-inset-inline, 0.5rem));
+}
+
 /* --- buttons --- */
 
 .header-nav-drawer-btn {

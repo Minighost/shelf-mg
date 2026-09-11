@@ -32,14 +32,14 @@
             <span>
                 {% if prev_index is not none %}
                     <a href="/read/{{ book.id }}/{{ prev_index }}{{ back_suffix }}"
-                       class="chapter-nav-link"
+                       class="chapter-nav-link click-target-expansion"
                        data-target-chapter="{{ prev_index }}">&larr; Previous</a>
                 {% endif %}
             </span>
             <span>
                 {% if next_index is not none %}
                     <a href="/read/{{ book.id }}/{{ next_index }}{{ back_suffix }}"
-                       class="chapter-nav-link"
+                       class="chapter-nav-link click-target-expansion"
                        data-target-chapter="{{ next_index }}">Next &rarr;</a>
                 {% endif %}
             </span>
