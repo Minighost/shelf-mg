@@ -11,6 +11,7 @@
               href="{{ url_for('library_list', page=page + 1, **page_args) }}">
     {% endif %}
     <script src="{{ url_for('static', filename='filter-search.js') }}"></script>
+    <script src="{{ url_for('static', filename='library-scroll.js') }}"></script>
     <script>
         // If this page is restored from bfcache (e.g. via the back
         // button), its "Recently read"/"Continue reading" data may be
@@ -20,6 +21,10 @@
         });
     </script>
 {% endblock %}
+{# Identifies this exact view for scroll restoration (library-scroll.js): the
+   canonical URL plus every setting that changes entry heights, so a changed
+   list can't inherit a stale offset. #}
+{% block body_attrs %}data-library-scroll-key="{{ url_for('library_list', page=page, **page_args) }}|{{ view }}|{{ settings.font_size }}|{{ settings.content_max_width_pct }}|{{ settings.enabled_list_fields }}"{% endblock %}
 {% block header_left %}
     <div class="header-left-last-synced">Last updated: {{ last_synced }}</div>
 {% endblock %}
