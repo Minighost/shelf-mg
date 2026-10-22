@@ -189,7 +189,8 @@ def get_settings(db_path: str) -> Settings:
         ),
         library_view=row["library_view"] or DEFAULT_LIBRARY_VIEW,
         scroll_idle_threshold_minutes=float(
-            row["scroll_idle_threshold_minutes"] or DEFAULT_SCROLL_IDLE_THRESHOLD_MINUTES
+            row["scroll_idle_threshold_minutes"]
+            or DEFAULT_SCROLL_IDLE_THRESHOLD_MINUTES
         ),
         scroll_save_debounce_seconds=float(
             row["scroll_save_debounce_seconds"] or DEFAULT_SCROLL_SAVE_DEBOUNCE_SECONDS

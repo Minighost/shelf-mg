@@ -9,6 +9,7 @@ shelf-mg.db
 uv.lock
 *.bak
 /.scratch/
+/real_books/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

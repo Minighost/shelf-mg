@@ -300,12 +300,12 @@ def _typed_value(book, field):
     if datatype in ("int", "float"):
         try:
             return float(raw_values[0])
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
     if datatype == "datetime":
         try:
             return datetime.fromisoformat(raw_values[0])
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
     return min(v.lower() for v in raw_values)
 
@@ -380,7 +380,7 @@ def _build_history_entries(rows):
         try:
             epub_book = epub_parser.parse_book(book.epub_path)
             chapter_title = epub_book.chapters[pos.chapter_index].title
-        except (IndexError, OSError):
+        except IndexError, OSError:
             continue
         entries.append(
             {

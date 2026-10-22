@@ -73,7 +73,9 @@ def count_chapters(db_path: str, query_text: str) -> int:
         conn.close()
 
 
-def query_chapters(db_path: str, query_text: str, limit: int, offset: int) -> list[dict]:
+def query_chapters(
+    db_path: str, query_text: str, limit: int, offset: int
+) -> list[dict]:
     """Search chapters_fts for a literal phrase, returning one page of matching rows."""
     phrase = _phrase_query(query_text)
     conn = sqlite3.connect(db_path)
