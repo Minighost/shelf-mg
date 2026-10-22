@@ -352,6 +352,33 @@ def get_stylesheets(epub_path: str, book: Book) -> str:
         return "\n".join(parts)
 
 
+def get_chapter_inline_styles(epub_path: str, book: Book, chapter_index: int) -> str:
+    """
+    CSS from <style> blocks inside a chapter's own file <head>s — which
+    _split_body discards with the rest of the head, and which aren't
+    manifest items, so get_stylesheets() never sees them either. Sigil-edited
+    EPUBs put real formatting here (e.g. `p.sgc-1 {font-style: italic}`).
+
+    Per-chapter, not book-wide: Sigil numbers sgc-N classes per file, so the
+    same class can mean bold in one file and italic in another. Kept out of
+    get_chapter_body so search indexing doesn't pick up CSS as chapter text.
+    """
+    import re
+
+    chapter = book.chapters[chapter_index]
+    parts = []
+    with zipfile.ZipFile(epub_path) as zf:
+        for href in chapter.all_hrefs:
+            raw = zf.read(book.opf_dir + href).decode("utf-8")
+            head = re.search(r"<head[^>]*>(.*?)</head>", raw, re.DOTALL)
+            if head is None:
+                continue
+            parts.extend(
+                re.findall(r"<style[^>]*>(.*?)</style>", head.group(1), re.DOTALL)
+            )
+    return "\n".join(parts)
+
+
 @dataclass
 class EpubStats:
     file_size_bytes: int

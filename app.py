@@ -762,7 +762,16 @@ def read_chapter_frame(book_id, chapter_index):
         )
         content = _rewrite_image_srcs(content, book_id, chapter_index, chapter_dir)
         content = _normalize_chapter_html(content)
-        css = epub_parser.get_stylesheets(epub_path, epub_book)
+        # Inline head styles go last, matching their cascade position in the
+        # original file (after its <link>ed stylesheets).
+        css = "\n".join(
+            [
+                epub_parser.get_stylesheets(epub_path, epub_book),
+                epub_parser.get_chapter_inline_styles(
+                    epub_path, epub_book, chapter_index
+                ),
+            ]
+        )
     except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError) as e:
         logger.warning("failed to parse epub %s: %s", epub_path, e)
         flask.abort(404, description=_epub_error_description(e))
